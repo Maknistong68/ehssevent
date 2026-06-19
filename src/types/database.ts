@@ -1,0 +1,244 @@
+import type {
+  OrgType,
+  UserRole,
+  InspectionFieldType,
+  InspectionStatus,
+  EventApprovalLevel,
+  EventType,
+  EventClassification,
+  EventSignificantHazard,
+  EventImpactedParty,
+  CorrectiveActionStatus,
+  CorrectiveActionPriority,
+} from './enums'
+
+export interface Organization {
+  id: string
+  name: string
+  org_type: OrgType
+  logo_url: string | null
+  contact_email: string | null
+  is_active: boolean
+  created_at: string
+  updated_at: string
+}
+
+export interface Profile {
+  id: string
+  email: string
+  full_name: string | null
+  role: UserRole
+  organization_id: string | null
+  is_active: boolean
+  terms_accepted_at: string | null
+  privacy_accepted_at: string | null
+  terms_version: string | null
+  privacy_version: string | null
+  created_at: string
+  updated_at: string
+  organization?: Organization
+}
+
+export interface Project {
+  id: string
+  name: string
+  description: string | null
+  client_org_id: string
+  location: string | null
+  is_active: boolean
+  created_at: string
+  updated_at: string
+  client_organization?: Organization
+}
+
+export interface ProjectContractor {
+  project_id: string
+  contractor_org_id: string
+  created_at: string
+  contractor_organization?: Organization
+}
+
+export interface Event {
+  id: string
+  reference_number: string
+  project_id: string | null
+  created_by: string
+  creator_org_id: string
+  approval_level: EventApprovalLevel
+  type: EventType
+  was_fire: boolean
+  was_injury: boolean
+  was_environment_impacted: boolean
+  was_security: boolean
+  impact_other: string | null
+  classification: EventClassification
+  site: string | null
+  contractor: string | null
+  specific_area: string | null
+  latitude: number | null
+  longitude: number | null
+  event_date: string | null
+  reported_date: string | null
+  work_related: boolean
+  impacted_party: EventImpactedParty | null
+  leadership_member_name: string | null
+  attendees: string | null
+  notify_attendees_by_email: boolean
+  event_description: string | null
+  conditions: string | null
+  significant_hazard: EventSignificantHazard | null
+  repeat_incident: boolean
+  immediate_corrective_actions: string | null
+  stop_work: boolean
+  stop_work_details: string | null
+  further_action_required: boolean
+  photo_urls: string[]
+  contractor_reviewer: string | null
+  reviewer: string | null
+  contractor_investigator: string | null
+  lead_investigator: string | null
+  validator: string | null
+  approver: string | null
+  created_by_name: string | null
+  closeout_photo_urls: string[]
+  date_closure: string | null
+  reporting_deadline_24h: string | null
+  reporting_deadline_3day: string | null
+  deadline_24h_met: boolean
+  deadline_3day_met: boolean
+  deadline_24h_met_at: string | null
+  deadline_3day_met_at: string | null
+  created_at: string
+  updated_at: string
+  project?: Project
+  creator?: Profile
+  creator_organization?: Organization
+  responses?: EventResponse[]
+}
+
+export interface EventResponse {
+  id: string
+  event_id: string
+  responded_by: string
+  responder_org_id: string
+  response_text: string
+  photo_urls: string[]
+  is_closing: boolean
+  created_at: string
+  responder?: Profile
+  responder_organization?: Organization
+}
+
+export interface CorrectiveAction {
+  id: string
+  reference_number: string
+  event_id: string | null
+  inspection_id: string | null
+  section_id: string | null
+  item_id: string | null
+  item_label: string | null
+  project_id: string | null
+  created_by: string
+  creator_org_id: string
+  assigned_to: string | null
+  approver_id: string | null
+  title: string
+  description: string | null
+  priority: CorrectiveActionPriority
+  status: CorrectiveActionStatus
+  due_date: string | null
+  photo_urls: string[]
+  completed_at: string | null
+  approved_at: string | null
+  rejection_reason: string | null
+  created_at: string
+  updated_at: string
+  event?: Event
+  inspection?: Pick<Inspection, 'id' | 'reference_number'>
+  project?: Project
+  creator?: Profile
+  assignee?: Profile
+  approver?: Profile
+}
+
+export interface DashboardStats {
+  draft: number
+  in_progress: number
+  closed: number
+  total: number
+  open_actions: number
+  overdue_actions: number
+  deadline_24h_overdue: number
+  deadline_3day_overdue: number
+  deadline_24h_approaching: number
+}
+
+// Inspection types
+
+export interface TemplateItem {
+  id: string
+  label: string
+  field_type: InspectionFieldType
+  required: boolean
+  options: string[] | null
+  order: number
+}
+
+export interface TemplateSection {
+  id: string
+  title: string
+  order: number
+  items: TemplateItem[]
+}
+
+export interface InspectionTemplate {
+  id: string
+  organization_id: string
+  name: string
+  description: string | null
+  sections: TemplateSection[]
+  is_active: boolean
+  created_by: string
+  created_at: string
+  updated_at: string
+  creator?: Profile
+}
+
+export interface Inspection {
+  id: string
+  reference_number: string
+  template_id: string
+  project_id: string
+  organization_id: string
+  conducted_by: string
+  status: InspectionStatus
+  score: number | null
+  total_items: number
+  scorable_items: number
+  compliant_items: number
+  notes: string | null
+  completed_at: string | null
+  created_at: string
+  updated_at: string
+  template?: InspectionTemplate
+  project?: Project
+  conductor?: Profile
+  responses?: InspectionResponse[]
+}
+
+export interface InspectionResponse {
+  id: string
+  inspection_id: string
+  section_id: string
+  item_id: string
+  field_type: InspectionFieldType
+  value: string | null
+  photo_urls: string[]
+  created_at: string
+}
+
+export interface InspectionStats {
+  total: number
+  completed_this_month: number
+  average_score: number | null
+}

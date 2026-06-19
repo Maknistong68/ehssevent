@@ -1,0 +1,170 @@
+'use client'
+
+import { useAuth } from '@/components/auth/auth-provider'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import { Separator } from '@/components/ui/separator'
+import { Skeleton } from '@/components/ui/skeleton'
+import { LogOut, Mail, Building2, Shield, User, FileText, Lock } from 'lucide-react'
+import { createClient } from '@/lib/supabase/client'
+import { useRouter } from 'next/navigation'
+import { format } from 'date-fns'
+
+const ROLE_LABELS: Record<string, string> = {
+  system_admin: 'System Admin',
+  support: 'Support',
+  client_admin: 'Client Admin',
+  client_manager: 'Client Manager',
+  client_user: 'Client User',
+  contractor_user: 'Contractor User',
+}
+
+export default function ProfilePage() {
+  const { profile, loading } = useAuth()
+  const router = useRouter()
+  const supabase = createClient()
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut()
+    router.push('/login')
+    router.refresh()
+  }
+
+  if (loading) {
+    return (
+      <div className="p-4 md:p-6 space-y-4">
+        <Skeleton className="h-8 w-48" />
+        <Skeleton className="h-64 w-full" />
+      </div>
+    )
+  }
+
+  const initials = (profile?.full_name || profile?.email || 'U')
+    .split(/[\s._@-]+/)
+    .slice(0, 2)
+    .map((p) => p[0]?.toUpperCase())
+    .join('')
+
+  return (
+    <div className="max-w-2xl p-4 md:p-6 space-y-6">
+      <h1 className="mb-6 font-heading text-2xl font-bold tracking-tight md:text-3xl">Profile</h1>
+
+      <Card className="animate-fade-up">
+        <CardHeader>
+          <div className="flex items-center gap-4">
+            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary font-heading text-xl font-bold text-primary-foreground shadow-soft">
+              {initials}
+            </div>
+            <div>
+              <CardTitle className="text-lg">{profile?.full_name || 'No name set'}</CardTitle>
+              <CardDescription>{profile?.email}</CardDescription>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <Separator />
+
+          <div className="space-y-3">
+            <div className="flex items-center gap-3">
+              <Mail className="h-4 w-4 text-muted-foreground" />
+              <div>
+                <p className="text-sm font-medium">Email</p>
+                <p className="text-sm text-muted-foreground">{profile?.email}</p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <Shield className="h-4 w-4 text-muted-foreground" />
+              <div>
+                <p className="text-sm font-medium">Role</p>
+                <Badge variant="secondary">
+                  {ROLE_LABELS[profile?.role || ''] || profile?.role}
+                </Badge>
+              </div>
+            </div>
+
+            {profile?.organization && (
+              <div className="flex items-center gap-3">
+                <Building2 className="h-4 w-4 text-muted-foreground" />
+                <div>
+                  <p className="text-sm font-medium">Organization</p>
+                  <p className="text-sm text-muted-foreground">
+                    {(profile.organization as { name: string }).name}
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
+
+          <Separator />
+
+          <Button variant="destructive" onClick={handleLogout} className="w-full">
+            <LogOut className="mr-2 h-4 w-4" />
+            Sign Out
+          </Button>
+        </CardContent>
+      </Card>
+
+      <Card className="animate-fade-up animate-delay-100">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Lock className="h-4 w-4" />
+            Privacy & Data
+          </CardTitle>
+          <CardDescription>
+            Your data rights under the Saudi Personal Data Protection Law (PDPL)
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-3">
+            <div className="flex items-center gap-3">
+              <FileText className="h-4 w-4 text-muted-foreground" />
+              <div>
+                <p className="text-sm font-medium">Terms of Service</p>
+                <p className="text-sm text-muted-foreground">
+                  {profile?.terms_accepted_at
+                    ? `Accepted on ${format(new Date(profile.terms_accepted_at), 'dd MMM yyyy')} (v${profile.terms_version || '1.0'})`
+                    : 'Not recorded'}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <Shield className="h-4 w-4 text-muted-foreground" />
+              <div>
+                <p className="text-sm font-medium">Privacy Policy (PDPL)</p>
+                <p className="text-sm text-muted-foreground">
+                  {profile?.privacy_accepted_at
+                    ? `Accepted on ${format(new Date(profile.privacy_accepted_at), 'dd MMM yyyy')} (v${profile.privacy_version || '1.0'})`
+                    : 'Not recorded'}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <Separator />
+
+          <div className="rounded-2xl bg-muted/50 p-4">
+            <h4 className="text-sm font-semibold mb-2">Your PDPL Data Rights</h4>
+            <ul className="text-xs text-muted-foreground space-y-1">
+              <li>- Right to access your personal data</li>
+              <li>- Right to correct inaccurate data</li>
+              <li>- Right to request data deletion</li>
+              <li>- Right to data portability</li>
+              <li>- Right to object to processing</li>
+            </ul>
+          </div>
+
+          <Button variant="outline" className="w-full" disabled>
+            <User className="mr-2 h-4 w-4" />
+            Request Data Access / Deletion
+          </Button>
+          <p className="text-xs text-center text-muted-foreground">
+            Contact dpo@oxagonport.sa for data requests
+          </p>
+        </CardContent>
+      </Card>
+    </div>
+  )
+}
