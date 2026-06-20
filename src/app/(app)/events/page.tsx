@@ -2,15 +2,13 @@ export const dynamic = 'force-dynamic'
 
 import Link from 'next/link'
 import { getEvents } from '@/lib/queries/events'
-import { getSessionProfile } from '@/lib/auth/guards'
-import { can } from '@/lib/auth/permissions'
 import { EventCard } from '@/components/events/event-card'
 import { EventsTable } from '@/components/events/events-table'
 import { EventFilters } from '@/components/events/event-filters'
 import { EmptyState } from '@/components/shared/empty-state'
 import { Pagination } from '@/components/shared/pagination'
 import { Button } from '@/components/ui/button'
-import { Plus, Calendar, Download } from 'lucide-react'
+import { Plus, Calendar } from 'lucide-react'
 import { sortItems, paginate, parsePageParams } from '@/lib/list-utils'
 import { EVENT_APPROVAL_LABELS } from '@/types/enums'
 import type {
@@ -47,8 +45,7 @@ interface Props {
 }
 
 export default async function EventsPage({ searchParams }: Props) {
-  const [params, profile] = await Promise.all([searchParams, getSessionProfile()])
-  const canExport = can(profile?.role, 'event:export')
+  const params = await searchParams
 
   const events = await getEvents({
     approval_level: params.approval_level as EventApprovalLevel | undefined,
@@ -62,14 +59,6 @@ export default async function EventsPage({ searchParams }: Props) {
   const { page, per } = parsePageParams(params)
   const { pageItems, total, totalPages, from, to, page: currentPage } = paginate(sorted, page, per)
 
-  const exportQuery = new URLSearchParams()
-  if (params.approval_level) exportQuery.set('approval_level', params.approval_level)
-  if (params.type) exportQuery.set('type', params.type)
-  if (params.classification) exportQuery.set('classification', params.classification)
-  if (params.project_id) exportQuery.set('project_id', params.project_id)
-  if (params.search) exportQuery.set('search', params.search)
-  const exportHref = `/events/export${exportQuery.toString() ? `?${exportQuery.toString()}` : ''}`
-
   return (
     <div className="space-y-5 p-4 md:p-6">
       <div className="flex items-end justify-between gap-3">
@@ -82,14 +71,6 @@ export default async function EventsPage({ searchParams }: Props) {
           </p>
         </div>
         <div className="flex gap-2">
-          {canExport && (
-            <a href={exportHref}>
-              <Button variant="outline" data-icon="inline-start">
-                <Download className="h-4 w-4" />
-                Export
-              </Button>
-            </a>
-          )}
           <Link href="/events/new">
             <Button data-icon="inline-start">
               <Plus className="h-4 w-4" />

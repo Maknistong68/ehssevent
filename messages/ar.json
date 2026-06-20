@@ -91,6 +91,8 @@
     "avgCompliance": "متوسط الامتثال",
     "recentEvents": "الأحداث الأخيرة",
     "openCorrectiveActions": "الإجراءات التصحيحية المفتوحة",
+    "myCorrectiveActions": "إجراءاتي التصحيحية",
+    "noMyActions": "لا توجد إجراءات تصحيحية مسندة إليك.",
     "noEvents": "لا توجد أحداث بعد.",
     "noOpenActions": "لا توجد إجراءات تصحيحية مفتوحة.",
     "deadlines": "مواعيد الإبلاغ",

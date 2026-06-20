@@ -1,9 +1,7 @@
 import Link from 'next/link'
 import { Card, CardContent } from '@/components/ui/card'
 import { CaStatusBadge } from './ca-status-badge'
-import { CaPriorityBadge } from './ca-priority-badge'
-import { User, CalendarDays, FileText, ClipboardCheck } from 'lucide-react'
-import { format } from 'date-fns'
+import { User, FileText, ClipboardCheck } from 'lucide-react'
 import type { CorrectiveAction } from '@/types/database'
 
 interface CaCardProps {
@@ -35,7 +33,6 @@ export function CaCard({ correctiveAction }: CaCardProps) {
           </div>
 
           <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-muted-foreground">
-            <CaPriorityBadge priority={correctiveAction.priority} />
             {event?.reference_number && (
               <span className="flex items-center gap-1.5">
                 <FileText className="h-3.5 w-3.5" />
@@ -57,12 +54,6 @@ export function CaCard({ correctiveAction }: CaCardProps) {
               <span className="flex items-center gap-1.5">
                 <User className="h-3.5 w-3.5" />
                 {assignee.full_name || assignee.email}
-              </span>
-            )}
-            {correctiveAction.due_date && (
-              <span className="flex items-center gap-1.5">
-                <CalendarDays className="h-3.5 w-3.5" />
-                {format(new Date(correctiveAction.due_date), 'dd MMM yyyy')}
               </span>
             )}
           </div>

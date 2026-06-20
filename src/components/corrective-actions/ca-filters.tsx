@@ -11,7 +11,7 @@ import {
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Search, X } from 'lucide-react'
-import { CA_STATUS_LABELS, CA_PRIORITY_LABELS } from '@/types/enums'
+import { CA_STATUS_LABELS } from '@/types/enums'
 
 export function CaFilters() {
   const router = useRouter()
@@ -85,33 +85,12 @@ export function CaFilters() {
           </SelectContent>
         </Select>
 
-        <Select
-          value={searchParams.get('priority') || 'all'}
-          onValueChange={(v) => updateFilter('priority', v ?? '')}
-        >
-          <SelectTrigger className="min-w-[120px] flex-1 sm:w-[140px] sm:flex-none">
-            <SelectValue placeholder="Priority" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Priority</SelectItem>
-            {Object.entries(CA_PRIORITY_LABELS).map(([value, label]) => (
-              <SelectItem key={value} value={value}>
-                {label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
         <Select value={sortValue} onValueChange={(v) => updateSort(v ?? 'default')}>
           <SelectTrigger className="min-w-[140px] flex-1 sm:w-[170px] sm:flex-none">
             <SelectValue placeholder="Sort by" />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="default">Sort: Default</SelectItem>
-            <SelectItem value="due:asc">Due date (soonest)</SelectItem>
-            <SelectItem value="due:desc">Due date (latest)</SelectItem>
-            <SelectItem value="priority:desc">Priority (high–low)</SelectItem>
-            <SelectItem value="priority:asc">Priority (low–high)</SelectItem>
             <SelectItem value="status:asc">Status</SelectItem>
             <SelectItem value="reference:asc">Reference (A–Z)</SelectItem>
           </SelectContent>

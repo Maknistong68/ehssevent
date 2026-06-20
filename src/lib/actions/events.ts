@@ -1,6 +1,5 @@
 'use server'
 
-import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
 import { requirePermission } from '@/lib/auth/guards'
 import {
@@ -21,7 +20,8 @@ export async function createEvent(input: unknown) {
 
   revalidatePath('/events')
   revalidatePath('/dashboard')
-  redirect('/events')
+
+  return { success: true }
 }
 
 export async function updateEventApprovalLevel(input: unknown) {

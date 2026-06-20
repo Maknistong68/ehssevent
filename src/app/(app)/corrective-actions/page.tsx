@@ -1,27 +1,18 @@
 export const dynamic = 'force-dynamic'
 
-import Link from 'next/link'
 import { getCorrectiveActions } from '@/lib/queries/corrective-actions'
 import { CaCard } from '@/components/corrective-actions/ca-card'
 import { CaTable } from '@/components/corrective-actions/ca-table'
 import { CaFilters } from '@/components/corrective-actions/ca-filters'
 import { EmptyState } from '@/components/shared/empty-state'
 import { Pagination } from '@/components/shared/pagination'
-import { Button } from '@/components/ui/button'
-import { Plus, ListChecks } from 'lucide-react'
+import { ListChecks } from 'lucide-react'
 import { sortItems, paginate, parsePageParams } from '@/lib/list-utils'
-import type { CorrectiveActionStatus, CorrectiveActionPriority } from '@/types/enums'
+import type { CorrectiveActionStatus } from '@/types/enums'
 import type { CorrectiveAction } from '@/types/database'
 
 export const metadata = {
   title: 'Corrective Actions - Event Report',
-}
-
-const PRIORITY_RANK: Record<CorrectiveActionPriority, number> = {
-  low: 0,
-  medium: 1,
-  high: 2,
-  critical: 3,
 }
 
 const STATUS_RANK: Record<CorrectiveActionStatus, number> = {
@@ -34,16 +25,12 @@ const STATUS_RANK: Record<CorrectiveActionStatus, number> = {
 
 const caAccessors = {
   reference: (c: CorrectiveAction) => c.reference_number,
-  priority: (c: CorrectiveAction) => PRIORITY_RANK[c.priority],
   status: (c: CorrectiveAction) => STATUS_RANK[c.status],
-  due: (c: CorrectiveAction) => (c.due_date ? new Date(c.due_date) : null),
 }
 
 interface Props {
   searchParams: Promise<{
     status?: string
-    priority?: string
-    project_id?: string
     search?: string
     sort?: string
     dir?: string
@@ -56,8 +43,6 @@ export default async function CorrectiveActionsPage({ searchParams }: Props) {
   const params = await searchParams
   const correctiveActions = await getCorrectiveActions({
     status: params.status as CorrectiveActionStatus | undefined,
-    priority: params.priority as CorrectiveActionPriority | undefined,
-    project_id: params.project_id,
     search: params.search,
   })
 
@@ -76,12 +61,6 @@ export default async function CorrectiveActionsPage({ searchParams }: Props) {
             {correctiveActions.length} corrective action{correctiveActions.length !== 1 ? 's' : ''}
           </p>
         </div>
-        <Link href="/corrective-actions/new">
-          <Button data-icon="inline-start">
-            <Plus className="h-4 w-4" />
-            New
-          </Button>
-        </Link>
       </div>
 
       <CaFilters />
@@ -90,15 +69,7 @@ export default async function CorrectiveActionsPage({ searchParams }: Props) {
         <EmptyState
           icon={ListChecks}
           title="No corrective actions found"
-          description="No corrective actions match your current filters, or none have been created yet."
-          action={
-            <Link href="/corrective-actions/new">
-              <Button data-icon="inline-start">
-                <Plus className="h-4 w-4" />
-                Create Corrective Action
-              </Button>
-            </Link>
-          }
+          description="Raise corrective actions from an event or inspection."
         />
       ) : (
         <>

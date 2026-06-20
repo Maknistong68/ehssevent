@@ -30,12 +30,6 @@ const cairo = Cairo({
 export const metadata: Metadata = {
   title: 'Event Report - HSE Management',
   description: 'Health, Safety & Environment event reporting',
-  manifest: '/manifest.json',
-  appleWebApp: {
-    capable: true,
-    statusBarStyle: 'default',
-    title: 'Event Report',
-  },
 }
 
 export const viewport: Viewport = {

@@ -248,6 +248,11 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
         )}
       </nav>
 
+      {/* Language toggle */}
+      <div className="px-3 pb-1">
+        <LanguageSwitcher collapsed={collapsed} />
+      </div>
+
       {/* Account section */}
       <div className="border-t border-sidebar-border p-3">
         <DropdownMenu>
@@ -289,9 +294,6 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
               <User className="h-4 w-4" />
               {t('nav.profile')}
             </DropdownMenuItem>
-            <div className="px-1 py-1">
-              <LanguageSwitcher variant="compact" />
-            </div>
             <DropdownMenuSeparator />
             <form action={logout}>
               <DropdownMenuItem variant="destructive" render={<button type="submit" />} className="w-full">

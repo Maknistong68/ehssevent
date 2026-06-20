@@ -91,6 +91,8 @@
     "avgCompliance": "Avg. Compliance",
     "recentEvents": "Recent Events",
     "openCorrectiveActions": "Open Corrective Actions",
+    "myCorrectiveActions": "My Corrective Actions",
+    "noMyActions": "No corrective actions assigned to you.",
     "noEvents": "No events yet.",
     "noOpenActions": "No open corrective actions.",
     "deadlines": "Reporting Deadlines",

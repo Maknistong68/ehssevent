@@ -1,7 +1,6 @@
 export const dynamic = 'force-dynamic'
 
 import { CreateCaForm } from '@/components/corrective-actions/create-ca-form'
-import { getProjects } from '@/lib/queries/projects'
 import { getAssignableUsers } from '@/lib/queries/users'
 
 export const metadata = {
@@ -21,7 +20,7 @@ interface Props {
 export default async function NewCorrectiveActionPage({ searchParams }: Props) {
   const { event_id, inspection_id, section_id, item_id, item_label } =
     await searchParams
-  const [projects, users] = await Promise.all([getProjects(), getAssignableUsers()])
+  const users = await getAssignableUsers()
 
   return (
     <div className="mx-auto max-w-2xl p-4 md:p-6">
@@ -29,7 +28,6 @@ export default async function NewCorrectiveActionPage({ searchParams }: Props) {
         New Corrective Action
       </h1>
       <CreateCaForm
-        projects={projects}
         users={users}
         eventId={event_id}
         inspectionId={inspection_id}

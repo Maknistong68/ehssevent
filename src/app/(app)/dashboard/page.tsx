@@ -1,34 +1,9 @@
 export const dynamic = 'force-dynamic'
 
-import {
-  getDashboardStats,
-  getRecentEvents,
-  getOpenCorrectiveActions,
-  getInspectionStats,
-  getAdminStats,
-  getPendingApprovalCount,
-} from '@/lib/queries/dashboard'
-import { getSessionProfile } from '@/lib/auth/guards'
-import { can } from '@/lib/auth/permissions'
-import { StatCard } from '@/components/dashboard/stat-card'
-import { EventCard } from '@/components/events/event-card'
+import { getMyPendingCorrectiveActions } from '@/lib/queries/dashboard'
 import { CaCard } from '@/components/corrective-actions/ca-card'
-import { Card, CardContent } from '@/components/ui/card'
-import {
-  Layers,
-  FileText,
-  Clock,
-  CheckCircle2,
-  ListChecks,
-  AlertTriangle,
-  ClipboardCheck,
-  TrendingUp,
-  Building2,
-  Users,
-  UserX,
-  ClipboardList,
-} from 'lucide-react'
-import Link from 'next/link'
+import { CaStatusStepper } from '@/components/corrective-actions/ca-status-stepper'
+import { MyCaTable } from '@/components/dashboard/my-ca-table'
 import { getTranslations } from 'next-intl/server'
 
 export const metadata = {
@@ -36,272 +11,45 @@ export const metadata = {
 }
 
 export default async function DashboardPage() {
-  const [stats, recentEvents, openActions, inspectionStats, t, profile] = await Promise.all([
-    getDashboardStats(),
-    getRecentEvents(),
-    getOpenCorrectiveActions(),
-    getInspectionStats(),
+  const [myActions, t] = await Promise.all([
+    getMyPendingCorrectiveActions(),
     getTranslations('dashboard'),
-    getSessionProfile(),
   ])
-
-  const isAdmin = can(profile?.role, 'admin:access')
-  const isManager = can(profile?.role, 'ca:approve')
-
-  // Fetch role-specific data
-  const adminStats = isAdmin ? await getAdminStats() : null
-  const pendingApprovals = isManager && !isAdmin ? await getPendingApprovalCount() : null
 
   return (
     <div className="space-y-7 p-4 md:p-6">
       <div className="hidden md:block">
         <h1 className="font-heading text-3xl font-bold tracking-tight">{t('title')}</h1>
-        <p className="text-sm text-muted-foreground">
-          {t('subtitle')}
-        </p>
+        <p className="text-sm text-muted-foreground">{t('subtitle')}</p>
       </div>
 
-      {adminStats && (
-        <section>
-          <h2 className="mb-3 px-1 font-heading text-base font-semibold tracking-tight">
-            {t('platform')}
-          </h2>
-          <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-            <StatCard
-              label={t('organizations')}
-              value={adminStats.total_organizations}
-              icon={Building2}
-              color="bg-violet-100 text-violet-700"
-              index={0}
-            />
-            <StatCard
-              label={t('totalUsers')}
-              value={adminStats.total_users}
-              icon={Users}
-              color="bg-blue-100 text-blue-700"
-              index={1}
-            />
-            <StatCard
-              label={t('inactiveUsers')}
-              value={adminStats.inactive_users}
-              icon={UserX}
-              color="bg-slate-100 text-slate-700"
-              index={2}
-            />
-            <StatCard
-              label={t('pendingApprovals')}
-              value={adminStats.pending_approvals}
-              icon={ClipboardList}
-              color="bg-purple-100 text-purple-700"
-              index={3}
-            />
-          </div>
-        </section>
-      )}
-
-      {pendingApprovals !== null && pendingApprovals > 0 && (
-        <section>
-          <h2 className="mb-3 px-1 font-heading text-base font-semibold tracking-tight">
-            {t('managerTasks')}
-          </h2>
-          <div className="grid grid-cols-2 gap-3">
-            <StatCard
-              label={t('pendingApprovals')}
-              value={pendingApprovals}
-              icon={ClipboardList}
-              color="bg-purple-100 text-purple-700"
-              index={0}
-            />
-          </div>
-        </section>
-      )}
-
-      <section>
-        <h2 className="mb-3 px-1 font-heading text-base font-semibold tracking-tight">
-          {t('events')}
+      <div className="space-y-3">
+        <h2 className="font-heading text-base font-semibold tracking-tight px-1">
+          {t('myCorrectiveActions')}
         </h2>
-        <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-          <StatCard
-            label={t('total')}
-            value={stats.total}
-            icon={Layers}
-            color="bg-indigo-100 text-indigo-700"
-            index={0}
-          />
-          <StatCard
-            label={t('draft')}
-            value={stats.draft}
-            icon={FileText}
-            color="bg-slate-100 text-slate-700"
-            index={1}
-          />
-          <StatCard
-            label={t('inProgress')}
-            value={stats.in_progress}
-            icon={Clock}
-            color="bg-amber-100 text-amber-700"
-            index={2}
-          />
-          <StatCard
-            label={t('closed')}
-            value={stats.closed}
-            icon={CheckCircle2}
-            color="bg-emerald-100 text-emerald-700"
-            index={3}
-          />
-        </div>
-      </section>
 
-      <section>
-        <h2 className="mb-3 px-1 font-heading text-base font-semibold tracking-tight">
-          {t('correctiveActions')}
-        </h2>
-        <div className="grid grid-cols-2 gap-3">
-          <StatCard
-            label={t('openActions')}
-            value={stats.open_actions}
-            icon={ListChecks}
-            color="bg-sky-100 text-sky-700"
-            index={0}
-          />
-          <StatCard
-            label={t('overdue')}
-            value={stats.overdue_actions}
-            icon={AlertTriangle}
-            color="bg-red-100 text-red-700"
-            index={1}
-          />
-        </div>
-      </section>
+        {myActions.length === 0 ? (
+          <p className="text-sm text-muted-foreground px-1">{t('noMyActions')}</p>
+        ) : (
+          <>
+            {/* Desktop table */}
+            <div className="hidden md:block">
+              <MyCaTable correctiveActions={myActions} />
+            </div>
 
-      {(inspectionStats.total > 0 || inspectionStats.completed_this_month > 0) && (
-        <section>
-          <h2 className="mb-3 px-1 font-heading text-base font-semibold tracking-tight">
-            {t('inspections')}
-          </h2>
-          <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
-            <StatCard
-              label={t('totalInspections')}
-              value={inspectionStats.total}
-              icon={ClipboardCheck}
-              color="bg-indigo-100 text-indigo-700"
-              index={0}
-            />
-            <StatCard
-              label={t('completedThisMonth')}
-              value={inspectionStats.completed_this_month}
-              icon={CheckCircle2}
-              color="bg-emerald-100 text-emerald-700"
-              index={1}
-            />
-            <Link href="/inspections" className="animate-fade-up animate-delay-150">
-              <Card size="sm" className="h-full transition-transform duration-200 hover:-translate-y-0.5">
-                <CardContent className="flex flex-col gap-3">
-                  <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-accent/30 text-brand-green">
-                    <TrendingUp className="h-5 w-5" />
+            {/* Mobile cards */}
+            <div className="space-y-3 md:hidden">
+              {myActions.map((ca) => (
+                <div key={ca.id} className="space-y-2">
+                  <CaCard correctiveAction={ca} />
+                  <div className="px-1">
+                    <CaStatusStepper status={ca.status} />
                   </div>
-                  <div>
-                    <p className="font-heading text-3xl leading-none font-bold tracking-tight">
-                      {inspectionStats.average_score !== null
-                        ? `${inspectionStats.average_score.toFixed(1)}%`
-                        : 'N/A'}
-                    </p>
-                    <p className="mt-1.5 text-xs font-medium text-muted-foreground">
-                      {t('avgCompliance')}
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
-            </Link>
-          </div>
-        </section>
-      )}
-
-      {(stats.deadline_24h_overdue > 0 || stats.deadline_3day_overdue > 0 || stats.deadline_24h_approaching > 0) && (
-        <section>
-          <h2 className="mb-3 px-1 font-heading text-base font-semibold tracking-tight">
-            {t('deadlines')}
-          </h2>
-          <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
-            {stats.deadline_24h_overdue > 0 && (
-              <StatCard
-                label={t('overdue24h')}
-                value={stats.deadline_24h_overdue}
-                icon={AlertTriangle}
-                color="bg-red-100 text-red-700"
-                index={0}
-              />
-            )}
-            {stats.deadline_3day_overdue > 0 && (
-              <StatCard
-                label={t('overdue3day')}
-                value={stats.deadline_3day_overdue}
-                icon={AlertTriangle}
-                color="bg-orange-100 text-orange-700"
-                index={1}
-              />
-            )}
-            {stats.deadline_24h_approaching > 0 && (
-              <StatCard
-                label={t('approaching')}
-                value={stats.deadline_24h_approaching}
-                icon={Clock}
-                color="bg-amber-100 text-amber-700"
-                index={2}
-              />
-            )}
-          </div>
-        </section>
-      )}
-
-      <div className="grid gap-6 md:grid-cols-2">
-        <div className="space-y-3">
-          <div className="flex items-center justify-between px-1">
-            <h2 className="font-heading text-base font-semibold tracking-tight">
-              {t('recentEvents')}
-            </h2>
-            <Link
-              href="/events"
-              className="text-sm font-medium text-muted-foreground hover:text-foreground"
-            >
-              View all
-            </Link>
-          </div>
-          {recentEvents.length === 0 ? (
-            <p className="text-sm text-muted-foreground">{t('noEvents')}</p>
-          ) : (
-            <div className="space-y-3">
-              {recentEvents.map((event) => (
-                <EventCard key={event.id} event={event} />
+                </div>
               ))}
             </div>
-          )}
-        </div>
-
-        <div className="space-y-3">
-          <div className="flex items-center justify-between px-1">
-            <h2 className="font-heading text-base font-semibold tracking-tight">
-              {t('openCorrectiveActions')}
-            </h2>
-            <Link
-              href="/corrective-actions"
-              className="text-sm font-medium text-muted-foreground hover:text-foreground"
-            >
-              View all
-            </Link>
-          </div>
-          {openActions.length === 0 ? (
-            <p className="text-sm text-muted-foreground">
-              {t('noOpenActions')}
-            </p>
-          ) : (
-            <div className="space-y-3">
-              {openActions.map((ca) => (
-                <CaCard key={ca.id} correctiveAction={ca} />
-              ))}
-            </div>
-          )}
-        </div>
+          </>
+        )}
       </div>
     </div>
   )

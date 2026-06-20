@@ -14,9 +14,22 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover'
 import { Card, CardContent } from '@/components/ui/card'
 import { PhotoUpload } from '@/components/shared/photo-upload'
-import { AlertCircle, ArrowLeft, Loader2, MapPin } from 'lucide-react'
+import {
+  AlertCircle,
+  ArrowLeft,
+  Calendar as CalendarIcon,
+  CheckCircle2,
+  Loader2,
+  MapPin,
+  Plus,
+} from 'lucide-react'
 import { format } from 'date-fns'
 import { createEvent } from '@/lib/actions/events'
 import {
@@ -34,8 +47,6 @@ interface CreateEventFormProps {
   projects: Project[]
   defaultProjectId?: string
 }
-
-const NONE = '__none__'
 
 // Classifications offered in the dropdown for the variable types.
 const CLASSIFICATION_OPTIONS: Array<keyof typeof EVENT_CLASSIFICATION_LABELS> = [
@@ -79,9 +90,11 @@ function CheckboxRow({
 
 export function CreateEventForm({ projects, defaultProjectId = '' }: CreateEventFormProps) {
   const [loading, setLoading] = useState(false)
+  const [created, setCreated] = useState(false)
   const [error, setError] = useState('')
   const [photos, setPhotos] = useState<string[]>([])
   const [eventDate, setEventDate] = useState<Date | undefined>(undefined)
+  const [eventTime, setEventTime] = useState('')
   const [showGps, setShowGps] = useState(false)
 
   const [type, setType] = useState<EventType>('hazard_identification')
@@ -96,7 +109,6 @@ export function CreateEventForm({ projects, defaultProjectId = '' }: CreateEvent
   const [latitude, setLatitude] = useState('')
   const [longitude, setLongitude] = useState('')
   const [eventDescription, setEventDescription] = useState('')
-  const [conditions, setConditions] = useState('')
   const [immediateCorrectiveActions, setImmediateCorrectiveActions] =
     useState('')
   const [stopWorkDetails, setStopWorkDetails] = useState('')
@@ -118,7 +130,6 @@ export function CreateEventForm({ projects, defaultProjectId = '' }: CreateEvent
   const showClassification = WITH_RESPONSE.includes(type)
   const showSignificantHazard = WITH_RESPONSE.includes(type)
   const showWorkRepeat = WITH_RESPONSE.includes(type)
-  const showConditions = type === 'incident' || type === 'hazard_identification'
   const showResponse = WITH_RESPONSE.includes(type)
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -144,7 +155,6 @@ export function CreateEventForm({ projects, defaultProjectId = '' }: CreateEvent
       repeat_incident: showWorkRepeat ? repeatIncident : false,
       stop_work: showResponse ? stopWork : false,
       stop_work_details: showResponse ? stopWorkDetails || undefined : undefined,
-      conditions: showConditions ? conditions || undefined : undefined,
       immediate_corrective_actions: showResponse
         ? immediateCorrectiveActions || undefined
         : undefined,
@@ -158,7 +168,9 @@ export function CreateEventForm({ projects, defaultProjectId = '' }: CreateEvent
       specific_area: specificArea || undefined,
       latitude: showGps ? latitude || undefined : undefined,
       longitude: showGps ? longitude || undefined : undefined,
-      event_date: eventDate ? format(eventDate, 'yyyy-MM-dd') : undefined,
+      event_date: eventDate
+        ? format(eventDate, 'yyyy-MM-dd') + (eventTime ? 'T' + eventTime : '')
+        : undefined,
       event_description: eventDescription || undefined,
       photo_urls: photos,
     })
@@ -166,7 +178,46 @@ export function CreateEventForm({ projects, defaultProjectId = '' }: CreateEvent
     if (result?.error) {
       setError(result.error)
       setLoading(false)
+      return
     }
+
+    if (result?.success) {
+      setCreated(true)
+      setLoading(false)
+    }
+  }
+
+  if (created) {
+    return (
+      <Card>
+        <CardContent className="flex flex-col items-center gap-4 p-8 text-center">
+          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary">
+            <CheckCircle2 className="h-6 w-6" />
+          </div>
+          <div className="space-y-1">
+            <h3 className="font-heading text-lg font-semibold tracking-tight">
+              Event created.
+            </h3>
+            <p className="text-sm text-muted-foreground">
+              Add a corrective action to track follow-up for this event.
+            </p>
+          </div>
+          <div className="flex w-full flex-col gap-3 sm:flex-row sm:justify-center">
+            <Link href="/corrective-actions/new" className="flex-1 sm:flex-none">
+              <Button className="w-full" data-icon="inline-start">
+                <Plus className="h-4 w-4" />
+                Add Corrective Action
+              </Button>
+            </Link>
+            <Link href="/events" className="flex-1 sm:flex-none">
+              <Button variant="outline" className="w-full">
+                Back to Events
+              </Button>
+            </Link>
+          </div>
+        </CardContent>
+      </Card>
+    )
   }
 
   return (
@@ -209,16 +260,13 @@ export function CreateEventForm({ projects, defaultProjectId = '' }: CreateEvent
             <div className="space-y-2">
               <Label>Classification</Label>
               <Select
-                value={classification || NONE}
-                onValueChange={(v) =>
-                  setClassification(v === NONE ? '' : (v ?? ''))
-                }
+                value={classification || undefined}
+                onValueChange={(v) => setClassification(v ?? '')}
               >
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Select classification" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value={NONE}>—</SelectItem>
                   {CLASSIFICATION_OPTIONS.map((v) => (
                     <SelectItem key={v} value={v}>
                       {EVENT_CLASSIFICATION_LABELS[v]}
@@ -236,16 +284,13 @@ export function CreateEventForm({ projects, defaultProjectId = '' }: CreateEvent
                 {isIncident || type === 'hazard_identification' ? ' *' : ''}
               </Label>
               <Select
-                value={significantHazard || NONE}
-                onValueChange={(v) =>
-                  setSignificantHazard(v === NONE ? '' : (v ?? ''))
-                }
+                value={significantHazard || undefined}
+                onValueChange={(v) => setSignificantHazard(v ?? '')}
               >
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Select hazard" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value={NONE}>—</SelectItem>
                   {Object.entries(EVENT_HAZARD_LABELS).map(([v, l]) => (
                     <SelectItem key={v} value={v}>
                       {l}
@@ -268,14 +313,13 @@ export function CreateEventForm({ projects, defaultProjectId = '' }: CreateEvent
           <div className="space-y-2">
             <Label>Site</Label>
             <Select
-              value={site || NONE}
-              onValueChange={(v) => setSite(v === NONE ? '' : (v ?? ''))}
+              value={site || undefined}
+              onValueChange={(v) => setSite(v ?? '')}
             >
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Select site" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value={NONE}>—</SelectItem>
                 {SITE_OPTIONS.map((s) => (
                   <SelectItem key={s} value={s}>
                     {s}
@@ -289,14 +333,13 @@ export function CreateEventForm({ projects, defaultProjectId = '' }: CreateEvent
             <div className="space-y-2">
               <Label>Contractor</Label>
               <Select
-                value={contractor || NONE}
-                onValueChange={(v) => setContractor(v === NONE ? '' : (v ?? ''))}
+                value={contractor || undefined}
+                onValueChange={(v) => setContractor(v ?? '')}
               >
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Select contractor" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value={NONE}>—</SelectItem>
                   {CONTRACTOR_OPTIONS.map((c) => (
                     <SelectItem key={c} value={c}>
                       {c}
@@ -321,14 +364,13 @@ export function CreateEventForm({ projects, defaultProjectId = '' }: CreateEvent
             <div className="space-y-2">
               <Label>Linked Project (optional)</Label>
               <Select
-                value={projectId || NONE}
-                onValueChange={(v) => setProjectId(v === NONE ? '' : (v ?? ''))}
+                value={projectId || undefined}
+                onValueChange={(v) => setProjectId(v ?? '')}
               >
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Link to a project" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value={NONE}>—</SelectItem>
                   {projects.map((p) => (
                     <SelectItem key={p.id} value={p.id}>
                       {p.name}
@@ -379,24 +421,49 @@ export function CreateEventForm({ projects, defaultProjectId = '' }: CreateEvent
 
       {/* Event Date */}
       <Card>
-        <CardContent className="p-4 space-y-3">
-          <div className="flex items-center justify-between">
-            <h3 className="font-heading text-sm font-semibold tracking-tight">
-              Event Date
-            </h3>
-            {eventDate && (
-              <span className="text-sm font-medium text-muted-foreground">
-                {format(eventDate, 'dd MMM yyyy')}
-              </span>
-            )}
-          </div>
-          <div className="flex justify-center rounded-2xl border border-input bg-secondary/30">
-            <Calendar
-              mode="single"
-              selected={eventDate}
-              onSelect={setEventDate}
-              disabled={{ after: new Date() }}
-            />
+        <CardContent className="p-4 space-y-4">
+          <h3 className="font-heading text-sm font-semibold tracking-tight">
+            Event Date
+          </h3>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="space-y-2">
+              <Label>Date</Label>
+              <Popover>
+                <PopoverTrigger
+                  render={
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="w-full justify-start font-normal data-[empty=true]:text-muted-foreground"
+                      data-empty={!eventDate}
+                      data-icon="inline-start"
+                    />
+                  }
+                >
+                  <CalendarIcon className="h-4 w-4" />
+                  {eventDate
+                    ? format(eventDate, 'dd MMM yyyy')
+                    : 'Select event date'}
+                </PopoverTrigger>
+                <PopoverContent>
+                  <Calendar
+                    mode="single"
+                    selected={eventDate}
+                    onSelect={setEventDate}
+                    disabled={{ after: new Date() }}
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="event_time">Time (optional)</Label>
+              <Input
+                id="event_time"
+                type="time"
+                value={eventTime}
+                onChange={(e) => setEventTime(e.target.value)}
+              />
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -448,16 +515,13 @@ export function CreateEventForm({ projects, defaultProjectId = '' }: CreateEvent
             <div className="space-y-2">
               <Label>Impacted Party</Label>
               <Select
-                value={impactedParty || NONE}
-                onValueChange={(v) =>
-                  setImpactedParty(v === NONE ? '' : (v ?? ''))
-                }
+                value={impactedParty || undefined}
+                onValueChange={(v) => setImpactedParty(v ?? '')}
               >
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Select party" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value={NONE}>—</SelectItem>
                   {Object.entries(EVENT_IMPACTED_PARTY_LABELS).map(([v, l]) => (
                     <SelectItem key={v} value={v}>
                       {l}
@@ -517,18 +581,6 @@ export function CreateEventForm({ projects, defaultProjectId = '' }: CreateEvent
               placeholder="Describe what was observed..."
             />
           </div>
-
-          {showConditions && (
-            <div className="space-y-2">
-              <Label htmlFor="conditions">Conditions (optional)</Label>
-              <Textarea
-                id="conditions"
-                rows={2}
-                value={conditions}
-                onChange={(e) => setConditions(e.target.value)}
-              />
-            </div>
-          )}
 
           {showWorkRepeat && (
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">

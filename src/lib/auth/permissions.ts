@@ -12,7 +12,6 @@ export type Permission =
   | 'event:create'
   | 'event:respond'
   | 'event:manage'
-  | 'event:export'
   | 'ca:view'
   | 'ca:create'
   | 'ca:approve'
@@ -45,7 +44,6 @@ const BASE_PERMISSIONS: Permission[] = [
 // closeouts, CA approvals, inspection templates, project management).
 const MANAGER_PERMISSIONS: Permission[] = [
   'event:manage',
-  'event:export',
   'ca:approve',
   'ca:manage',
   'inspection:templates',

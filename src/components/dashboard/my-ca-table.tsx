@@ -7,20 +7,18 @@ import {
   TableHead,
   TableCell,
 } from '@/components/ui/table'
-import { SortHeader } from '@/components/shared/sort-header'
-import { CaStatusBadge } from './ca-status-badge'
+import { CaStatusStepper } from '@/components/corrective-actions/ca-status-stepper'
 import type { CorrectiveAction } from '@/types/database'
 
-export function CaTable({ correctiveActions }: { correctiveActions: CorrectiveAction[] }) {
+export function MyCaTable({ correctiveActions }: { correctiveActions: CorrectiveAction[] }) {
   return (
     <Table>
       <TableHeader>
         <TableRow>
-          <SortHeader sortKey="reference">Reference</SortHeader>
+          <TableHead>Reference</TableHead>
           <TableHead>Title</TableHead>
-          <SortHeader sortKey="status">Status</SortHeader>
           <TableHead>Source</TableHead>
-          <TableHead>Assignee</TableHead>
+          <TableHead>Progress</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -40,14 +38,11 @@ export function CaTable({ correctiveActions }: { correctiveActions: CorrectiveAc
               <TableCell className="max-w-[20rem]">
                 <span className="line-clamp-1">{ca.title}</span>
               </TableCell>
-              <TableCell>
-                <CaStatusBadge status={ca.status} />
-              </TableCell>
               <TableCell className="font-mono text-xs whitespace-nowrap text-muted-foreground">
                 {source}
               </TableCell>
-              <TableCell className="whitespace-nowrap text-muted-foreground">
-                {ca.assignee?.full_name || ca.assignee?.email || '—'}
+              <TableCell>
+                <CaStatusStepper status={ca.status} />
               </TableCell>
             </TableRow>
           )
