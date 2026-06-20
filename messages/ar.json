@@ -104,7 +104,16 @@
     "totalUsers": "إجمالي المستخدمين",
     "inactiveUsers": "المستخدمون غير النشطين",
     "pendingApprovals": "الموافقات المعلقة",
-    "managerTasks": "مهام المدير"
+    "managerTasks": "مهام المدير",
+    "totalObservations": "إجمالي الملاحظات",
+    "pendingCaEvents": "إجراءات معلقة — الأحداث",
+    "pendingCaInspections": "إجراءات معلقة — التفتيشات",
+    "overdueActions": "إجراءات متأخرة",
+    "filterAll": "الكل",
+    "filter6m": "6 أشهر",
+    "filter3m": "3 أشهر",
+    "filter1m": "شهر",
+    "filterWeek": "أسبوع"
   },
   "events": {
     "title": "الأحداث",

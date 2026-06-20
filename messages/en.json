@@ -104,7 +104,16 @@
     "totalUsers": "Total Users",
     "inactiveUsers": "Inactive Users",
     "pendingApprovals": "Pending Approvals",
-    "managerTasks": "Manager Tasks"
+    "managerTasks": "Manager Tasks",
+    "totalObservations": "Total Observations",
+    "pendingCaEvents": "Pending Actions — Events",
+    "pendingCaInspections": "Pending Actions — Inspections",
+    "overdueActions": "Overdue Actions",
+    "filterAll": "All",
+    "filter6m": "6M",
+    "filter3m": "3M",
+    "filter1m": "1M",
+    "filterWeek": "W"
   },
   "events": {
     "title": "Events",

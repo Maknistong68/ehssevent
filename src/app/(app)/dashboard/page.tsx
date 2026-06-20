@@ -1,9 +1,14 @@
 export const dynamic = 'force-dynamic'
 
-import { getMyPendingCorrectiveActions } from '@/lib/queries/dashboard'
+import {
+  getAllCorrectiveActions,
+  getAllEvents,
+  getMyPendingCorrectiveActions,
+} from '@/lib/queries/dashboard'
 import { CaCard } from '@/components/corrective-actions/ca-card'
 import { CaStatusStepper } from '@/components/corrective-actions/ca-status-stepper'
 import { MyCaTable } from '@/components/dashboard/my-ca-table'
+import { DashboardOverview } from '@/components/dashboard/dashboard-overview'
 import { getTranslations } from 'next-intl/server'
 
 export const metadata = {
@@ -11,17 +16,16 @@ export const metadata = {
 }
 
 export default async function DashboardPage() {
-  const [myActions, t] = await Promise.all([
+  const [myActions, events, correctiveActions, t] = await Promise.all([
     getMyPendingCorrectiveActions(),
+    getAllEvents(),
+    getAllCorrectiveActions(),
     getTranslations('dashboard'),
   ])
 
   return (
     <div className="space-y-7 p-4 md:p-6">
-      <div className="hidden md:block">
-        <h1 className="font-heading text-3xl font-bold tracking-tight">{t('title')}</h1>
-        <p className="text-sm text-muted-foreground">{t('subtitle')}</p>
-      </div>
+      <DashboardOverview events={events} correctiveActions={correctiveActions} />
 
       <div className="space-y-3">
         <h2 className="font-heading text-base font-semibold tracking-tight px-1">

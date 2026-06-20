@@ -52,6 +52,14 @@ export async function getInspectionStats(): Promise<InspectionStats> {
   return MOCK_INSPECTION_STATS
 }
 
+export async function getAllEvents(): Promise<Event[]> {
+  return MOCK_EVENTS
+}
+
+export async function getAllCorrectiveActions(): Promise<CorrectiveAction[]> {
+  return MOCK_CORRECTIVE_ACTIONS
+}
+
 export async function getMyPendingCorrectiveActions(): Promise<CorrectiveAction[]> {
   const profile = await getSessionProfile()
   if (!profile) return []
