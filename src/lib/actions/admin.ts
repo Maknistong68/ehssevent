@@ -2,13 +2,17 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
-import type { OrgType, UserRole } from '@/types/enums'
+import { requireAdmin } from '@/lib/auth/guards'
+import { ADMIN_ROLES, type OrgType, type UserRole } from '@/types/enums'
 
 export async function createOrganization(input: {
   name: string
   org_type: OrgType
   contact_email?: string
 }) {
+  const auth = await requireAdmin()
+  if (!auth.ok) return { error: auth.error }
+
   const supabase = await createClient()
 
   const { error } = await supabase.from('organizations').insert({
@@ -29,6 +33,25 @@ export async function updateUserProfile(input: {
   organization_id?: string | null
   is_active?: boolean
 }) {
+  const auth = await requireAdmin()
+  if (!auth.ok) return { error: auth.error }
+  const actor = auth.profile
+
+  // Prevent admins from changing their own role or active status,
+  // which avoids self-escalation and accidental self-lockout.
+  if (input.user_id === actor.id && (input.role !== undefined || input.is_active !== undefined)) {
+    return { error: 'You cannot change your own role or active status' }
+  }
+
+  // Only a system_admin may grant platform-admin roles.
+  if (
+    input.role !== undefined &&
+    ADMIN_ROLES.includes(input.role) &&
+    actor.role !== 'system_admin'
+  ) {
+    return { error: 'Only a system admin can assign admin roles' }
+  }
+
   const supabase = await createClient()
 
   const updateData: Record<string, unknown> = {}

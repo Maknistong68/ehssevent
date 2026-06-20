@@ -1,6 +1,8 @@
 export const dynamic = 'force-dynamic'
 
+import { redirect } from 'next/navigation'
 import { getAllOrganizations, getAllProfiles } from '@/lib/queries/admin'
+import { requireAdmin } from '@/lib/auth/guards'
 import { AdminOrganizations } from './organizations'
 import { AdminUsers } from './users'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -10,6 +12,9 @@ export const metadata = {
 }
 
 export default async function AdminPage() {
+  const auth = await requireAdmin()
+  if (!auth.ok) redirect('/dashboard')
+
   const [organizations, profiles] = await Promise.all([
     getAllOrganizations(),
     getAllProfiles(),

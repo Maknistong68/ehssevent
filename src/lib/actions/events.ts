@@ -3,6 +3,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
+import { requireUser, requirePermission } from '@/lib/auth/guards'
 import {
   createEventSchema,
   updateApprovalLevelSchema,
@@ -21,12 +22,8 @@ function numOrNull(value: number | string | undefined): number | null {
 }
 
 export async function createEvent(input: unknown) {
-  const supabase = await createClient()
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-  if (!user) return { error: 'Not authenticated' }
+  const auth = await requireUser()
+  if (!auth.ok) return { error: auth.error }
 
   const parsed = createEventSchema.safeParse(input)
   if (!parsed.success) {
@@ -34,15 +31,17 @@ export async function createEvent(input: unknown) {
   }
   const d = parsed.data
 
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('organization_id, full_name')
-    .eq('id', user.id)
-    .single()
-
-  if (!profile?.organization_id) {
+  if (!auth.profile.organization_id) {
     return { error: 'Your account is not associated with an organization' }
   }
+
+  const supabase = await createClient()
+
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('full_name')
+    .eq('id', auth.profile.id)
+    .single()
 
   // Derive classification for fixed types; otherwise honour the dropdown
   // value, falling back to 'to_be_determined'.
@@ -57,8 +56,8 @@ export async function createEvent(input: unknown) {
   }
 
   const insertData: Record<string, unknown> = {
-    created_by: user.id,
-    creator_org_id: profile.organization_id,
+    created_by: auth.profile.id,
+    creator_org_id: auth.profile.organization_id,
     approval_level: d.approval_level ?? 'draft',
     type: d.type,
     classification,
@@ -95,7 +94,7 @@ export async function createEvent(input: unknown) {
     lead_investigator: emptyToNull(d.lead_investigator),
     validator: emptyToNull(d.validator),
     approver: emptyToNull(d.approver),
-    created_by_name: emptyToNull(d.created_by_name) ?? profile.full_name ?? null,
+    created_by_name: emptyToNull(d.created_by_name) ?? profile?.full_name ?? null,
     photo_urls: d.photo_urls,
   }
 
@@ -119,12 +118,10 @@ export async function createEvent(input: unknown) {
 }
 
 export async function updateEventApprovalLevel(input: unknown) {
-  const supabase = await createClient()
+  const auth = await requirePermission('event:manage')
+  if (!auth.ok) return { error: auth.error }
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-  if (!user) return { error: 'Not authenticated' }
+  const supabase = await createClient()
 
   const parsed = updateApprovalLevelSchema.safeParse(input)
   if (!parsed.success) {
@@ -173,25 +170,17 @@ export async function updateEventApprovalLevel(input: unknown) {
 }
 
 export async function addEventResponse(input: unknown) {
-  const supabase = await createClient()
+  const auth = await requireUser()
+  if (!auth.ok) return { error: auth.error }
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-  if (!user) return { error: 'Not authenticated' }
+  const supabase = await createClient()
 
   const parsed = createEventResponseSchema.safeParse(input)
   if (!parsed.success) {
     return { error: parsed.error.issues[0].message }
   }
 
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('organization_id')
-    .eq('id', user.id)
-    .single()
-
-  if (!profile?.organization_id) {
+  if (!auth.profile.organization_id) {
     return { error: 'Your account is not associated with an organization' }
   }
 
@@ -199,8 +188,8 @@ export async function addEventResponse(input: unknown) {
     .from('event_responses')
     .insert({
       event_id: parsed.data.event_id,
-      responded_by: user.id,
-      responder_org_id: profile.organization_id,
+      responded_by: auth.profile.id,
+      responder_org_id: auth.profile.organization_id,
       response_text: parsed.data.response_text,
       photo_urls: parsed.data.photo_urls,
       is_closing: parsed.data.is_closing,
@@ -225,12 +214,10 @@ export async function addEventResponse(input: unknown) {
 }
 
 export async function closeoutEvent(input: unknown) {
-  const supabase = await createClient()
+  const auth = await requirePermission('event:manage')
+  if (!auth.ok) return { error: auth.error }
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-  if (!user) return { error: 'Not authenticated' }
+  const supabase = await createClient()
 
   const parsed = closeoutEventSchema.safeParse(input)
   if (!parsed.success) {
