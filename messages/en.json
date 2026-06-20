@@ -22,7 +22,13 @@
     "profile": "Profile",
     "adminPanel": "Admin Panel",
     "audit": "Audit Log",
-    "team": "Team"
+    "team": "Team",
+    "newCreate": "New",
+    "newEvent": "New Event",
+    "newCorrectiveAction": "New Corrective Action",
+    "newInspection": "New Inspection",
+    "collapseSidebar": "Collapse sidebar",
+    "expandSidebar": "Expand sidebar"
   },
   "admin": {
     "auditLog": "Audit Log",
@@ -114,14 +120,38 @@
     "privacyPolicy": "Privacy Policy (PDPL)",
     "acceptedOn": "Accepted on {date} (v{version})",
     "notRecorded": "Not recorded",
-    "pdplRights": "Your PDPL Data Rights",
+    "pdplRights": "Your PDPL Data Rights (Article 4)",
+    "rightInformed": "Right to be informed about how your data is used",
     "rightAccess": "Right to access your personal data",
+    "rightCopy": "Right to obtain a copy of your data",
     "rightCorrect": "Right to correct inaccurate data",
-    "rightDelete": "Right to request data deletion",
-    "rightPortability": "Right to data portability",
-    "rightObject": "Right to object to processing",
+    "rightDestroy": "Right to request destruction of your data",
     "requestData": "Request Data Access / Deletion",
-    "contactDpo": "Contact dpo@oxagonport.sa for data requests"
+    "contactDpo": "Contact dpo@oxagonport.sa for data requests",
+    "dsr": {
+      "trigger": "Request Data Access / Deletion",
+      "title": "Data Subject Request",
+      "description": "Exercise your rights under the Saudi Personal Data Protection Law (PDPL). We will respond within the statutory period.",
+      "typeLabel": "Request type",
+      "noteLabel": "Details (optional)",
+      "notePlaceholder": "Add any details that help us process your request",
+      "submit": "Submit Request",
+      "submitted": "Request received. We will respond within {days} days.",
+      "types": {
+        "access": "Access my personal data",
+        "copy": "Obtain a copy of my data",
+        "correction": "Correct inaccurate data",
+        "destruction": "Destroy my personal data"
+      }
+    }
+  },
+  "reconsent": {
+    "title": "Updated Terms & Privacy Policy",
+    "description": "We have updated our Terms of Service and Privacy Policy (PDPL). Please review and accept to continue.",
+    "reviewTerms": "Review the Terms of Service",
+    "reviewPrivacy": "Review the Privacy Policy (PDPL)",
+    "accept": "I accept the updated terms",
+    "accepted": "Thank you. Your consent has been recorded."
   },
   "team": {
     "editMember": "Edit Member",

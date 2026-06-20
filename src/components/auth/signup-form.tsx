@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { AuthShell, AuthField, AuthAlert } from '@/components/auth/auth-shell'
 import { AlertCircle, CheckCircle2, Loader2, Lock, Mail, User } from 'lucide-react'
 import { useTranslations } from 'next-intl'
+import { signup } from '@/lib/actions/auth'
 
 export function SignupForm() {
   const [email, setEmail] = useState('')
@@ -41,8 +42,23 @@ export function SignupForm() {
 
     setLoading(true)
 
-    // Mock signup — always succeeds
-    setSuccess(t('checkEmail'))
+    // Send consent to the server so it can be recorded (proof of consent).
+    const result = await signup({
+      email,
+      full_name: fullName,
+      password,
+      confirm_password: confirmPassword,
+      terms_accepted: termsAccepted,
+      privacy_accepted: privacyAccepted,
+    })
+
+    if (result.error) {
+      setError(result.error)
+      setLoading(false)
+      return
+    }
+
+    setSuccess(result.success ?? t('checkEmail'))
     setLoading(false)
   }
 

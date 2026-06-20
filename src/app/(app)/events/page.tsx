@@ -5,18 +5,31 @@ import { getEvents } from '@/lib/queries/events'
 import { getSessionProfile } from '@/lib/auth/guards'
 import { can } from '@/lib/auth/permissions'
 import { EventCard } from '@/components/events/event-card'
+import { EventsTable } from '@/components/events/events-table'
 import { EventFilters } from '@/components/events/event-filters'
 import { EmptyState } from '@/components/shared/empty-state'
+import { Pagination } from '@/components/shared/pagination'
 import { Button } from '@/components/ui/button'
 import { Plus, Calendar, Download } from 'lucide-react'
+import { sortItems, paginate, parsePageParams } from '@/lib/list-utils'
+import { EVENT_APPROVAL_LABELS } from '@/types/enums'
 import type {
   EventApprovalLevel,
   EventType,
   EventClassification,
 } from '@/types/enums'
+import type { Event } from '@/types/database'
 
 export const metadata = {
   title: 'Events - Event Report',
+}
+
+const APPROVAL_ORDER = Object.keys(EVENT_APPROVAL_LABELS) as EventApprovalLevel[]
+
+const eventAccessors = {
+  reference: (e: Event) => e.reference_number,
+  date: (e: Event) => (e.event_date ? new Date(e.event_date) : null),
+  approval: (e: Event) => APPROVAL_ORDER.indexOf(e.approval_level),
 }
 
 interface Props {
@@ -26,6 +39,10 @@ interface Props {
     classification?: string
     project_id?: string
     search?: string
+    sort?: string
+    dir?: string
+    page?: string
+    per?: string
   }>
 }
 
@@ -40,6 +57,10 @@ export default async function EventsPage({ searchParams }: Props) {
     project_id: params.project_id,
     search: params.search,
   })
+
+  const sorted = sortItems(events, params.sort, params.dir, eventAccessors)
+  const { page, per } = parsePageParams(params)
+  const { pageItems, total, totalPages, from, to, page: currentPage } = paginate(sorted, page, per)
 
   const exportQuery = new URLSearchParams()
   if (params.approval_level) exportQuery.set('approval_level', params.approval_level)
@@ -95,17 +116,34 @@ export default async function EventsPage({ searchParams }: Props) {
           }
         />
       ) : (
-        <div className="space-y-3">
-          {events.map((event, i) => (
-            <div
-              key={event.id}
-              className="animate-fade-up"
-              style={{ animationDelay: `${Math.min(i, 8) * 50}ms` }}
-            >
-              <EventCard event={event} />
-            </div>
-          ))}
-        </div>
+        <>
+          {/* Desktop table */}
+          <div className="hidden md:block">
+            <EventsTable events={pageItems} />
+          </div>
+
+          {/* Mobile cards */}
+          <div className="space-y-3 md:hidden">
+            {pageItems.map((event, i) => (
+              <div
+                key={event.id}
+                className="animate-fade-up"
+                style={{ animationDelay: `${Math.min(i, 8) * 50}ms` }}
+              >
+                <EventCard event={event} />
+              </div>
+            ))}
+          </div>
+
+          <Pagination
+            total={total}
+            page={currentPage}
+            per={per}
+            totalPages={totalPages}
+            from={from}
+            to={to}
+          />
+        </>
       )}
     </div>
   )

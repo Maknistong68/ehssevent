@@ -11,9 +11,8 @@ import {
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Search, X } from 'lucide-react'
-import { CA_STATUS_LABELS, CA_PRIORITY_LABELS } from '@/types/enums'
 
-export function CaFilters() {
+export function ProjectFilters() {
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
@@ -60,7 +59,7 @@ export function CaFilters() {
       <div className="relative">
         <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
         <Input
-          placeholder="Search corrective actions..."
+          placeholder="Search projects..."
           className="pl-11"
           defaultValue={searchParams.get('search') || ''}
           onChange={(e) => updateFilter('search', e.target.value)}
@@ -68,52 +67,14 @@ export function CaFilters() {
       </div>
 
       <div className="flex flex-wrap gap-2">
-        <Select
-          value={searchParams.get('status') || 'all'}
-          onValueChange={(v) => updateFilter('status', v ?? '')}
-        >
-          <SelectTrigger className="min-w-[120px] flex-1 sm:w-[160px] sm:flex-none">
-            <SelectValue placeholder="Status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Status</SelectItem>
-            {Object.entries(CA_STATUS_LABELS).map(([value, label]) => (
-              <SelectItem key={value} value={value}>
-                {label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
-        <Select
-          value={searchParams.get('priority') || 'all'}
-          onValueChange={(v) => updateFilter('priority', v ?? '')}
-        >
-          <SelectTrigger className="min-w-[120px] flex-1 sm:w-[140px] sm:flex-none">
-            <SelectValue placeholder="Priority" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Priority</SelectItem>
-            {Object.entries(CA_PRIORITY_LABELS).map(([value, label]) => (
-              <SelectItem key={value} value={value}>
-                {label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
         <Select value={sortValue} onValueChange={(v) => updateSort(v ?? 'default')}>
           <SelectTrigger className="min-w-[140px] flex-1 sm:w-[170px] sm:flex-none">
             <SelectValue placeholder="Sort by" />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="default">Sort: Default</SelectItem>
-            <SelectItem value="due:asc">Due date (soonest)</SelectItem>
-            <SelectItem value="due:desc">Due date (latest)</SelectItem>
-            <SelectItem value="priority:desc">Priority (high–low)</SelectItem>
-            <SelectItem value="priority:asc">Priority (low–high)</SelectItem>
-            <SelectItem value="status:asc">Status</SelectItem>
-            <SelectItem value="reference:asc">Reference (A–Z)</SelectItem>
+            <SelectItem value="name:asc">Name (A–Z)</SelectItem>
+            <SelectItem value="name:desc">Name (Z–A)</SelectItem>
           </SelectContent>
         </Select>
 

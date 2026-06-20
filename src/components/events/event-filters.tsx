@@ -29,8 +29,29 @@ export function EventFilters() {
     } else {
       params.delete(key)
     }
+    params.delete('page')
     router.push(`${pathname}?${params.toString()}`)
   }
+
+  const updateSort = (value: string) => {
+    const params = new URLSearchParams(searchParams.toString())
+    if (!value || value === 'default') {
+      params.delete('sort')
+      params.delete('dir')
+    } else {
+      const [sort, dir] = value.split(':')
+      params.set('sort', sort)
+      params.set('dir', dir)
+    }
+    params.delete('page')
+    router.push(`${pathname}?${params.toString()}`)
+  }
+
+  const sortValue = (() => {
+    const sort = searchParams.get('sort')
+    const dir = searchParams.get('dir')
+    return sort && dir ? `${sort}:${dir}` : 'default'
+  })()
 
   const clearFilters = () => {
     router.push(pathname)
@@ -99,6 +120,20 @@ export function EventFilters() {
                 {label}
               </SelectItem>
             ))}
+          </SelectContent>
+        </Select>
+
+        <Select value={sortValue} onValueChange={(v) => updateSort(v ?? 'default')}>
+          <SelectTrigger className="min-w-[140px] flex-1 sm:w-[170px] sm:flex-none">
+            <SelectValue placeholder="Sort by" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="default">Sort: Default</SelectItem>
+            <SelectItem value="date:desc">Newest first</SelectItem>
+            <SelectItem value="date:asc">Oldest first</SelectItem>
+            <SelectItem value="reference:asc">Reference (A–Z)</SelectItem>
+            <SelectItem value="reference:desc">Reference (Z–A)</SelectItem>
+            <SelectItem value="approval:asc">Approval stage</SelectItem>
           </SelectContent>
         </Select>
 

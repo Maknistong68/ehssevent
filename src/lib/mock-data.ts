@@ -11,6 +11,7 @@ import type {
   Inspection,
   InspectionResponse,
   InspectionStats,
+  DsrRequest,
 } from '@/types/database'
 import type { AuditLogEntry } from '@/lib/queries/audit'
 
@@ -887,3 +888,12 @@ export const MOCK_AUDIT_LOGS: AuditLogEntry[] = [
     created_at: '2025-02-01T00:00:00Z',
   },
 ]
+
+// ============================================================
+// Data Subject Requests (PDPL)
+// ============================================================
+// In mock mode this is an in-memory store. submitDsrRequest() appends here so
+// the demo can show a request being raised. In production this is a DB table
+// the DPO works from.
+
+export const MOCK_DSR_REQUESTS: DsrRequest[] = []

@@ -76,14 +76,15 @@ export default function PrivacyPolicyPage() {
           </p>
 
           <h2 className="font-heading text-lg font-semibold">6. Your Rights Under PDPL</h2>
-          <p className="text-sm">As a data subject, you have the right to:</p>
+          <p className="text-sm">
+            Under Article 4 of the PDPL, as a data subject you have the right to:
+          </p>
           <ul className="list-disc space-y-1 pl-5 text-sm">
-            <li>Be informed about data collection and processing purposes</li>
+            <li>Be informed about the legal basis and purposes of collecting your personal data</li>
             <li>Access your personal data held by us</li>
-            <li>Request correction of inaccurate personal data</li>
-            <li>Request deletion of your personal data (subject to legal retention requirements)</li>
-            <li>Object to data processing in certain circumstances</li>
-            <li>Data portability in a structured, commonly used format</li>
+            <li>Obtain a copy of your personal data in a readable, commonly used format</li>
+            <li>Request correction of inaccurate, incomplete, or outdated personal data</li>
+            <li>Request destruction of your personal data (subject to legal retention requirements)</li>
           </ul>
 
           <h2 className="font-heading text-lg font-semibold">7. Data Protection Officer</h2>

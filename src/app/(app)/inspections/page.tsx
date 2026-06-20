@@ -5,15 +5,30 @@ import { getInspections } from '@/lib/queries/inspections'
 import { getTemplates } from '@/lib/queries/inspections'
 import { getProjects } from '@/lib/queries/projects'
 import { InspectionCard } from '@/components/inspections/inspection-card'
+import { InspectionsTable } from '@/components/inspections/inspections-table'
 import { InspectionFilters } from '@/components/inspections/inspection-filters'
 import { EmptyState } from '@/components/shared/empty-state'
+import { Pagination } from '@/components/shared/pagination'
 import { Can } from '@/components/shared/role-gate'
 import { Button } from '@/components/ui/button'
 import { Plus, ClipboardCheck, Settings } from 'lucide-react'
+import { sortItems, paginate, parsePageParams } from '@/lib/list-utils'
 import type { InspectionStatus } from '@/types/enums'
+import type { Inspection } from '@/types/database'
 
 export const metadata = {
   title: 'Inspections - Event Report',
+}
+
+const STATUS_RANK: Record<InspectionStatus, number> = {
+  draft: 0,
+  completed: 1,
+}
+
+const inspectionAccessors = {
+  reference: (i: Inspection) => i.reference_number,
+  status: (i: Inspection) => STATUS_RANK[i.status],
+  score: (i: Inspection) => i.score,
 }
 
 interface Props {
@@ -22,6 +37,10 @@ interface Props {
     project_id?: string
     template_id?: string
     search?: string
+    sort?: string
+    dir?: string
+    page?: string
+    per?: string
   }>
 }
 
@@ -37,6 +56,10 @@ export default async function InspectionsPage({ searchParams }: Props) {
     getTemplates(),
     getProjects(),
   ])
+
+  const sorted = sortItems(inspections, params.sort, params.dir, inspectionAccessors)
+  const { page, per } = parsePageParams(params)
+  const { pageItems, total, totalPages, from, to, page: currentPage } = paginate(sorted, page, per)
 
   return (
     <div className="space-y-5 p-4 md:p-6">
@@ -82,17 +105,34 @@ export default async function InspectionsPage({ searchParams }: Props) {
           }
         />
       ) : (
-        <div className="space-y-3">
-          {inspections.map((inspection, i) => (
-            <div
-              key={inspection.id}
-              className="animate-fade-up"
-              style={{ animationDelay: `${Math.min(i, 8) * 50}ms` }}
-            >
-              <InspectionCard inspection={inspection} />
-            </div>
-          ))}
-        </div>
+        <>
+          {/* Desktop table */}
+          <div className="hidden md:block">
+            <InspectionsTable inspections={pageItems} />
+          </div>
+
+          {/* Mobile cards */}
+          <div className="space-y-3 md:hidden">
+            {pageItems.map((inspection, i) => (
+              <div
+                key={inspection.id}
+                className="animate-fade-up"
+                style={{ animationDelay: `${Math.min(i, 8) * 50}ms` }}
+              >
+                <InspectionCard inspection={inspection} />
+              </div>
+            ))}
+          </div>
+
+          <Pagination
+            total={total}
+            page={currentPage}
+            per={per}
+            totalPages={totalPages}
+            from={from}
+            to={to}
+          />
+        </>
       )}
     </div>
   )

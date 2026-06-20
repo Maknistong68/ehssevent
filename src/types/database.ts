@@ -39,6 +39,21 @@ export interface Profile {
   organization?: Organization
 }
 
+// Data Subject Request (PDPL Article 4). Records a user's request to exercise
+// an actionable right: access, obtain a copy, correction, or destruction.
+// Status moves forward as the DPO processes the request.
+export interface DsrRequest {
+  id: string
+  requester_id: string
+  requester_email: string
+  type: 'access' | 'copy' | 'correction' | 'destruction'
+  note: string | null
+  status: 'received' | 'in_progress' | 'completed' | 'rejected'
+  created_at: string
+  due_at: string // statutory response deadline (created_at + DSR_RESPONSE_DAYS)
+  resolved_at: string | null
+}
+
 export interface Project {
   id: string
   name: string

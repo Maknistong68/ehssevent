@@ -6,9 +6,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import { Skeleton } from '@/components/ui/skeleton'
-import { LogOut, Mail, Building2, Shield, User, FileText, Lock } from 'lucide-react'
+import { LogOut, Mail, Building2, Shield, FileText, Lock } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { format } from 'date-fns'
+import { DsrRequestDialog } from '@/components/profile/dsr-request-dialog'
+import { DPO_EMAIL } from '@/lib/constants/legal'
 
 const ROLE_LABELS: Record<string, string> = {
   system_admin: 'System Admin',
@@ -143,22 +145,19 @@ export default function ProfilePage() {
           <Separator />
 
           <div className="rounded-2xl bg-muted/50 p-4">
-            <h4 className="text-sm font-semibold mb-2">Your PDPL Data Rights</h4>
+            <h4 className="text-sm font-semibold mb-2">Your PDPL Data Rights (Article 4)</h4>
             <ul className="text-xs text-muted-foreground space-y-1">
+              <li>- Right to be informed about how your data is used</li>
               <li>- Right to access your personal data</li>
+              <li>- Right to obtain a copy of your data</li>
               <li>- Right to correct inaccurate data</li>
-              <li>- Right to request data deletion</li>
-              <li>- Right to data portability</li>
-              <li>- Right to object to processing</li>
+              <li>- Right to request destruction of your data</li>
             </ul>
           </div>
 
-          <Button variant="outline" className="w-full" disabled>
-            <User className="mr-2 h-4 w-4" />
-            Request Data Access / Deletion
-          </Button>
+          <DsrRequestDialog />
           <p className="text-xs text-center text-muted-foreground">
-            Contact dpo@oxagonport.sa for data requests
+            Contact {DPO_EMAIL} for data requests
           </p>
         </CardContent>
       </Card>
