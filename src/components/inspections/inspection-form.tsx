@@ -13,23 +13,21 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
 import { PhotoUpload } from '@/components/shared/photo-upload'
-import { AlertCircle, ArrowLeft, Loader2 } from 'lucide-react'
+import { AlertCircle, ArrowLeft, ArrowRight, Loader2 } from 'lucide-react'
 import { submitInspection } from '@/lib/actions/inspections'
 import type { InspectionTemplate, Project } from '@/types/database'
-import { COMPLIANCE_LABELS, type ComplianceValue } from '@/types/enums'
+import { COMPLIANCE_LABELS, COMPLIANCE_COLORS, type ComplianceValue } from '@/types/enums'
+import type { AssignableUser } from '@/lib/queries/users'
 import Link from 'next/link'
-
-const COMPLIANCE_OPTIONS: { value: ComplianceValue; activeClass: string }[] = [
-  { value: 'fully_compliant', activeClass: 'bg-green-600 hover:bg-green-700' },
-  { value: 'partially_compliant', activeClass: 'bg-amber-500 hover:bg-amber-600' },
-  { value: 'non_compliant', activeClass: 'bg-red-600 hover:bg-red-700' },
-  { value: 'not_applicable', activeClass: 'bg-slate-500 hover:bg-slate-600' },
-]
 
 interface InspectionFormProps {
   template: InspectionTemplate
   projects: Project[]
+  organizationName: string
+  conductedByName: string
+  assignableUsers: AssignableUser[]
 }
 
 interface ResponseState {
@@ -39,10 +37,36 @@ interface ResponseState {
   }
 }
 
-export function InspectionForm({ template, projects }: InspectionFormProps) {
+interface NonCompliantItem {
+  section_id: string
+  section_title: string
+  item_id: string
+  item_label: string
+  compliance_value: ComplianceValue
+  ca_title: string
+  assigned_to: string
+}
+
+type FormStep = 'checklist' | 'assign_ca'
+
+export function InspectionForm({
+  template,
+  projects,
+  organizationName,
+  conductedByName,
+  assignableUsers,
+}: InspectionFormProps) {
+  const [step, setStep] = useState<FormStep>('checklist')
   const [projectId, setProjectId] = useState('')
+  const [auditTitle, setAuditTitle] = useState(template.name)
+  const [auditDate, setAuditDate] = useState(() => {
+    const now = new Date()
+    now.setMinutes(now.getMinutes() - now.getTimezoneOffset())
+    return now.toISOString().slice(0, 16)
+  })
   const [notes, setNotes] = useState('')
   const [responses, setResponses] = useState<ResponseState>({})
+  const [nonCompliantItems, setNonCompliantItems] = useState<NonCompliantItem[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
@@ -68,12 +92,8 @@ export function InspectionForm({ template, projects }: InspectionFormProps) {
     }))
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError('')
-    setLoading(true)
-
-    const responseArray = template.sections.flatMap((section) =>
+  const buildResponseArray = () =>
+    template.sections.flatMap((section) =>
       section.items.map((item) => {
         const resp = getResponse(section.id, item.id)
         return {
@@ -86,11 +106,82 @@ export function InspectionForm({ template, projects }: InspectionFormProps) {
       })
     )
 
+  const handleChecklistSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    setError('')
+
+    // Scan for non-compliant items
+    const failingItems: NonCompliantItem[] = []
+    for (const section of template.sections) {
+      for (const item of section.items) {
+        if (item.field_type === 'compliance') {
+          const resp = getResponse(section.id, item.id)
+          if (resp.value === 'non_compliant' || resp.value === 'partially_compliant') {
+            failingItems.push({
+              section_id: section.id,
+              section_title: section.title,
+              item_id: item.id,
+              item_label: item.label,
+              compliance_value: resp.value as ComplianceValue,
+              ca_title: `Corrective action: ${item.label}`,
+              assigned_to: '',
+            })
+          }
+        }
+      }
+    }
+
+    if (failingItems.length > 0) {
+      setNonCompliantItems(failingItems)
+      setStep('assign_ca')
+    } else {
+      doSubmit()
+    }
+  }
+
+  const handleCaSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    setError('')
+
+    // Validate all CA items have an assigned person
+    const unassigned = nonCompliantItems.some((item) => !item.assigned_to)
+    if (unassigned) {
+      setError('Please assign a responsible person for each corrective action.')
+      return
+    }
+
+    const invalidTitle = nonCompliantItems.some((item) => item.ca_title.trim().length < 3)
+    if (invalidTitle) {
+      setError('Each corrective action title must be at least 3 characters.')
+      return
+    }
+
+    doSubmit()
+  }
+
+  const doSubmit = async () => {
+    setLoading(true)
+    setError('')
+
+    const responseArray = buildResponseArray()
+
+    const corrective_actions =
+      nonCompliantItems.length > 0
+        ? nonCompliantItems.map((item) => ({
+            section_id: item.section_id,
+            item_id: item.item_id,
+            item_label: item.item_label,
+            title: item.ca_title,
+            assigned_to: item.assigned_to,
+          }))
+        : undefined
+
     const result = await submitInspection({
       template_id: template.id,
       project_id: projectId,
       notes: notes || undefined,
       responses: responseArray,
+      corrective_actions,
     })
 
     if (result?.error) {
@@ -100,8 +191,101 @@ export function InspectionForm({ template, projects }: InspectionFormProps) {
     // On success, the server action redirects
   }
 
+  const updateCaItem = (index: number, field: keyof NonCompliantItem, value: string) => {
+    setNonCompliantItems((prev) =>
+      prev.map((item, i) => (i === index ? { ...item, [field]: value } : item))
+    )
+  }
+
+  if (step === 'assign_ca') {
+    return (
+      <form onSubmit={handleCaSubmit} className="space-y-6">
+        {error && (
+          <div className="flex items-center gap-2 rounded-md bg-destructive/10 p-3 text-sm text-destructive">
+            <AlertCircle className="h-4 w-4 shrink-0" />
+            {error}
+          </div>
+        )}
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Assign Corrective Actions</CardTitle>
+            <p className="text-sm text-muted-foreground">
+              The following items were marked as non-compliant or partially compliant.
+              Please assign a responsible person for each corrective action.
+            </p>
+          </CardHeader>
+          <CardContent>
+            <div className="divide-y">
+              {nonCompliantItems.map((item, index) => (
+                <div key={`${item.section_id}:${item.item_id}`} className="py-4 first:pt-0 last:pb-0 space-y-3">
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <p className="text-sm font-medium">{item.item_label}</p>
+                      <p className="text-xs text-muted-foreground">{item.section_title}</p>
+                    </div>
+                    <Badge
+                      variant="secondary"
+                      className={COMPLIANCE_COLORS[item.compliance_value]}
+                    >
+                      {COMPLIANCE_LABELS[item.compliance_value]}
+                    </Badge>
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-xs">CA Title</Label>
+                    <Input
+                      value={item.ca_title}
+                      onChange={(e) => updateCaItem(index, 'ca_title', e.target.value)}
+                      placeholder="Corrective action title"
+                      className="h-8 text-sm"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-xs">Responsible Person *</Label>
+                    <Select
+                      value={item.assigned_to}
+                      onValueChange={(v) => updateCaItem(index, 'assigned_to', v ?? '')}
+                    >
+                      <SelectTrigger className="h-8 text-sm">
+                        <SelectValue placeholder="Select person" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {assignableUsers.map((user) => (
+                          <SelectItem key={user.id} value={user.id}>
+                            {user.full_name || user.email}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        <div className="flex gap-3">
+          <Button
+            type="button"
+            variant="outline"
+            className="flex-1"
+            onClick={() => setStep('checklist')}
+            disabled={loading}
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back to Checklist
+          </Button>
+          <Button type="submit" className="flex-1" disabled={loading}>
+            {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            Submit Inspection & Create Actions
+          </Button>
+        </div>
+      </form>
+    )
+  }
+
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form onSubmit={handleChecklistSubmit} className="space-y-6">
       {error && (
         <div className="flex items-center gap-2 rounded-md bg-destructive/10 p-3 text-sm text-destructive">
           <AlertCircle className="h-4 w-4 shrink-0" />
@@ -109,158 +293,183 @@ export function InspectionForm({ template, projects }: InspectionFormProps) {
         </div>
       )}
 
+      {/* Audit Header */}
       <Card>
-        <CardContent className="p-4 space-y-4">
-          <div className="space-y-2">
-            <Label>Template</Label>
-            <p className="text-sm font-medium">{template.name}</p>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="project">Project *</Label>
-            <Select value={projectId} onValueChange={(v) => setProjectId(v ?? '')} required>
-              <SelectTrigger>
-                <SelectValue placeholder="Select a project" />
-              </SelectTrigger>
-              <SelectContent>
-                {projects.map((project) => (
-                  <SelectItem key={project.id} value={project.id}>
-                    {project.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base">Audit Information</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="space-y-2">
+              <Label>Organization</Label>
+              <Input value={organizationName} readOnly className="bg-muted" />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="audit-title">Audit Title</Label>
+              <Input
+                id="audit-title"
+                value={auditTitle}
+                onChange={(e) => setAuditTitle(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="audit-date">Date & Time</Label>
+              <Input
+                id="audit-date"
+                type="datetime-local"
+                value={auditDate}
+                onChange={(e) => setAuditDate(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Conducted By</Label>
+              <Input value={conductedByName} readOnly className="bg-muted" />
+            </div>
+            <div className="space-y-2">
+              <Label>Template</Label>
+              <Input value={template.name} readOnly className="bg-muted" />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="project">Project *</Label>
+              <Select value={projectId} onValueChange={(v) => setProjectId(v ?? '')} required>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a project" />
+                </SelectTrigger>
+                <SelectContent>
+                  {projects.map((project) => (
+                    <SelectItem key={project.id} value={project.id}>
+                      {project.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </CardContent>
       </Card>
 
+      {/* Checklist Sections */}
       {template.sections.map((section) => (
         <Card key={section.id}>
           <CardHeader className="pb-3">
             <CardTitle className="text-base">{section.title}</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-5">
-            {section.items.map((item) => {
-              const resp = getResponse(section.id, item.id)
-              return (
-                <div key={item.id} className="space-y-2">
-                  <Label>
-                    {item.label}
-                    {item.required && <span className="text-red-500 ml-1">*</span>}
-                  </Label>
+          <CardContent className="p-0">
+            <div className="divide-y">
+              {section.items.map((item) => {
+                const resp = getResponse(section.id, item.id)
+                return (
+                  <div
+                    key={item.id}
+                    className="flex flex-col gap-2 px-6 py-3 sm:flex-row sm:items-center sm:justify-between"
+                  >
+                    <Label className="flex-1 font-normal sm:font-medium">
+                      {item.label}
+                      {item.required && <span className="text-red-500 ml-1">*</span>}
+                    </Label>
 
-                  {item.field_type === 'text' && (
-                    <Textarea
-                      value={resp.value || ''}
-                      onChange={(e) => setResponseValue(section.id, item.id, e.target.value)}
-                      placeholder="Enter response..."
-                      rows={2}
-                    />
-                  )}
-
-                  {item.field_type === 'yes_no' && (
-                    <div className="flex gap-2">
-                      <Button
-                        type="button"
-                        variant={resp.value === 'yes' ? 'default' : 'outline'}
-                        size="sm"
-                        onClick={() => setResponseValue(section.id, item.id, 'yes')}
-                        className={resp.value === 'yes' ? 'bg-green-600 hover:bg-green-700' : ''}
-                      >
-                        Yes
-                      </Button>
-                      <Button
-                        type="button"
-                        variant={resp.value === 'no' ? 'default' : 'outline'}
-                        size="sm"
-                        onClick={() => setResponseValue(section.id, item.id, 'no')}
-                        className={resp.value === 'no' ? 'bg-red-600 hover:bg-red-700' : ''}
-                      >
-                        No
-                      </Button>
-                    </div>
-                  )}
-
-                  {item.field_type === 'pass_fail' && (
-                    <div className="flex gap-2">
-                      <Button
-                        type="button"
-                        variant={resp.value === 'pass' ? 'default' : 'outline'}
-                        size="sm"
-                        onClick={() => setResponseValue(section.id, item.id, 'pass')}
-                        className={resp.value === 'pass' ? 'bg-green-600 hover:bg-green-700' : ''}
-                      >
-                        Pass
-                      </Button>
-                      <Button
-                        type="button"
-                        variant={resp.value === 'fail' ? 'default' : 'outline'}
-                        size="sm"
-                        onClick={() => setResponseValue(section.id, item.id, 'fail')}
-                        className={resp.value === 'fail' ? 'bg-red-600 hover:bg-red-700' : ''}
-                      >
-                        Fail
-                      </Button>
-                    </div>
-                  )}
-
-                  {item.field_type === 'numeric' && (
-                    <Input
-                      type="number"
-                      value={resp.value || ''}
-                      onChange={(e) => setResponseValue(section.id, item.id, e.target.value)}
-                      placeholder="Enter a number..."
-                    />
-                  )}
-
-                  {item.field_type === 'dropdown' && item.options && (
-                    <Select
-                      value={resp.value || ''}
-                      onValueChange={(v) => setResponseValue(section.id, item.id, v)}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select an option" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {item.options.map((option) => (
-                          <SelectItem key={option} value={option}>
-                            {option}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  )}
-
-                  {item.field_type === 'photo' && (
-                    <PhotoUpload
-                      photos={resp.photo_urls}
-                      onPhotosChange={(photos) => setResponsePhotos(section.id, item.id, photos)}
-                      bucket="inspection-photos"
-                    />
-                  )}
-
-                  {item.field_type === 'compliance' && (
-                    <div className="flex flex-wrap gap-2">
-                      {COMPLIANCE_OPTIONS.map((opt) => (
-                        <Button
-                          key={opt.value}
-                          type="button"
-                          variant={resp.value === opt.value ? 'default' : 'outline'}
-                          size="sm"
-                          onClick={() => setResponseValue(section.id, item.id, opt.value)}
-                          className={resp.value === opt.value ? opt.activeClass : ''}
+                    <div className="w-full sm:w-56 shrink-0">
+                      {item.field_type === 'compliance' && (
+                        <Select
+                          value={resp.value || ''}
+                          onValueChange={(v) => setResponseValue(section.id, item.id, v)}
                         >
-                          {COMPLIANCE_LABELS[opt.value]}
-                        </Button>
-                      ))}
+                          <SelectTrigger className="h-9">
+                            <SelectValue placeholder="Select status" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="fully_compliant">Fully Compliant</SelectItem>
+                            <SelectItem value="partially_compliant">Partially Compliant</SelectItem>
+                            <SelectItem value="non_compliant">Non-Compliant</SelectItem>
+                            <SelectItem value="not_applicable">Not Applicable</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      )}
+
+                      {item.field_type === 'yes_no' && (
+                        <Select
+                          value={resp.value || ''}
+                          onValueChange={(v) => setResponseValue(section.id, item.id, v)}
+                        >
+                          <SelectTrigger className="h-9">
+                            <SelectValue placeholder="Select" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="yes">Yes</SelectItem>
+                            <SelectItem value="no">No</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      )}
+
+                      {item.field_type === 'pass_fail' && (
+                        <Select
+                          value={resp.value || ''}
+                          onValueChange={(v) => setResponseValue(section.id, item.id, v)}
+                        >
+                          <SelectTrigger className="h-9">
+                            <SelectValue placeholder="Select" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="pass">Pass</SelectItem>
+                            <SelectItem value="fail">Fail</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      )}
+
+                      {item.field_type === 'text' && (
+                        <Textarea
+                          value={resp.value || ''}
+                          onChange={(e) => setResponseValue(section.id, item.id, e.target.value)}
+                          placeholder="Enter response..."
+                          rows={2}
+                        />
+                      )}
+
+                      {item.field_type === 'numeric' && (
+                        <Input
+                          type="number"
+                          value={resp.value || ''}
+                          onChange={(e) => setResponseValue(section.id, item.id, e.target.value)}
+                          placeholder="Enter a number..."
+                          className="h-9"
+                        />
+                      )}
+
+                      {item.field_type === 'dropdown' && item.options && (
+                        <Select
+                          value={resp.value || ''}
+                          onValueChange={(v) => setResponseValue(section.id, item.id, v)}
+                        >
+                          <SelectTrigger className="h-9">
+                            <SelectValue placeholder="Select an option" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {item.options.map((option) => (
+                              <SelectItem key={option} value={option}>
+                                {option}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
+
+                      {item.field_type === 'photo' && (
+                        <PhotoUpload
+                          photos={resp.photo_urls}
+                          onPhotosChange={(photos) => setResponsePhotos(section.id, item.id, photos)}
+                          bucket="inspection-photos"
+                        />
+                      )}
                     </div>
-                  )}
-                </div>
-              )
-            })}
+                  </div>
+                )
+              })}
+            </div>
           </CardContent>
         </Card>
       ))}
 
+      {/* Notes */}
       <Card>
         <CardContent className="p-4 space-y-4">
           <div className="space-y-2">
@@ -286,6 +495,7 @@ export function InspectionForm({ template, projects }: InspectionFormProps) {
         <Button type="submit" className="flex-1" disabled={loading || !projectId}>
           {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
           Submit Inspection
+          <ArrowRight className="ml-2 h-4 w-4" />
         </Button>
       </div>
     </form>

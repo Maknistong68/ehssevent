@@ -105,8 +105,8 @@ const CLIENT_ORG_OBJ = MOCK_ORGANIZATIONS[0]
 
 export const MOCK_CURRENT_USER: Profile = {
   id: MOCK_USER_ID,
-  email: 'john.admin@neomport.sa',
-  full_name: 'John Admin',
+  email: 'mark.nieva@neomport.sa',
+  full_name: 'Mark Nieva',
   role: 'client_admin',
   organization_id: CLIENT_ORG_ID,
   is_active: true,
@@ -311,7 +311,7 @@ export const MOCK_EVENTS: Event[] = [
     lead_investigator: null,
     validator: null,
     approver: null,
-    created_by_name: 'John Admin',
+    created_by_name: 'Mark Nieva',
     closeout_photo_urls: [],
     date_closure: null,
     reporting_deadline_24h: '2025-05-11T09:00:00Z',
@@ -323,7 +323,7 @@ export const MOCK_EVENTS: Event[] = [
     created_at: '2025-05-10T09:00:00Z',
     updated_at: '2025-05-10T09:00:00Z',
     project: MOCK_PROJECTS[0],
-    creator: { id: MOCK_USER_ID, email: 'john.admin@neomport.sa', full_name: 'John Admin', role: 'client_admin', organization_id: CLIENT_ORG_ID, is_active: true, terms_accepted_at: null, privacy_accepted_at: null, terms_version: null, privacy_version: null, created_at: '2025-01-01T00:00:00Z', updated_at: '2025-01-01T00:00:00Z' },
+    creator: { id: MOCK_USER_ID, email: 'mark.nieva@neomport.sa', full_name: 'Mark Nieva', role: 'client_admin', organization_id: CLIENT_ORG_ID, is_active: true, terms_accepted_at: null, privacy_accepted_at: null, terms_version: null, privacy_version: null, created_at: '2025-01-01T00:00:00Z', updated_at: '2025-01-01T00:00:00Z' },
     creator_organization: CLIENT_ORG_OBJ,
   },
   {
@@ -420,7 +420,7 @@ export const MOCK_EVENTS: Event[] = [
     contractor_reviewer: 'Ahmed Al-Rashid',
     reviewer: null,
     contractor_investigator: 'Ahmed Al-Rashid',
-    lead_investigator: 'John Admin',
+    lead_investigator: 'Mark Nieva',
     validator: null,
     approver: null,
     created_by_name: 'Ahmed Al-Rashid',
@@ -478,8 +478,8 @@ export const MOCK_EVENTS: Event[] = [
     contractor_investigator: null,
     lead_investigator: null,
     validator: null,
-    approver: 'John Admin',
-    created_by_name: 'John Admin',
+    approver: 'Mark Nieva',
+    created_by_name: 'Mark Nieva',
     closeout_photo_urls: [],
     date_closure: '2025-04-21T12:00:00Z',
     reporting_deadline_24h: '2025-04-21T09:30:00Z',
@@ -491,7 +491,7 @@ export const MOCK_EVENTS: Event[] = [
     created_at: '2025-04-20T09:30:00Z',
     updated_at: '2025-04-21T12:00:00Z',
     project: MOCK_PROJECTS[2],
-    creator: { id: MOCK_USER_ID, email: 'john.admin@neomport.sa', full_name: 'John Admin', role: 'client_admin', organization_id: CLIENT_ORG_ID, is_active: true, terms_accepted_at: null, privacy_accepted_at: null, terms_version: null, privacy_version: null, created_at: '2025-01-01T00:00:00Z', updated_at: '2025-01-01T00:00:00Z' },
+    creator: { id: MOCK_USER_ID, email: 'mark.nieva@neomport.sa', full_name: 'Mark Nieva', role: 'client_admin', organization_id: CLIENT_ORG_ID, is_active: true, terms_accepted_at: null, privacy_accepted_at: null, terms_version: null, privacy_version: null, created_at: '2025-01-01T00:00:00Z', updated_at: '2025-01-01T00:00:00Z' },
     creator_organization: CLIENT_ORG_OBJ,
   },
   {
@@ -590,7 +590,7 @@ export const MOCK_EVENT_RESPONSES: EventResponse[] = [
     photo_urls: [],
     is_closing: true,
     created_at: '2025-04-21T12:00:00Z',
-    responder: { id: MOCK_USER_ID, email: 'john.admin@neomport.sa', full_name: 'John Admin', role: 'client_admin', organization_id: CLIENT_ORG_ID, is_active: true, terms_accepted_at: null, privacy_accepted_at: null, terms_version: null, privacy_version: null, created_at: '2025-01-01T00:00:00Z', updated_at: '2025-01-01T00:00:00Z' },
+    responder: { id: MOCK_USER_ID, email: 'mark.nieva@neomport.sa', full_name: 'Mark Nieva', role: 'client_admin', organization_id: CLIENT_ORG_ID, is_active: true, terms_accepted_at: null, privacy_accepted_at: null, terms_version: null, privacy_version: null, created_at: '2025-01-01T00:00:00Z', updated_at: '2025-01-01T00:00:00Z' },
     responder_organization: CLIENT_ORG_OBJ,
   },
 ]
@@ -770,7 +770,7 @@ export const MOCK_INSPECTION_TEMPLATES: InspectionTemplate[] = [
     created_by: MOCK_USER_ID,
     created_at: '2025-02-15T00:00:00Z',
     updated_at: '2025-02-15T00:00:00Z',
-    creator: { id: MOCK_USER_ID, email: 'john.admin@neomport.sa', full_name: 'John Admin', role: 'client_admin', organization_id: CLIENT_ORG_ID, is_active: true, terms_accepted_at: null, privacy_accepted_at: null, terms_version: null, privacy_version: null, created_at: '2025-01-01T00:00:00Z', updated_at: '2025-01-01T00:00:00Z' },
+    creator: { id: MOCK_USER_ID, email: 'mark.nieva@neomport.sa', full_name: 'Mark Nieva', role: 'client_admin', organization_id: CLIENT_ORG_ID, is_active: true, terms_accepted_at: null, privacy_accepted_at: null, terms_version: null, privacy_version: null, created_at: '2025-01-01T00:00:00Z', updated_at: '2025-01-01T00:00:00Z' },
   },
 ]
 
@@ -797,7 +797,7 @@ export const MOCK_INSPECTIONS: Inspection[] = [
     updated_at: '2025-05-05T14:00:00Z',
     template: { id: TEMPLATE1_ID, name: 'General Site Safety Inspection' } as InspectionTemplate,
     project: MOCK_PROJECTS[0],
-    conductor: { id: MOCK_USER_ID, email: 'john.admin@neomport.sa', full_name: 'John Admin', role: 'client_admin', organization_id: CLIENT_ORG_ID, is_active: true, terms_accepted_at: null, privacy_accepted_at: null, terms_version: null, privacy_version: null, created_at: '2025-01-01T00:00:00Z', updated_at: '2025-01-01T00:00:00Z' },
+    conductor: { id: MOCK_USER_ID, email: 'mark.nieva@neomport.sa', full_name: 'Mark Nieva', role: 'client_admin', organization_id: CLIENT_ORG_ID, is_active: true, terms_accepted_at: null, privacy_accepted_at: null, terms_version: null, privacy_version: null, created_at: '2025-01-01T00:00:00Z', updated_at: '2025-01-01T00:00:00Z' },
   },
   {
     id: INSPECTION2_ID,
@@ -868,7 +868,7 @@ export const MOCK_AUDIT_LOGS: AuditLogEntry[] = [
   {
     id: '90000000-0000-0000-0000-000000000001',
     actor_id: MOCK_USER_ID,
-    actor_email: 'john.admin@neomport.sa',
+    actor_email: 'mark.nieva@neomport.sa',
     action: 'user.update',
     target_table: 'profiles',
     target_id: CONTRACTOR_USER1_ID,
@@ -879,7 +879,7 @@ export const MOCK_AUDIT_LOGS: AuditLogEntry[] = [
   {
     id: '90000000-0000-0000-0000-000000000002',
     actor_id: MOCK_USER_ID,
-    actor_email: 'john.admin@neomport.sa',
+    actor_email: 'mark.nieva@neomport.sa',
     action: 'organization.create',
     target_table: 'organizations',
     target_id: CONTRACTOR_ORG3_ID,

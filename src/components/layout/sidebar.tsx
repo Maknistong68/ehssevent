@@ -37,7 +37,6 @@ const mainNavItems = [
   { href: '/events', labelKey: 'nav.events' as const, icon: Calendar },
   { href: '/corrective-actions', labelKey: 'nav.correctiveActions' as const, icon: ListChecks },
   { href: '/inspections', labelKey: 'nav.inspections' as const, icon: ClipboardCheck },
-  { href: '/projects', labelKey: 'nav.projects' as const, icon: FolderOpen },
 ]
 
 function initials(name?: string | null, email?: string | null) {
@@ -213,13 +212,20 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
           ))}
         </div>
 
-        {can('user:manage') && !isAdmin && (
-          <div className="mt-6">
-            {!collapsed && (
-              <p className="mb-2 px-3.5 text-xs font-semibold tracking-wide text-sidebar-foreground/40 uppercase">
-                {t('common.management')}
-              </p>
-            )}
+        <div className="mt-6">
+          {!collapsed && (
+            <p className="mb-2 px-3.5 text-xs font-semibold tracking-wide text-sidebar-foreground/40 uppercase">
+              {t('common.management')}
+            </p>
+          )}
+          <NavLink
+            href="/projects"
+            label={t('nav.projects')}
+            icon={FolderOpen}
+            collapsed={collapsed}
+            isActive={strippedPathname === '/projects' || strippedPathname.startsWith('/projects/')}
+          />
+          {can('user:manage') && (
             <NavLink
               href="/team"
               label={t('nav.team')}
@@ -227,8 +233,8 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
               collapsed={collapsed}
               isActive={strippedPathname.startsWith('/team')}
             />
-          </div>
-        )}
+          )}
+        </div>
 
         {isAdmin && (
           <div className="mt-6">

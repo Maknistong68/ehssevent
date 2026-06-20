@@ -1,5 +1,6 @@
+import { cookies } from 'next/headers'
 import { ADMIN_ROLES, type UserRole } from '@/types/enums'
-import { can, type Permission } from '@/lib/auth/permissions'
+import { can, isViewPermission, type Permission } from '@/lib/auth/permissions'
 
 export const IMPERSONATION_COOKIE = 'impersonate_uid'
 
@@ -26,6 +27,11 @@ type GuardResult =
   | { ok: false; error: string }
 
 export async function requireUser(): Promise<GuardResult> {
+  // Deactivated accounts must not pass authentication, even if a session
+  // exists (offboarding / SOC 2 access-revocation requirement).
+  if (!MOCK_SESSION.is_active) {
+    return { ok: false, error: 'Account is inactive' }
+  }
   return { ok: true, profile: MOCK_SESSION }
 }
 
@@ -43,6 +49,15 @@ export async function requirePermission(p: Permission): Promise<GuardResult> {
   if (!result.ok) return result
   if (!can(result.profile.role, p)) {
     return { ok: false, error: 'Not authorized' }
+  }
+  // While impersonating ("view as"), the session is strictly read-only.
+  // Enforced server-side (not just in the UI) so an admin can never mutate
+  // another user's data under their identity — PDPL/SOC 2 accountability.
+  if (!isViewPermission(p)) {
+    const cookieStore = await cookies()
+    if (cookieStore.get(IMPERSONATION_COOKIE)?.value) {
+      return { ok: false, error: 'Read-only while impersonating' }
+    }
   }
   return result
 }

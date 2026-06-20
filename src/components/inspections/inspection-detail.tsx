@@ -2,12 +2,14 @@ import Link from 'next/link'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { AlertTriangle } from 'lucide-react'
+import { AlertTriangle, ExternalLink } from 'lucide-react'
 import { CaCard } from '@/components/corrective-actions/ca-card'
 import {
   INSPECTION_FIELD_TYPE_LABELS,
   COMPLIANCE_LABELS,
   COMPLIANCE_COLORS,
+  CA_STATUS_LABELS,
+  CA_STATUS_COLORS,
 } from '@/types/enums'
 import type { InspectionFieldType, ComplianceValue } from '@/types/enums'
 import type {
@@ -137,6 +139,9 @@ export function InspectionDetail({
               const isFailing =
                 item.field_type === 'compliance' &&
                 FAILING_COMPLIANCE.includes(response?.value as ComplianceValue)
+              const linkedCa = correctiveActions.find(
+                (ca) => ca.section_id === section.id && ca.item_id === item.id
+              )
               const caHref =
                 `/corrective-actions/new?inspection_id=${inspection.id}` +
                 `&section_id=${encodeURIComponent(section.id)}` +
@@ -158,7 +163,20 @@ export function InspectionDetail({
                       {getValueDisplay(response, item.field_type as InspectionFieldType)}
                     </div>
                   </div>
-                  {isFailing && canRaiseCa && (
+                  {isFailing && linkedCa && (
+                    <div>
+                      <Link href={`/corrective-actions/${linkedCa.id}`}>
+                        <Badge
+                          variant="secondary"
+                          className={`${CA_STATUS_COLORS[linkedCa.status]} cursor-pointer inline-flex items-center gap-1`}
+                        >
+                          {linkedCa.reference_number} &middot; {CA_STATUS_LABELS[linkedCa.status]}
+                          <ExternalLink className="h-3 w-3" />
+                        </Badge>
+                      </Link>
+                    </div>
+                  )}
+                  {isFailing && !linkedCa && canRaiseCa && (
                     <div>
                       <Link href={caHref}>
                         <Button variant="outline" size="sm" className="h-7 text-xs">

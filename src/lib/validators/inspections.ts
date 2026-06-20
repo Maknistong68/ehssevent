@@ -43,6 +43,13 @@ export const submitInspectionSchema = z.object({
   project_id: z.string().uuid('Please select a project'),
   notes: z.string().optional(),
   responses: z.array(inspectionResponseSchema),
+  corrective_actions: z.array(z.object({
+    section_id: z.string(),
+    item_id: z.string(),
+    item_label: z.string(),
+    title: z.string().min(3),
+    assigned_to: z.string().uuid(),
+  })).optional(),
 })
 
 export type CreateTemplateInput = z.infer<typeof createTemplateSchema>

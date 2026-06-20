@@ -8,6 +8,20 @@ import {
   updateTemplateSchema,
   submitInspectionSchema,
 } from '@/lib/validators/inspections'
+import {
+  MOCK_USER_ID,
+  MOCK_INSPECTIONS,
+  MOCK_INSPECTION_RESPONSES,
+  MOCK_CORRECTIVE_ACTIONS,
+  MOCK_CURRENT_USER,
+  MOCK_PROJECTS,
+  MOCK_INSPECTION_TEMPLATES,
+  MOCK_PROFILES,
+} from '@/lib/mock-data'
+import { COMPLIANCE_SCORE } from '@/types/enums'
+import type { ComplianceValue } from '@/types/enums'
+import type { Inspection, InspectionResponse, CorrectiveAction, Event } from '@/types/database'
+import { randomUUID } from 'crypto'
 
 export async function createTemplate(input: unknown) {
   const auth = await requirePermission('inspection:templates')
@@ -55,7 +69,126 @@ export async function submitInspection(input: unknown) {
     return { error: parsed.error.issues[0].message }
   }
 
+  const { template_id, project_id, notes, responses, corrective_actions } = parsed.data
+
+  const inspectionId = randomUUID()
+  const now = new Date().toISOString()
+  const refNum = `INS-${new Date().getFullYear()}-${String(MOCK_INSPECTIONS.length + 1).padStart(3, '0')}`
+
+  // Calculate compliance score
+  let scorableItems = 0
+  let compliantScore = 0
+  for (const resp of responses) {
+    if (resp.field_type === 'compliance' && resp.value) {
+      const score = COMPLIANCE_SCORE[resp.value as ComplianceValue]
+      if (score !== null && score !== undefined) {
+        scorableItems++
+        compliantScore += score
+      }
+    }
+  }
+  const score = scorableItems > 0 ? (compliantScore / scorableItems) * 100 : null
+  const compliantItems = responses.filter(
+    (r) => r.field_type === 'compliance' && r.value === 'fully_compliant'
+  ).length
+
+  const template = MOCK_INSPECTION_TEMPLATES.find((t) => t.id === template_id)
+  const project = MOCK_PROJECTS.find((p) => p.id === project_id)
+
+  // Create inspection record
+  const inspection: Inspection = {
+    id: inspectionId,
+    reference_number: refNum,
+    template_id,
+    project_id,
+    organization_id: MOCK_CURRENT_USER.organization_id || '',
+    conducted_by: MOCK_USER_ID,
+    status: 'completed',
+    score,
+    total_items: responses.length,
+    scorable_items: scorableItems,
+    compliant_items: compliantItems,
+    notes: notes || null,
+    completed_at: now,
+    created_at: now,
+    updated_at: now,
+    template: template ? { id: template.id, name: template.name } as any : undefined,
+    project: project || undefined,
+    conductor: {
+      id: MOCK_USER_ID,
+      email: MOCK_CURRENT_USER.email,
+      full_name: MOCK_CURRENT_USER.full_name,
+      role: MOCK_CURRENT_USER.role,
+      organization_id: MOCK_CURRENT_USER.organization_id,
+      is_active: true,
+      terms_accepted_at: null,
+      privacy_accepted_at: null,
+      terms_version: null,
+      privacy_version: null,
+      created_at: MOCK_CURRENT_USER.created_at,
+      updated_at: MOCK_CURRENT_USER.updated_at,
+    },
+  }
+  MOCK_INSPECTIONS.push(inspection)
+
+  // Create response records
+  for (const resp of responses) {
+    const responseRecord: InspectionResponse = {
+      id: randomUUID(),
+      inspection_id: inspectionId,
+      section_id: resp.section_id,
+      item_id: resp.item_id,
+      field_type: resp.field_type,
+      value: resp.value,
+      photo_urls: resp.photo_urls,
+      created_at: now,
+    }
+    MOCK_INSPECTION_RESPONSES.push(responseRecord)
+  }
+
+  // Create corrective actions for non-compliant items
+  if (corrective_actions && corrective_actions.length > 0) {
+    for (const ca of corrective_actions) {
+      const caId = randomUUID()
+      const caRefNum = `CA-${new Date().getFullYear()}-${String(MOCK_CORRECTIVE_ACTIONS.length + 1).padStart(3, '0')}`
+      const assignee = MOCK_PROFILES.find((p) => p.id === ca.assigned_to)
+
+      const caRecord: CorrectiveAction = {
+        id: caId,
+        reference_number: caRefNum,
+        event_id: null,
+        inspection_id: inspectionId,
+        section_id: ca.section_id,
+        item_id: ca.item_id,
+        item_label: ca.item_label,
+        project_id,
+        created_by: MOCK_USER_ID,
+        creator_org_id: MOCK_CURRENT_USER.organization_id || '',
+        assigned_to: ca.assigned_to,
+        approver_id: MOCK_USER_ID,
+        title: ca.title,
+        description: `Auto-generated corrective action for non-compliant item: ${ca.item_label}`,
+        priority: 'medium',
+        status: 'open',
+        due_date: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
+        photo_urls: [],
+        completed_at: null,
+        approved_at: null,
+        rejection_reason: null,
+        created_at: now,
+        updated_at: now,
+        inspection: { id: inspectionId, reference_number: refNum },
+        project: project || undefined,
+        creator: MOCK_CURRENT_USER,
+        assignee: assignee || undefined,
+        approver: MOCK_CURRENT_USER,
+      }
+      MOCK_CORRECTIVE_ACTIONS.push(caRecord)
+    }
+  }
+
   revalidatePath('/inspections')
+  revalidatePath('/corrective-actions')
   revalidatePath('/dashboard')
   redirect('/inspections')
 }
