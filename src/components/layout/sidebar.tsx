@@ -8,12 +8,13 @@ import {
   ClipboardCheck,
   ListChecks,
   User,
+  Users,
   ShieldCheck,
   FolderOpen,
   Settings,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { useAuth } from '@/components/auth/auth-provider'
+import { usePermissions } from '@/components/shared/role-gate'
 import { useTranslations } from 'next-intl'
 import { LanguageSwitcher } from '@/components/layout/language-switcher'
 
@@ -56,10 +57,10 @@ function NavLink({
 
 export function Sidebar() {
   const pathname = usePathname()
-  const { profile } = useAuth()
+  const { can } = usePermissions()
   const t = useTranslations()
 
-  const isAdmin = profile?.role === 'system_admin' || profile?.role === 'support'
+  const isAdmin = can('admin:access')
 
   // Strip locale prefix for route matching
   const strippedPathname = pathname.replace(/^\/(en|ar)/, '') || '/'
@@ -89,6 +90,20 @@ export function Sidebar() {
             />
           ))}
         </div>
+
+        {can('user:manage') && !isAdmin && (
+          <div className="mt-6">
+            <p className="mb-2 px-3.5 text-xs font-semibold tracking-wide text-sidebar-foreground/40 uppercase">
+              {t('common.management')}
+            </p>
+            <NavLink
+              href="/team"
+              label={t('nav.team')}
+              icon={Users}
+              isActive={strippedPathname.startsWith('/team')}
+            />
+          </div>
+        )}
 
         {isAdmin && (
           <div className="mt-6">

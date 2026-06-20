@@ -1,6 +1,7 @@
 export const dynamic = 'force-dynamic'
 
-import { notFound } from 'next/navigation'
+import { notFound, redirect } from 'next/navigation'
+import { requirePermission } from '@/lib/auth/guards'
 import { getTemplateById } from '@/lib/queries/inspections'
 import { TemplateBuilder } from '@/components/inspections/template-builder'
 
@@ -19,6 +20,9 @@ export async function generateMetadata({ params }: Props) {
 }
 
 export default async function EditTemplatePage({ params }: Props) {
+  const auth = await requirePermission('inspection:templates')
+  if (!auth.ok) redirect('/dashboard')
+
   const { id } = await params
   const template = await getTemplateById(id)
 

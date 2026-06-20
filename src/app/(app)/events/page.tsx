@@ -2,6 +2,8 @@ export const dynamic = 'force-dynamic'
 
 import Link from 'next/link'
 import { getEvents } from '@/lib/queries/events'
+import { getSessionProfile } from '@/lib/auth/guards'
+import { can } from '@/lib/auth/permissions'
 import { EventCard } from '@/components/events/event-card'
 import { EventFilters } from '@/components/events/event-filters'
 import { EmptyState } from '@/components/shared/empty-state'
@@ -28,7 +30,9 @@ interface Props {
 }
 
 export default async function EventsPage({ searchParams }: Props) {
-  const params = await searchParams
+  const [params, profile] = await Promise.all([searchParams, getSessionProfile()])
+  const canExport = can(profile?.role, 'event:export')
+
   const events = await getEvents({
     approval_level: params.approval_level as EventApprovalLevel | undefined,
     type: params.type as EventType | undefined,
@@ -57,12 +61,14 @@ export default async function EventsPage({ searchParams }: Props) {
           </p>
         </div>
         <div className="flex gap-2">
-          <a href={exportHref}>
-            <Button variant="outline" data-icon="inline-start">
-              <Download className="h-4 w-4" />
-              Export
-            </Button>
-          </a>
+          {canExport && (
+            <a href={exportHref}>
+              <Button variant="outline" data-icon="inline-start">
+                <Download className="h-4 w-4" />
+                Export
+              </Button>
+            </a>
+          )}
           <Link href="/events/new">
             <Button data-icon="inline-start">
               <Plus className="h-4 w-4" />

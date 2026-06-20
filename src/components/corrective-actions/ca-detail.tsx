@@ -10,6 +10,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Separator } from '@/components/ui/separator'
 import { CaStatusBadge } from './ca-status-badge'
 import { CaPriorityBadge } from './ca-priority-badge'
+import { Can } from '@/components/shared/role-gate'
 import { updateCorrectiveActionStatus } from '@/lib/actions/corrective-actions'
 import {
   ArrowLeft,
@@ -306,7 +307,7 @@ export function CaDetail({ correctiveAction, currentUserId, isAdmin }: CaDetailP
                   </Button>
                 )}
                 {showApproveReject && (
-                  <>
+                  <Can permission="ca:approve">
                     <Button
                       onClick={() => changeStatus('approved')}
                       disabled={loading}
@@ -327,7 +328,7 @@ export function CaDetail({ correctiveAction, currentUserId, isAdmin }: CaDetailP
                       <XCircle className="mr-2 h-4 w-4" />
                       Reject
                     </Button>
-                  </>
+                  </Can>
                 )}
               </div>
             )}

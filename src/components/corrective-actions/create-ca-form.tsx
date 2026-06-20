@@ -19,13 +19,13 @@ import { AlertCircle, ArrowLeft, Loader2 } from 'lucide-react'
 import { createCorrectiveAction } from '@/lib/actions/corrective-actions'
 import { CA_PRIORITY_LABELS } from '@/types/enums'
 import type { CorrectiveActionPriority } from '@/types/enums'
-import type { Project, Profile } from '@/types/database'
+import type { Project } from '@/types/database'
 import { format } from 'date-fns'
 import Link from 'next/link'
 
 interface CreateCaFormProps {
   projects: Project[]
-  users: Profile[]
+  users: { id: string; full_name: string | null; email: string }[]
   eventId?: string
   inspectionId?: string
   sectionId?: string

@@ -3,7 +3,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
-import { requireUser, requirePermission } from '@/lib/auth/guards'
+import { requirePermission } from '@/lib/auth/guards'
 import {
   createEventSchema,
   updateApprovalLevelSchema,
@@ -22,7 +22,7 @@ function numOrNull(value: number | string | undefined): number | null {
 }
 
 export async function createEvent(input: unknown) {
-  const auth = await requireUser()
+  const auth = await requirePermission('event:create')
   if (!auth.ok) return { error: auth.error }
 
   const parsed = createEventSchema.safeParse(input)
@@ -170,7 +170,7 @@ export async function updateEventApprovalLevel(input: unknown) {
 }
 
 export async function addEventResponse(input: unknown) {
-  const auth = await requireUser()
+  const auth = await requirePermission('event:respond')
   if (!auth.ok) return { error: auth.error }
 
   const supabase = await createClient()

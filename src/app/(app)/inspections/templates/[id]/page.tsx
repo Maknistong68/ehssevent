@@ -1,7 +1,8 @@
 export const dynamic = 'force-dynamic'
 
-import { notFound } from 'next/navigation'
+import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
+import { requirePermission } from '@/lib/auth/guards'
 import { getTemplateById } from '@/lib/queries/inspections'
 import { TemplatePreview } from '@/components/inspections/template-preview'
 import { ToggleTemplateButton } from './toggle-button'
@@ -25,6 +26,9 @@ export async function generateMetadata({ params }: Props) {
 }
 
 export default async function TemplateDetailPage({ params }: Props) {
+  const auth = await requirePermission('inspection:templates')
+  if (!auth.ok) redirect('/dashboard')
+
   const { id } = await params
   const template = await getTemplateById(id)
 

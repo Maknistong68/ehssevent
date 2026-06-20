@@ -20,34 +20,30 @@ import {
 } from '@/components/ui/dialog'
 import { Label } from '@/components/ui/label'
 import { Separator } from '@/components/ui/separator'
-import { Pencil, Loader2, Eye, ShieldCheck, Power } from 'lucide-react'
+import { Pencil, Loader2, Power } from 'lucide-react'
 import { useTranslations } from 'next-intl'
-import { updateUserProfile } from '@/lib/actions/admin'
-import { startImpersonation } from '@/lib/actions/impersonation'
+import { updateTeamMember } from '@/lib/actions/team'
 import { ROLE_PERMISSIONS } from '@/lib/auth/permissions'
-import type { Profile, Organization } from '@/types/database'
+import type { Profile } from '@/types/database'
 import type { UserRole } from '@/types/enums'
 import { toast } from 'sonner'
 
-const ROLE_OPTIONS: { value: UserRole; label: string }[] = [
-  { value: 'system_admin', label: 'System Admin' },
-  { value: 'support', label: 'Support' },
+// Roles a client_admin can assign (no platform-admin roles)
+const ASSIGNABLE_ROLES: { value: UserRole; label: string }[] = [
   { value: 'client_admin', label: 'Client Admin' },
   { value: 'client_manager', label: 'Client Manager' },
   { value: 'client_user', label: 'Client User' },
   { value: 'contractor_user', label: 'Contractor User' },
 ]
 
-interface AdminUsersProps {
-  profiles: Profile[]
-  organizations: Organization[]
+interface TeamMembersProps {
+  members: Profile[]
   currentUserId: string
 }
 
-export function AdminUsers({ profiles, organizations, currentUserId }: AdminUsersProps) {
+export function TeamMembers({ members, currentUserId }: TeamMembersProps) {
   const [editUser, setEditUser] = useState<Profile | null>(null)
   const [role, setRole] = useState<UserRole>('client_user')
-  const [orgId, setOrgId] = useState('')
   const [loading, setLoading] = useState(false)
   const [busy, setBusy] = useState(false)
   const router = useRouter()
@@ -56,23 +52,21 @@ export function AdminUsers({ profiles, organizations, currentUserId }: AdminUser
   const openEdit = (profile: Profile) => {
     setEditUser(profile)
     setRole(profile.role)
-    setOrgId(profile.organization_id || '')
   }
 
   const handleSave = async () => {
     if (!editUser) return
     setLoading(true)
 
-    const result = await updateUserProfile({
+    const result = await updateTeamMember({
       user_id: editUser.id,
       role,
-      organization_id: orgId || null,
     })
 
     if (result.error) {
       toast.error(result.error)
     } else {
-      toast.success('User updated')
+      toast.success('Member updated')
       setEditUser(null)
       router.refresh()
     }
@@ -82,45 +76,29 @@ export function AdminUsers({ profiles, organizations, currentUserId }: AdminUser
   const handleToggleActive = async () => {
     if (!editUser) return
     setBusy(true)
-    const result = await updateUserProfile({
+    const result = await updateTeamMember({
       user_id: editUser.id,
       is_active: !editUser.is_active,
     })
     if (result.error) {
       toast.error(result.error)
     } else {
-      toast.success(editUser.is_active ? 'User deactivated' : 'User activated')
+      toast.success(editUser.is_active ? 'Member deactivated' : 'Member activated')
       setEditUser(null)
       router.refresh()
     }
     setBusy(false)
   }
 
-  const handleViewAs = async () => {
-    if (!editUser) return
-    setBusy(true)
-    const result = await startImpersonation(editUser.id)
-    if (result.error) {
-      toast.error(result.error)
-      setBusy(false)
-      return
-    }
-    // Reload so the auth provider resolves the impersonated profile.
-    window.location.href = '/dashboard'
-  }
-
   const isSelf = editUser?.id === currentUserId
   const effectivePermissions = editUser ? ROLE_PERMISSIONS[editUser.role] ?? [] : []
-  const editOrg = editUser?.organization as
-    | { id: string; name: string; org_type: string }
-    | undefined
 
   return (
     <div className="space-y-3">
       <Dialog open={!!editUser} onOpenChange={(open) => !open && setEditUser(null)}>
         <DialogContent className="max-h-[85vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>User Troubleshooting</DialogTitle>
+            <DialogTitle>{t('team.editMember')}</DialogTitle>
           </DialogHeader>
           {editUser && (
             <div className="space-y-5">
@@ -132,20 +110,19 @@ export function AdminUsers({ profiles, organizations, currentUserId }: AdminUser
                   <Badge variant={editUser.is_active ? 'accent' : 'destructive'}>
                     {editUser.is_active ? 'Active' : 'Inactive'}
                   </Badge>
-                  {editOrg && <Badge variant="outline">{editOrg.name}</Badge>}
                 </div>
               </div>
 
               <Separator />
 
               <div className="space-y-2">
-                <Label>Role</Label>
+                <Label>{t('team.role')}</Label>
                 <Select value={role} onValueChange={(v) => v && setRole(v as UserRole)}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {ROLE_OPTIONS.map((opt) => (
+                    {ASSIGNABLE_ROLES.map((opt) => (
                       <SelectItem key={opt.value} value={opt.value}>
                         {opt.label}
                       </SelectItem>
@@ -154,35 +131,15 @@ export function AdminUsers({ profiles, organizations, currentUserId }: AdminUser
                 </Select>
               </div>
 
-              <div className="space-y-2">
-                <Label>Organization</Label>
-                <Select value={orgId} onValueChange={(v) => setOrgId(v ?? '')}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="No organization" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">No Organization</SelectItem>
-                    {organizations.map((org) => (
-                      <SelectItem key={org.id} value={org.id}>
-                        {org.name} ({org.org_type})
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <Button onClick={handleSave} disabled={loading} className="w-full">
+              <Button onClick={handleSave} disabled={loading || isSelf} className="w-full">
                 {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Save Changes
+                {t('team.saveChanges')}
               </Button>
 
               <Separator />
 
               <div className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <ShieldCheck className="h-4 w-4 text-muted-foreground" />
-                  <Label className="text-sm">{t('admin.effectivePermissions')}</Label>
-                </div>
+                <Label className="text-sm">{t('team.permissions')}</Label>
                 <div className="flex flex-wrap gap-1.5">
                   {effectivePermissions.map((p) => (
                     <Badge key={p} variant="outline" className="font-mono text-[11px]">
@@ -194,33 +151,19 @@ export function AdminUsers({ profiles, organizations, currentUserId }: AdminUser
 
               <Separator />
 
-              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                <Button
-                  variant="outline"
-                  onClick={handleToggleActive}
-                  disabled={busy || isSelf}
-                  data-icon="inline-start"
-                >
-                  <Power className="h-4 w-4" />
-                  {editUser.is_active ? 'Deactivate' : 'Activate'}
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={handleViewAs}
-                  disabled={busy || isSelf}
-                  data-icon="inline-start"
-                >
-                  {busy ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Eye className="h-4 w-4" />
-                  )}
-                  {t('admin.viewAs')}
-                </Button>
-              </div>
+              <Button
+                variant="outline"
+                onClick={handleToggleActive}
+                disabled={busy || isSelf}
+                className="w-full"
+                data-icon="inline-start"
+              >
+                <Power className="h-4 w-4" />
+                {editUser.is_active ? t('team.deactivate') : t('team.activate')}
+              </Button>
               {isSelf && (
                 <p className="text-xs text-muted-foreground">
-                  You cannot deactivate or view-as your own account.
+                  {t('team.cannotEditSelf')}
                 </p>
               )}
             </div>
@@ -228,12 +171,8 @@ export function AdminUsers({ profiles, organizations, currentUserId }: AdminUser
         </DialogContent>
       </Dialog>
 
-      {profiles.map((profile, i) => {
-        const org = profile.organization as
-          | { id: string; name: string; org_type: string }
-          | undefined
-
-        const initials = (profile.full_name || profile.email || 'U')
+      {members.map((member, i) => {
+        const initials = (member.full_name || member.email || 'U')
           .split(/[\s._@-]+/)
           .slice(0, 2)
           .map((p) => p[0]?.toUpperCase())
@@ -241,7 +180,7 @@ export function AdminUsers({ profiles, organizations, currentUserId }: AdminUser
 
         return (
           <Card
-            key={profile.id}
+            key={member.id}
             size="sm"
             className="animate-fade-up"
             style={{ animationDelay: `${Math.min(i, 8) * 50}ms` }}
@@ -253,25 +192,22 @@ export function AdminUsers({ profiles, organizations, currentUserId }: AdminUser
                 </div>
                 <div className="min-w-0">
                   <p className="truncate font-medium">
-                    {profile.full_name || 'No name'}
+                    {member.full_name || 'No name'}
                   </p>
                   <p className="truncate text-xs text-muted-foreground">
-                    {profile.email}
+                    {member.email}
                   </p>
-                  {org && (
-                    <p className="truncate text-xs text-muted-foreground">{org.name}</p>
-                  )}
                 </div>
               </div>
               <div className="flex shrink-0 items-center gap-2">
-                <Badge variant="secondary">{profile.role}</Badge>
-                {!profile.is_active && (
+                <Badge variant="secondary">{t(`roles.${member.role}`)}</Badge>
+                {!member.is_active && (
                   <Badge variant="destructive">Inactive</Badge>
                 )}
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => openEdit(profile)}
+                  onClick={() => openEdit(member)}
                 >
                   <Pencil className="h-4 w-4" />
                 </Button>

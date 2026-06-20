@@ -3,6 +3,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
+import { requirePermission } from '@/lib/auth/guards'
 import {
   createCorrectiveActionSchema,
   updateCorrectiveActionStatusSchema,
@@ -13,12 +14,10 @@ function emptyToNull(value: string | undefined): string | null {
 }
 
 export async function createCorrectiveAction(input: unknown) {
-  const supabase = await createClient()
+  const auth = await requirePermission('ca:create')
+  if (!auth.ok) return { error: auth.error }
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-  if (!user) return { error: 'Not authenticated' }
+  const supabase = await createClient()
 
   const parsed = createCorrectiveActionSchema.safeParse(input)
   if (!parsed.success) {
@@ -26,21 +25,15 @@ export async function createCorrectiveAction(input: unknown) {
   }
   const d = parsed.data
 
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('organization_id')
-    .eq('id', user.id)
-    .single()
-
-  if (!profile?.organization_id) {
+  if (!auth.profile.organization_id) {
     return { error: 'Your account is not associated with an organization' }
   }
 
   const insertData: Record<string, unknown> = {
     title: d.title,
     description: emptyToNull(d.description),
-    created_by: user.id,
-    creator_org_id: profile.organization_id,
+    created_by: auth.profile.id,
+    creator_org_id: auth.profile.organization_id,
     priority: d.priority,
     status: 'open',
     due_date: emptyToNull(d.due_date),
@@ -78,18 +71,23 @@ export async function createCorrectiveAction(input: unknown) {
 }
 
 export async function updateCorrectiveActionStatus(input: unknown) {
-  const supabase = await createClient()
+  const auth = await requirePermission('ca:create')
+  if (!auth.ok) return { error: auth.error }
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-  if (!user) return { error: 'Not authenticated' }
+  const supabase = await createClient()
 
   const parsed = updateCorrectiveActionStatusSchema.safeParse(input)
   if (!parsed.success) {
     return { error: parsed.error.issues[0].message }
   }
   const d = parsed.data
+
+  // Approval decisions (approve / reject) require the ca:approve permission;
+  // other transitions (start / submit / resume) are open to the assignee.
+  if (d.status === 'approved' || d.status === 'rejected') {
+    const approveAuth = await requirePermission('ca:approve')
+    if (!approveAuth.ok) return { error: approveAuth.error }
+  }
 
   const updateData: Record<string, unknown> = { status: d.status }
 

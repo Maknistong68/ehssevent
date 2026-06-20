@@ -12,9 +12,11 @@ export type Permission =
   | 'event:create'
   | 'event:respond'
   | 'event:manage'
+  | 'event:export'
   | 'ca:view'
   | 'ca:create'
   | 'ca:approve'
+  | 'ca:manage'
   | 'inspection:view'
   | 'inspection:conduct'
   | 'inspection:templates'
@@ -22,6 +24,7 @@ export type Permission =
   | 'project:manage'
   | 'org:manage'
   | 'user:manage'
+  | 'team:view'
   | 'admin:access'
   | 'audit:view'
   | 'impersonate:use'
@@ -42,7 +45,9 @@ const BASE_PERMISSIONS: Permission[] = [
 // closeouts, CA approvals, inspection templates, project management).
 const MANAGER_PERMISSIONS: Permission[] = [
   'event:manage',
+  'event:export',
   'ca:approve',
+  'ca:manage',
   'inspection:templates',
   'project:manage',
 ]
@@ -62,7 +67,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
   // client_admin may also manage users within its own org (org-scoped, enforced
   // by updateUserProfile + migration 019); the platform admin panel stays
   // admin-only, so 'admin:access' is intentionally not granted here.
-  client_admin: [...BASE_PERMISSIONS, ...MANAGER_PERMISSIONS, 'user:manage'],
+  client_admin: [...BASE_PERMISSIONS, ...MANAGER_PERMISSIONS, 'user:manage', 'team:view'],
   client_manager: [...BASE_PERMISSIONS, ...MANAGER_PERMISSIONS],
   client_user: [...BASE_PERMISSIONS],
   contractor_user: [...BASE_PERMISSIONS],

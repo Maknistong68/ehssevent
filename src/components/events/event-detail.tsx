@@ -21,6 +21,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { PhotoUpload } from '@/components/shared/photo-upload'
+import { Can } from '@/components/shared/role-gate'
 import { ApprovalBadge } from './approval-badge'
 import { format } from 'date-fns'
 import { Loader2, CheckCircle2 } from 'lucide-react'
@@ -118,28 +119,30 @@ export function EventDetail({
         </div>
       </div>
 
-      <Card>
-        <CardContent className="p-4 space-y-3">
-          <div className="flex items-center justify-between gap-3">
-            <Label className="text-sm font-semibold">Approval Process Level</Label>
-            {savingLevel && (
-              <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-            )}
-          </div>
-          <Select value={level} onValueChange={handleLevelChange}>
-            <SelectTrigger className="w-full sm:w-[260px]">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {Object.entries(EVENT_APPROVAL_LABELS).map(([v, l]) => (
-                <SelectItem key={v} value={v}>
-                  {l}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </CardContent>
-      </Card>
+      <Can permission="event:manage">
+        <Card>
+          <CardContent className="p-4 space-y-3">
+            <div className="flex items-center justify-between gap-3">
+              <Label className="text-sm font-semibold">Approval Process Level</Label>
+              {savingLevel && (
+                <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+              )}
+            </div>
+            <Select value={level} onValueChange={handleLevelChange}>
+              <SelectTrigger className="w-full sm:w-[260px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {Object.entries(EVENT_APPROVAL_LABELS).map(([v, l]) => (
+                  <SelectItem key={v} value={v}>
+                    {l}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </CardContent>
+        </Card>
+      </Can>
 
       <Card>
         <CardContent className="grid grid-cols-1 gap-4 p-4 sm:grid-cols-2">
@@ -347,32 +350,34 @@ export function EventDetail({
       </div>
 
       {/* Closeout */}
-      <Card>
-        <CardContent className="space-y-4 p-4">
-          <div className="flex items-center justify-between gap-3">
-            <h3 className="font-heading text-sm font-semibold tracking-tight">
-              Contractor Closeout
-            </h3>
-            {event.date_closure && (
-              <span className="inline-flex items-center gap-1 text-xs text-green-700">
-                <CheckCircle2 className="h-3.5 w-3.5" />
-                Closed {fmt(event.date_closure)}
-              </span>
-            )}
-          </div>
+      <Can permission="event:manage">
+        <Card>
+          <CardContent className="space-y-4 p-4">
+            <div className="flex items-center justify-between gap-3">
+              <h3 className="font-heading text-sm font-semibold tracking-tight">
+                Contractor Closeout
+              </h3>
+              {event.date_closure && (
+                <span className="inline-flex items-center gap-1 text-xs text-green-700">
+                  <CheckCircle2 className="h-3.5 w-3.5" />
+                  Closed {fmt(event.date_closure)}
+                </span>
+              )}
+            </div>
 
-          <PhotoUpload
-            photos={closeoutPhotos}
-            onPhotosChange={setCloseoutPhotos}
-            bucket="event-photos"
-          />
+            <PhotoUpload
+              photos={closeoutPhotos}
+              onPhotosChange={setCloseoutPhotos}
+              bucket="event-photos"
+            />
 
-          <Button onClick={handleCloseout} disabled={closing}>
-            {closing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            {event.date_closure ? 'Update Closeout' : 'Close Out Event'}
-          </Button>
-        </CardContent>
-      </Card>
+            <Button onClick={handleCloseout} disabled={closing}>
+              {closing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {event.date_closure ? 'Update Closeout' : 'Close Out Event'}
+            </Button>
+          </CardContent>
+        </Card>
+      </Can>
     </div>
   )
 }

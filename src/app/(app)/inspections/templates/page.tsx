@@ -1,6 +1,8 @@
 export const dynamic = 'force-dynamic'
 
+import { redirect } from 'next/navigation'
 import Link from 'next/link'
+import { requirePermission } from '@/lib/auth/guards'
 import { getAllTemplates } from '@/lib/queries/inspections'
 import { TemplateCard } from '@/components/inspections/template-card'
 import { EmptyState } from '@/components/shared/empty-state'
@@ -12,6 +14,9 @@ export const metadata = {
 }
 
 export default async function TemplatesPage() {
+  const auth = await requirePermission('inspection:templates')
+  if (!auth.ok) redirect('/dashboard')
+
   const templates = await getAllTemplates()
 
   return (

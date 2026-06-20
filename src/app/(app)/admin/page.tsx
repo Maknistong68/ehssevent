@@ -2,9 +2,11 @@ export const dynamic = 'force-dynamic'
 
 import { redirect } from 'next/navigation'
 import { getAllOrganizations, getAllProfiles } from '@/lib/queries/admin'
+import { getAuditLogs } from '@/lib/queries/audit'
 import { requireAdmin } from '@/lib/auth/guards'
 import { AdminOrganizations } from './organizations'
 import { AdminUsers } from './users'
+import { AuditLog } from './audit-log'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
 export const metadata = {
@@ -15,9 +17,10 @@ export default async function AdminPage() {
   const auth = await requireAdmin()
   if (!auth.ok) redirect('/dashboard')
 
-  const [organizations, profiles] = await Promise.all([
+  const [organizations, profiles, auditLogs] = await Promise.all([
     getAllOrganizations(),
     getAllProfiles(),
+    getAuditLogs(),
   ])
 
   return (
@@ -35,6 +38,7 @@ export default async function AdminPage() {
             Organizations ({organizations.length})
           </TabsTrigger>
           <TabsTrigger value="users">Users ({profiles.length})</TabsTrigger>
+          <TabsTrigger value="audit">Audit Log</TabsTrigger>
         </TabsList>
 
         <TabsContent value="organizations" className="mt-4">
@@ -42,7 +46,15 @@ export default async function AdminPage() {
         </TabsContent>
 
         <TabsContent value="users" className="mt-4">
-          <AdminUsers profiles={profiles} organizations={organizations} />
+          <AdminUsers
+            profiles={profiles}
+            organizations={organizations}
+            currentUserId={auth.profile.id}
+          />
+        </TabsContent>
+
+        <TabsContent value="audit" className="mt-4">
+          <AuditLog entries={auditLogs} />
         </TabsContent>
       </Tabs>
     </div>

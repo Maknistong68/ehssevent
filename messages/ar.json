@@ -8,7 +8,8 @@
     "edit": "تعديل",
     "viewAll": "عرض الكل",
     "noData": "لا توجد بيانات",
-    "admin": "المشرف"
+    "admin": "المشرف",
+    "management": "الإدارة"
   },
   "nav": {
     "home": "الرئيسية",
@@ -19,7 +20,18 @@
     "inspections": "التفتيشات",
     "projects": "المشاريع",
     "profile": "الملف الشخصي",
-    "adminPanel": "لوحة المشرف"
+    "adminPanel": "لوحة المشرف",
+    "audit": "سجل التدقيق",
+    "team": "الفريق"
+  },
+  "admin": {
+    "auditLog": "سجل التدقيق",
+    "viewAs": "العرض كمستخدم",
+    "exitImpersonation": "خروج",
+    "effectivePermissions": "الصلاحيات الفعلية"
+  },
+  "impersonation": {
+    "banner": "العرض كـ {name} — للقراءة فقط"
   },
   "header": {
     "welcomeBack": "مرحبًا بعودتك"
@@ -78,7 +90,13 @@
     "deadlines": "مواعيد الإبلاغ",
     "overdue24h": "متأخرة 24 ساعة",
     "overdue3day": "متأخرة 3 أيام",
-    "approaching": "اقتراب 24 ساعة"
+    "approaching": "اقتراب 24 ساعة",
+    "platform": "نظرة عامة على المنصة",
+    "organizations": "المنظمات",
+    "totalUsers": "إجمالي المستخدمين",
+    "inactiveUsers": "المستخدمون غير النشطين",
+    "pendingApprovals": "الموافقات المعلقة",
+    "managerTasks": "مهام المدير"
   },
   "events": {
     "title": "الأحداث",
@@ -104,6 +122,15 @@
     "rightObject": "الحق في الاعتراض على المعالجة",
     "requestData": "طلب الوصول / حذف البيانات",
     "contactDpo": "تواصل مع dpo@oxagonport.sa لطلبات البيانات"
+  },
+  "team": {
+    "editMember": "تعديل العضو",
+    "role": "الدور",
+    "saveChanges": "حفظ التغييرات",
+    "permissions": "الصلاحيات الفعلية",
+    "deactivate": "تعطيل",
+    "activate": "تفعيل",
+    "cannotEditSelf": "لا يمكنك تغيير دورك أو حالة حسابك."
   },
   "roles": {
     "system_admin": "مشرف النظام",

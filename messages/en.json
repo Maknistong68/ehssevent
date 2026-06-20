@@ -8,7 +8,8 @@
     "edit": "Edit",
     "viewAll": "View all",
     "noData": "No data available",
-    "admin": "Admin"
+    "admin": "Admin",
+    "management": "Management"
   },
   "nav": {
     "home": "Home",
@@ -19,7 +20,18 @@
     "inspections": "Inspections",
     "projects": "Projects",
     "profile": "Profile",
-    "adminPanel": "Admin Panel"
+    "adminPanel": "Admin Panel",
+    "audit": "Audit Log",
+    "team": "Team"
+  },
+  "admin": {
+    "auditLog": "Audit Log",
+    "viewAs": "View as user",
+    "exitImpersonation": "Exit",
+    "effectivePermissions": "Effective permissions"
+  },
+  "impersonation": {
+    "banner": "Viewing as {name} — read only"
   },
   "header": {
     "welcomeBack": "Welcome back"
@@ -78,7 +90,13 @@
     "deadlines": "Reporting Deadlines",
     "overdue24h": "24h Overdue",
     "overdue3day": "3-Day Overdue",
-    "approaching": "Approaching 24h"
+    "approaching": "Approaching 24h",
+    "platform": "Platform Overview",
+    "organizations": "Organizations",
+    "totalUsers": "Total Users",
+    "inactiveUsers": "Inactive Users",
+    "pendingApprovals": "Pending Approvals",
+    "managerTasks": "Manager Tasks"
   },
   "events": {
     "title": "Events",
@@ -104,6 +122,15 @@
     "rightObject": "Right to object to processing",
     "requestData": "Request Data Access / Deletion",
     "contactDpo": "Contact dpo@oxagonport.sa for data requests"
+  },
+  "team": {
+    "editMember": "Edit Member",
+    "role": "Role",
+    "saveChanges": "Save Changes",
+    "permissions": "Effective Permissions",
+    "deactivate": "Deactivate",
+    "activate": "Activate",
+    "cannotEditSelf": "You cannot change your own role or active status."
   },
   "roles": {
     "system_admin": "System Admin",

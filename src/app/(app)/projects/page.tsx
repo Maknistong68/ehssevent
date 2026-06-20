@@ -5,6 +5,7 @@ import { getProjects } from '@/lib/queries/projects'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { EmptyState } from '@/components/shared/empty-state'
+import { Can } from '@/components/shared/role-gate'
 import { Plus, FolderOpen, MapPin } from 'lucide-react'
 
 export const metadata = {
@@ -23,12 +24,14 @@ export default async function ProjectsPage() {
             {projects.length} project{projects.length !== 1 ? 's' : ''}
           </p>
         </div>
-        <Link href="/projects/new">
-          <Button data-icon="inline-start">
-            <Plus className="h-4 w-4" />
-            New
-          </Button>
-        </Link>
+        <Can permission="project:manage">
+          <Link href="/projects/new">
+            <Button data-icon="inline-start">
+              <Plus className="h-4 w-4" />
+              New
+            </Button>
+          </Link>
+        </Can>
       </div>
 
       {projects.length === 0 ? (
@@ -37,12 +40,14 @@ export default async function ProjectsPage() {
           title="No projects yet"
           description="Create your first project to start tracking events."
           action={
-            <Link href="/projects/new">
-              <Button>
-                <Plus className="mr-2 h-4 w-4" />
-                Create Project
-              </Button>
-            </Link>
+            <Can permission="project:manage">
+              <Link href="/projects/new">
+                <Button>
+                  <Plus className="mr-2 h-4 w-4" />
+                  Create Project
+                </Button>
+              </Link>
+            </Can>
           }
         />
       ) : (

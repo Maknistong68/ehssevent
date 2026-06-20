@@ -3,6 +3,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
+import { requirePermission } from '@/lib/auth/guards'
 import {
   createTemplateSchema,
   updateTemplateSchema,
@@ -11,32 +12,19 @@ import {
 import { COMPLIANCE_SCORE, type ComplianceValue } from '@/types/enums'
 
 export async function createTemplate(input: unknown) {
-  const supabase = await createClient()
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-  if (!user) return { error: 'Not authenticated' }
+  const auth = await requirePermission('inspection:templates')
+  if (!auth.ok) return { error: auth.error }
 
   const parsed = createTemplateSchema.safeParse(input)
   if (!parsed.success) {
     return { error: parsed.error.issues[0].message }
   }
 
-  // Check role
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('organization_id, role')
-    .eq('id', user.id)
-    .single()
-
-  if (!profile?.organization_id) {
+  if (!auth.profile.organization_id) {
     return { error: 'Your account is not associated with an organization' }
   }
 
-  if (!['system_admin', 'support', 'client_admin', 'client_manager'].includes(profile.role)) {
-    return { error: 'You do not have permission to create templates' }
-  }
+  const supabase = await createClient()
 
   const { data, error } = await supabase
     .from('inspection_templates')
@@ -44,8 +32,8 @@ export async function createTemplate(input: unknown) {
       name: parsed.data.name,
       description: parsed.data.description || null,
       sections: parsed.data.sections,
-      organization_id: profile.organization_id,
-      created_by: user.id,
+      organization_id: auth.profile.organization_id,
+      created_by: auth.profile.id,
     })
     .select('id')
     .single()
@@ -59,31 +47,14 @@ export async function createTemplate(input: unknown) {
 }
 
 export async function updateTemplate(input: unknown) {
-  const supabase = await createClient()
+  const auth = await requirePermission('inspection:templates')
+  if (!auth.ok) return { error: auth.error }
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-  if (!user) return { error: 'Not authenticated' }
+  const supabase = await createClient()
 
   const parsed = updateTemplateSchema.safeParse(input)
   if (!parsed.success) {
     return { error: parsed.error.issues[0].message }
-  }
-
-  // Check role
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('organization_id, role')
-    .eq('id', user.id)
-    .single()
-
-  if (!profile?.organization_id) {
-    return { error: 'Your account is not associated with an organization' }
-  }
-
-  if (!['system_admin', 'support', 'client_admin', 'client_manager'].includes(profile.role)) {
-    return { error: 'You do not have permission to update templates' }
   }
 
   const updateData: Record<string, unknown> = {
@@ -112,23 +83,10 @@ export async function updateTemplate(input: unknown) {
 }
 
 export async function toggleTemplateActive(templateId: string) {
+  const auth = await requirePermission('inspection:templates')
+  if (!auth.ok) return { error: auth.error }
+
   const supabase = await createClient()
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-  if (!user) return { error: 'Not authenticated' }
-
-  // Check role
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('role')
-    .eq('id', user.id)
-    .single()
-
-  if (!['system_admin', 'support', 'client_admin', 'client_manager'].includes(profile?.role ?? '')) {
-    return { error: 'You do not have permission to modify templates' }
-  }
 
   // Get current state
   const { data: template } = await supabase
@@ -157,26 +115,17 @@ export async function toggleTemplateActive(templateId: string) {
 }
 
 export async function submitInspection(input: unknown) {
-  const supabase = await createClient()
+  const auth = await requirePermission('inspection:conduct')
+  if (!auth.ok) return { error: auth.error }
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-  if (!user) return { error: 'Not authenticated' }
+  const supabase = await createClient()
 
   const parsed = submitInspectionSchema.safeParse(input)
   if (!parsed.success) {
     return { error: parsed.error.issues[0].message }
   }
 
-  // Get user's org
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('organization_id')
-    .eq('id', user.id)
-    .single()
-
-  if (!profile?.organization_id) {
+  if (!auth.profile.organization_id) {
     return { error: 'Your account is not associated with an organization' }
   }
 
@@ -249,8 +198,8 @@ export async function submitInspection(input: unknown) {
     .insert({
       template_id: parsed.data.template_id,
       project_id: parsed.data.project_id,
-      organization_id: profile.organization_id,
-      conducted_by: user.id,
+      organization_id: auth.profile.organization_id,
+      conducted_by: auth.profile.id,
       status: 'completed',
       score: score !== null ? Math.round(score * 100) / 100 : null,
       total_items: totalItems,

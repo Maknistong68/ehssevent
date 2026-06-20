@@ -6,6 +6,46 @@ import type {
   InspectionStats,
 } from '@/types/database'
 
+export interface AdminStats {
+  total_organizations: number
+  total_users: number
+  inactive_users: number
+  pending_approvals: number
+}
+
+export async function getAdminStats(): Promise<AdminStats> {
+  const supabase = await createClient()
+
+  const [orgs, profiles, pendingCAs] = await Promise.all([
+    supabase.from('organizations').select('id', { count: 'exact', head: true }),
+    supabase.from('profiles').select('id, is_active'),
+    supabase
+      .from('corrective_actions')
+      .select('id', { count: 'exact', head: true })
+      .eq('status', 'pending_approval'),
+  ])
+
+  const allProfiles = profiles.data || []
+
+  return {
+    total_organizations: orgs.count || 0,
+    total_users: allProfiles.length,
+    inactive_users: allProfiles.filter((p) => !p.is_active).length,
+    pending_approvals: pendingCAs.count || 0,
+  }
+}
+
+export async function getPendingApprovalCount(): Promise<number> {
+  const supabase = await createClient()
+
+  const { count } = await supabase
+    .from('corrective_actions')
+    .select('id', { count: 'exact', head: true })
+    .eq('status', 'pending_approval')
+
+  return count || 0
+}
+
 export async function getDashboardStats(): Promise<DashboardStats> {
   const supabase = await createClient()
 

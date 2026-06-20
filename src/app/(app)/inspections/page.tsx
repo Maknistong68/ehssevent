@@ -7,7 +7,7 @@ import { getProjects } from '@/lib/queries/projects'
 import { InspectionCard } from '@/components/inspections/inspection-card'
 import { InspectionFilters } from '@/components/inspections/inspection-filters'
 import { EmptyState } from '@/components/shared/empty-state'
-import { RoleGate } from '@/components/shared/role-gate'
+import { Can } from '@/components/shared/role-gate'
 import { Button } from '@/components/ui/button'
 import { Plus, ClipboardCheck, Settings } from 'lucide-react'
 import type { InspectionStatus } from '@/types/enums'
@@ -48,14 +48,14 @@ export default async function InspectionsPage({ searchParams }: Props) {
           </p>
         </div>
         <div className="flex gap-2">
-          <RoleGate allowedRoles={['system_admin', 'support', 'client_admin', 'client_manager']}>
+          <Can permission="inspection:templates">
             <Link href="/inspections/templates">
               <Button variant="outline" size="sm" data-icon="inline-start">
                 <Settings className="h-4 w-4" />
                 Templates
               </Button>
             </Link>
-          </RoleGate>
+          </Can>
           <Link href="/inspections/new">
             <Button data-icon="inline-start">
               <Plus className="h-4 w-4" />

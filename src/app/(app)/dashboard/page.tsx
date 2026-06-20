@@ -5,7 +5,11 @@ import {
   getRecentEvents,
   getOpenCorrectiveActions,
   getInspectionStats,
+  getAdminStats,
+  getPendingApprovalCount,
 } from '@/lib/queries/dashboard'
+import { getSessionProfile } from '@/lib/auth/guards'
+import { can } from '@/lib/auth/permissions'
 import { StatCard } from '@/components/dashboard/stat-card'
 import { EventCard } from '@/components/events/event-card'
 import { CaCard } from '@/components/corrective-actions/ca-card'
@@ -19,6 +23,10 @@ import {
   AlertTriangle,
   ClipboardCheck,
   TrendingUp,
+  Building2,
+  Users,
+  UserX,
+  ClipboardList,
 } from 'lucide-react'
 import Link from 'next/link'
 import { getTranslations } from 'next-intl/server'
@@ -28,13 +36,21 @@ export const metadata = {
 }
 
 export default async function DashboardPage() {
-  const [stats, recentEvents, openActions, inspectionStats, t] = await Promise.all([
+  const [stats, recentEvents, openActions, inspectionStats, t, profile] = await Promise.all([
     getDashboardStats(),
     getRecentEvents(),
     getOpenCorrectiveActions(),
     getInspectionStats(),
     getTranslations('dashboard'),
+    getSessionProfile(),
   ])
+
+  const isAdmin = can(profile?.role, 'admin:access')
+  const isManager = can(profile?.role, 'ca:approve')
+
+  // Fetch role-specific data
+  const adminStats = isAdmin ? await getAdminStats() : null
+  const pendingApprovals = isManager && !isAdmin ? await getPendingApprovalCount() : null
 
   return (
     <div className="space-y-7 p-4 md:p-6">
@@ -44,6 +60,61 @@ export default async function DashboardPage() {
           {t('subtitle')}
         </p>
       </div>
+
+      {adminStats && (
+        <section>
+          <h2 className="mb-3 px-1 font-heading text-base font-semibold tracking-tight">
+            {t('platform')}
+          </h2>
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+            <StatCard
+              label={t('organizations')}
+              value={adminStats.total_organizations}
+              icon={Building2}
+              color="bg-violet-100 text-violet-700"
+              index={0}
+            />
+            <StatCard
+              label={t('totalUsers')}
+              value={adminStats.total_users}
+              icon={Users}
+              color="bg-blue-100 text-blue-700"
+              index={1}
+            />
+            <StatCard
+              label={t('inactiveUsers')}
+              value={adminStats.inactive_users}
+              icon={UserX}
+              color="bg-slate-100 text-slate-700"
+              index={2}
+            />
+            <StatCard
+              label={t('pendingApprovals')}
+              value={adminStats.pending_approvals}
+              icon={ClipboardList}
+              color="bg-purple-100 text-purple-700"
+              index={3}
+            />
+          </div>
+        </section>
+      )}
+
+      {pendingApprovals !== null && pendingApprovals > 0 && (
+        <section>
+          <h2 className="mb-3 px-1 font-heading text-base font-semibold tracking-tight">
+            {t('managerTasks')}
+          </h2>
+          <div className="grid grid-cols-2 gap-3">
+            <StatCard
+              label={t('pendingApprovals')}
+              value={pendingApprovals}
+              icon={ClipboardList}
+              color="bg-purple-100 text-purple-700"
+              index={0}
+            />
+          </div>
+        </section>
+      )}
 
       <section>
         <h2 className="mb-3 px-1 font-heading text-base font-semibold tracking-tight">
