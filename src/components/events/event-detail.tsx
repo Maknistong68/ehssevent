@@ -22,6 +22,8 @@ import {
 } from '@/components/ui/select'
 import { PhotoUpload } from '@/components/shared/photo-upload'
 import { Can } from '@/components/shared/role-gate'
+import { useAuth } from '@/components/auth/auth-provider'
+import { allowedEventTransitions } from '@/lib/auth/permissions'
 import { ApprovalBadge } from './approval-badge'
 import { format } from 'date-fns'
 import { Loader2, CheckCircle2 } from 'lucide-react'
@@ -29,6 +31,7 @@ import { toast } from 'sonner'
 import { updateEventApprovalLevel, closeoutEvent } from '@/lib/actions/events'
 import {
   EVENT_APPROVAL_LABELS,
+  EVENT_APPROVAL_SEQUENCE,
   EVENT_TYPE_LABELS,
   EVENT_CLASSIFICATION_LABELS,
   EVENT_HAZARD_LABELS,
@@ -60,8 +63,20 @@ export function EventDetail({
   responses?: EventResponse[]
 }) {
   const router = useRouter()
+  const { effectiveProfile, isImpersonating } = useAuth()
   const [level, setLevel] = useState(event.approval_level)
   const [savingLevel, setSavingLevel] = useState(false)
+
+  // Stages this user may move the event to, derived from the data model
+  // (stage ownership) via the permission matrix. Impersonated sessions are
+  // strictly read-only. The current level is always shown for context.
+  const transitions = isImpersonating
+    ? []
+    : allowedEventTransitions(effectiveProfile?.role, level)
+  const levelOptions = EVENT_APPROVAL_SEQUENCE.filter(
+    (s) => s === level || transitions.includes(s)
+  )
+  const canChangeLevel = transitions.length > 0
   const [closeoutPhotos, setCloseoutPhotos] = useState<string[]>(
     event.closeout_photo_urls || []
   )
@@ -119,7 +134,7 @@ export function EventDetail({
         </div>
       </div>
 
-      <Can permission="event:manage">
+      {canChangeLevel && (
         <Card>
           <CardContent className="p-4 space-y-3">
             <div className="flex items-center justify-between gap-3">
@@ -133,16 +148,16 @@ export function EventDetail({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {Object.entries(EVENT_APPROVAL_LABELS).map(([v, l]) => (
-                  <SelectItem key={v} value={v}>
-                    {l}
+                {levelOptions.map((v) => (
+                  <SelectItem key={v} value={v} disabled={v === level}>
+                    {EVENT_APPROVAL_LABELS[v]}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </CardContent>
         </Card>
-      </Can>
+      )}
 
       <Card>
         <CardContent className="grid grid-cols-1 gap-4 p-4 sm:grid-cols-2">

@@ -91,6 +91,7 @@ function CheckboxRow({
 export function CreateEventForm({ projects, defaultProjectId = '' }: CreateEventFormProps) {
   const [loading, setLoading] = useState(false)
   const [created, setCreated] = useState(false)
+  const [createdEventId, setCreatedEventId] = useState<string | null>(null)
   const [error, setError] = useState('')
   const [photos, setPhotos] = useState<string[]>([])
   const [eventDate, setEventDate] = useState<Date | undefined>(undefined)
@@ -182,6 +183,7 @@ export function CreateEventForm({ projects, defaultProjectId = '' }: CreateEvent
     }
 
     if (result?.success) {
+      setCreatedEventId(result.event_id ?? null)
       setCreated(true)
       setLoading(false)
     }
@@ -203,7 +205,14 @@ export function CreateEventForm({ projects, defaultProjectId = '' }: CreateEvent
             </p>
           </div>
           <div className="flex w-full flex-col gap-3 sm:flex-row sm:justify-center">
-            <Link href="/corrective-actions/new" className="flex-1 sm:flex-none">
+            <Link
+              href={
+                createdEventId
+                  ? `/corrective-actions/new?event_id=${createdEventId}`
+                  : '/corrective-actions/new'
+              }
+              className="flex-1 sm:flex-none"
+            >
               <Button className="w-full" data-icon="inline-start">
                 <Plus className="h-4 w-4" />
                 Add Corrective Action
@@ -260,7 +269,7 @@ export function CreateEventForm({ projects, defaultProjectId = '' }: CreateEvent
             <div className="space-y-2">
               <Label>Classification</Label>
               <Select
-                value={classification || undefined}
+                value={classification || null}
                 onValueChange={(v) => setClassification(v ?? '')}
               >
                 <SelectTrigger className="w-full">
@@ -284,7 +293,7 @@ export function CreateEventForm({ projects, defaultProjectId = '' }: CreateEvent
                 {isIncident || type === 'hazard_identification' ? ' *' : ''}
               </Label>
               <Select
-                value={significantHazard || undefined}
+                value={significantHazard || null}
                 onValueChange={(v) => setSignificantHazard(v ?? '')}
               >
                 <SelectTrigger className="w-full">
@@ -313,7 +322,7 @@ export function CreateEventForm({ projects, defaultProjectId = '' }: CreateEvent
           <div className="space-y-2">
             <Label>Site</Label>
             <Select
-              value={site || undefined}
+              value={site || null}
               onValueChange={(v) => setSite(v ?? '')}
             >
               <SelectTrigger className="w-full">
@@ -333,7 +342,7 @@ export function CreateEventForm({ projects, defaultProjectId = '' }: CreateEvent
             <div className="space-y-2">
               <Label>Contractor</Label>
               <Select
-                value={contractor || undefined}
+                value={contractor || null}
                 onValueChange={(v) => setContractor(v ?? '')}
               >
                 <SelectTrigger className="w-full">
@@ -364,7 +373,7 @@ export function CreateEventForm({ projects, defaultProjectId = '' }: CreateEvent
             <div className="space-y-2">
               <Label>Linked Project (optional)</Label>
               <Select
-                value={projectId || undefined}
+                value={projectId || null}
                 onValueChange={(v) => setProjectId(v ?? '')}
               >
                 <SelectTrigger className="w-full">
@@ -515,7 +524,7 @@ export function CreateEventForm({ projects, defaultProjectId = '' }: CreateEvent
             <div className="space-y-2">
               <Label>Impacted Party</Label>
               <Select
-                value={impactedParty || undefined}
+                value={impactedParty || null}
                 onValueChange={(v) => setImpactedParty(v ?? '')}
               >
                 <SelectTrigger className="w-full">

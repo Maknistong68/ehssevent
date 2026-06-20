@@ -7,6 +7,7 @@ import { requireAdmin } from '@/lib/auth/guards'
 import { AdminOrganizations } from './organizations'
 import { AdminUsers } from './users'
 import { AuditLog } from './audit-log'
+import { PermissionMatrix } from './permission-matrix'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
 export const metadata = {
@@ -38,6 +39,7 @@ export default async function AdminPage() {
             Organizations ({organizations.length})
           </TabsTrigger>
           <TabsTrigger value="users">Users ({profiles.length})</TabsTrigger>
+          <TabsTrigger value="roles">Roles</TabsTrigger>
           <TabsTrigger value="audit">Audit Log</TabsTrigger>
         </TabsList>
 
@@ -51,6 +53,10 @@ export default async function AdminPage() {
             organizations={organizations}
             currentUserId={auth.profile.id}
           />
+        </TabsContent>
+
+        <TabsContent value="roles" className="mt-4">
+          <PermissionMatrix />
         </TabsContent>
 
         <TabsContent value="audit" className="mt-4">

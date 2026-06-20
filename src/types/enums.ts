@@ -158,6 +158,36 @@ export const EVENT_APPROVAL_COLORS: Record<EventApprovalLevel, string> = {
   closed: 'bg-green-100 text-green-800',
 }
 
+// Canonical ordered lifecycle of an event. The sequence alternates between
+// contractor-owned and client-owned stages — this ordering is the single
+// source of truth for "what comes next" in the approval workflow.
+export const EVENT_APPROVAL_SEQUENCE: EventApprovalLevel[] = [
+  'draft',
+  'contractor_review',
+  'review',
+  'contractor_investigation',
+  'investigation',
+  'validation',
+  'approval',
+  'closed',
+]
+
+// Which organization type is responsible for acting at each stage. This is the
+// data-structure fact that authorization is derived from: contractor stages can
+// only be advanced by contractor-side actors, client stages by client-side
+// actors. `null` marks boundary stages (draft = the reporter submits; closed =
+// terminal/immutable) that no single org "owns".
+export const EVENT_STAGE_OWNER: Record<EventApprovalLevel, OrgType | null> = {
+  draft: null,
+  contractor_review: 'contractor',
+  review: 'client',
+  contractor_investigation: 'contractor',
+  investigation: 'client',
+  validation: 'client',
+  approval: 'client',
+  closed: null,
+}
+
 export const EVENT_TYPE_LABELS: Record<EventType, string> = {
   incident: 'Incident',
   near_miss: 'Near Miss',
