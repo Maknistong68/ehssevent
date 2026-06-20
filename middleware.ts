@@ -1,32 +1,10 @@
 import createMiddleware from 'next-intl/middleware'
-import { type NextRequest } from 'next/server'
 import { routing } from '@/i18n/routing'
-import { updateSession } from '@/lib/supabase/middleware'
 
 const intlMiddleware = createMiddleware(routing)
 
-export async function middleware(request: NextRequest) {
-  // Run next-intl middleware first (handles locale detection & URL rewriting)
-  const intlResponse = intlMiddleware(request)
-
-  // Run Supabase session middleware on the (possibly rewritten) request
-  const supabaseResponse = await updateSession(request)
-
-  // If Supabase middleware wants to redirect, use that response
-  if (supabaseResponse.headers.get('location')) {
-    // Merge any cookies set by intl middleware
-    intlResponse.cookies.getAll().forEach((cookie) => {
-      supabaseResponse.cookies.set(cookie.name, cookie.value)
-    })
-    return supabaseResponse
-  }
-
-  // Otherwise use intl response but merge Supabase cookies
-  supabaseResponse.cookies.getAll().forEach((cookie) => {
-    intlResponse.cookies.set(cookie.name, cookie.value)
-  })
-
-  return intlResponse
+export function middleware(request: Parameters<typeof intlMiddleware>[0]) {
+  return intlMiddleware(request)
 }
 
 export const config = {

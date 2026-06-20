@@ -1,7 +1,7 @@
 export const dynamic = 'force-dynamic'
 
 import { notFound } from 'next/navigation'
-import { createClient } from '@/lib/supabase/server'
+import { MOCK_USER_ID, MOCK_CURRENT_USER } from '@/lib/mock-data'
 import { getCorrectiveActionById } from '@/lib/queries/corrective-actions'
 import { CaDetail } from '@/components/corrective-actions/ca-detail'
 
@@ -21,31 +21,18 @@ export async function generateMetadata({ params }: Props) {
 
 export default async function CorrectiveActionDetailPage({ params }: Props) {
   const { id } = await params
-  const supabase = await createClient()
-
-  const [
-    {
-      data: { user },
-    },
-    ca,
-  ] = await Promise.all([supabase.auth.getUser(), getCorrectiveActionById(id)])
+  const ca = await getCorrectiveActionById(id)
 
   if (!ca) notFound()
 
-  let isAdmin = false
-  if (user) {
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', user.id)
-      .single()
-    isAdmin = profile?.role === 'system_admin' || profile?.role === 'support'
-  }
+  const isAdmin =
+    MOCK_CURRENT_USER.role === 'system_admin' ||
+    MOCK_CURRENT_USER.role === 'support'
 
   return (
     <CaDetail
       correctiveAction={ca}
-      currentUserId={user?.id ?? ''}
+      currentUserId={MOCK_USER_ID}
       isAdmin={isAdmin}
     />
   )

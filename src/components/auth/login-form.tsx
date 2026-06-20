@@ -3,7 +3,6 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { AuthShell, AuthField, AuthAlert } from '@/components/auth/auth-shell'
 import { AlertCircle, Eye, EyeOff, Loader2, Lock, Mail } from 'lucide-react'
@@ -16,7 +15,6 @@ export function LoginForm() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const router = useRouter()
-  const supabase = createClient()
   const t = useTranslations('auth')
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -24,17 +22,7 @@ export function LoginForm() {
     setError('')
     setLoading(true)
 
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    })
-
-    if (error) {
-      setError(error.message)
-      setLoading(false)
-      return
-    }
-
+    // Mock login — always succeeds
     router.push('/dashboard')
     router.refresh()
   }

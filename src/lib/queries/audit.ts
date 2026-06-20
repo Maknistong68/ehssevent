@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+import { MOCK_AUDIT_LOGS } from '@/lib/mock-data'
 
 export interface AuditLogEntry {
   id: string
@@ -12,18 +12,6 @@ export interface AuditLogEntry {
   created_at: string
 }
 
-/**
- * Returns the most recent audit log entries. Admin-only (RLS enforced).
- */
 export async function getAuditLogs(limit = 100): Promise<AuditLogEntry[]> {
-  const supabase = await createClient()
-
-  const { data, error } = await supabase
-    .from('audit_logs')
-    .select('*')
-    .order('created_at', { ascending: false })
-    .limit(limit)
-
-  if (error) return []
-  return (data as AuditLogEntry[]) || []
+  return MOCK_AUDIT_LOGS.slice(0, limit)
 }

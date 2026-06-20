@@ -3,7 +3,6 @@
 import { useState, useRef } from 'react'
 import { Button } from '@/components/ui/button'
 import { Camera, X, Loader2 } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
 import { toSecurePhotoUrl } from '@/lib/utils/photo-url'
 import Image from 'next/image'
 
@@ -27,12 +26,11 @@ export function PhotoUpload({
   photos,
   onPhotosChange,
   maxPhotos = 5,
-  bucket = 'observation-photos',
+  bucket: _bucket = 'observation-photos',
 }: PhotoUploadProps) {
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState('')
   const inputRef = useRef<HTMLInputElement>(null)
-  const supabase = createClient()
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files
@@ -57,18 +55,9 @@ export function PhotoUpload({
         continue
       }
 
-      const fileExt = file.name.split('.').pop()
-      const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`
-      const filePath = `uploads/${fileName}`
-
-      const { error: uploadError } = await supabase.storage.from(bucket).upload(filePath, file)
-
-      if (!uploadError) {
-        const {
-          data: { publicUrl },
-        } = supabase.storage.from(bucket).getPublicUrl(filePath)
-        newPhotos.push(publicUrl)
-      }
+      // Use local object URL instead of Supabase storage upload
+      const localUrl = URL.createObjectURL(file)
+      newPhotos.push(localUrl)
     }
 
     onPhotosChange([...photos, ...newPhotos])

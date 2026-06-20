@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { AuthShell, AuthField, AuthAlert } from '@/components/auth/auth-shell'
 import { AlertCircle, ArrowLeft, CheckCircle2, Loader2, Mail } from 'lucide-react'
@@ -13,7 +12,6 @@ export function ForgotPasswordForm() {
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   const [loading, setLoading] = useState(false)
-  const supabase = createClient()
   const t = useTranslations('auth')
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -22,16 +20,7 @@ export function ForgotPasswordForm() {
     setSuccess('')
     setLoading(true)
 
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/auth/callback?next=/profile`,
-    })
-
-    if (error) {
-      setError(error.message)
-      setLoading(false)
-      return
-    }
-
+    // Mock — always succeeds
     setSuccess(t('checkEmailReset'))
     setLoading(false)
   }

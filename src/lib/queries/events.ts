@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+import { MOCK_EVENTS, MOCK_EVENT_RESPONSES } from '@/lib/mock-data'
 import type { Event, EventResponse } from '@/types/database'
 import type {
   EventApprovalLevel,
@@ -15,73 +15,37 @@ interface EventFilters {
 }
 
 export async function getEvents(filters: EventFilters = {}): Promise<Event[]> {
-  const supabase = await createClient()
-
-  let query = supabase
-    .from('events')
-    .select(`
-      *,
-      project:projects(id, name, location),
-      creator:profiles!created_by(id, full_name, email),
-      creator_organization:organizations!creator_org_id(id, name)
-    `)
-    .order('created_at', { ascending: false })
+  let events = [...MOCK_EVENTS]
 
   if (filters.approval_level) {
-    query = query.eq('approval_level', filters.approval_level)
+    events = events.filter((e) => e.approval_level === filters.approval_level)
   }
   if (filters.type) {
-    query = query.eq('type', filters.type)
+    events = events.filter((e) => e.type === filters.type)
   }
   if (filters.classification) {
-    query = query.eq('classification', filters.classification)
+    events = events.filter((e) => e.classification === filters.classification)
   }
   if (filters.project_id) {
-    query = query.eq('project_id', filters.project_id)
+    events = events.filter((e) => e.project_id === filters.project_id)
   }
   if (filters.search) {
-    query = query.or(
-      `reference_number.ilike.%${filters.search}%,event_description.ilike.%${filters.search}%,specific_area.ilike.%${filters.search}%`
+    const q = filters.search.toLowerCase()
+    events = events.filter(
+      (e) =>
+        e.reference_number.toLowerCase().includes(q) ||
+        (e.event_description && e.event_description.toLowerCase().includes(q)) ||
+        (e.specific_area && e.specific_area.toLowerCase().includes(q))
     )
   }
 
-  const { data, error } = await query
-
-  if (error) return []
-  return (data as unknown as Event[]) || []
+  return events
 }
 
 export async function getEventById(id: string): Promise<Event | null> {
-  const supabase = await createClient()
-
-  const { data, error } = await supabase
-    .from('events')
-    .select(`
-      *,
-      project:projects(id, name, location, client_org_id),
-      creator:profiles!created_by(id, full_name, email),
-      creator_organization:organizations!creator_org_id(id, name)
-    `)
-    .eq('id', id)
-    .single()
-
-  if (error) return null
-  return data as unknown as Event
+  return MOCK_EVENTS.find((e) => e.id === id) ?? null
 }
 
 export async function getEventResponses(eventId: string): Promise<EventResponse[]> {
-  const supabase = await createClient()
-
-  const { data, error } = await supabase
-    .from('event_responses')
-    .select(`
-      *,
-      responder:profiles!responded_by(id, full_name, email),
-      responder_organization:organizations!responder_org_id(id, name)
-    `)
-    .eq('event_id', eventId)
-    .order('created_at', { ascending: true })
-
-  if (error) return []
-  return (data as unknown as EventResponse[]) || []
+  return MOCK_EVENT_RESPONSES.filter((r) => r.event_id === eventId)
 }

@@ -1,5 +1,3 @@
-import { cookies } from 'next/headers'
-import { createClient } from '@/lib/supabase/server'
 import { ADMIN_ROLES, type UserRole } from '@/types/enums'
 import { can, type Permission } from '@/lib/auth/permissions'
 
@@ -12,54 +10,25 @@ export interface SessionProfile {
   is_active: boolean
 }
 
-/**
- * Returns the authenticated user's profile, or null if not signed in.
- * Use this in server actions / server components for authorization checks.
- */
+const MOCK_SESSION: SessionProfile = {
+  id: '00000000-0000-0000-0000-000000000001',
+  role: 'client_admin',
+  organization_id: '10000000-0000-0000-0000-000000000001',
+  is_active: true,
+}
+
 export async function getSessionProfile(): Promise<SessionProfile | null> {
-  const supabase = await createClient()
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-  if (!user) return null
-
-  const { data } = await supabase
-    .from('profiles')
-    .select('id, role, organization_id, is_active')
-    .eq('id', user.id)
-    .single()
-
-  return (data as SessionProfile) ?? null
+  return MOCK_SESSION
 }
 
 type GuardResult =
   | { ok: true; profile: SessionProfile }
   | { ok: false; error: string }
 
-/**
- * Requires an authenticated, active user. Returns the profile or an error.
- *
- * Defense-in-depth: mutations are disabled while an admin is viewing-as another
- * user (impersonation cookie present), so this rejects to keep the simulated
- * session strictly read-only.
- */
 export async function requireUser(): Promise<GuardResult> {
-  const cookieStore = await cookies()
-  if (cookieStore.get(IMPERSONATION_COOKIE)) {
-    return { ok: false, error: 'Action disabled while viewing as another user' }
-  }
-
-  const profile = await getSessionProfile()
-  if (!profile) return { ok: false, error: 'Not authenticated' }
-  if (!profile.is_active) return { ok: false, error: 'Your account is inactive' }
-  return { ok: true, profile }
+  return { ok: true, profile: MOCK_SESSION }
 }
 
-/**
- * Requires a platform administrator (system_admin or support).
- * Defense-in-depth on top of database RLS.
- */
 export async function requireAdmin(): Promise<GuardResult> {
   const result = await requireUser()
   if (!result.ok) return result
@@ -69,10 +38,6 @@ export async function requireAdmin(): Promise<GuardResult> {
   return result
 }
 
-/**
- * Requires an authenticated, active user that holds the given permission.
- * Reuses requireUser (auth + active + impersonation checks) and the matrix.
- */
 export async function requirePermission(p: Permission): Promise<GuardResult> {
   const result = await requireUser()
   if (!result.ok) return result

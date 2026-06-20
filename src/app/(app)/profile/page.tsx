@@ -7,7 +7,6 @@ import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import { Skeleton } from '@/components/ui/skeleton'
 import { LogOut, Mail, Building2, Shield, User, FileText, Lock } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import { format } from 'date-fns'
 
@@ -23,10 +22,8 @@ const ROLE_LABELS: Record<string, string> = {
 export default function ProfilePage() {
   const { profile, loading } = useAuth()
   const router = useRouter()
-  const supabase = createClient()
 
   const handleLogout = async () => {
-    await supabase.auth.signOut()
     router.push('/login')
     router.refresh()
   }

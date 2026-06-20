@@ -2,14 +2,13 @@ export const dynamic = 'force-dynamic'
 
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/server'
+import { MOCK_USER_ID } from '@/lib/mock-data'
 import { getInspectionById, getInspectionResponses } from '@/lib/queries/inspections'
 import { getInspectionCorrectiveActions } from '@/lib/queries/corrective-actions'
 import { InspectionStatusBadge } from '@/components/inspections/inspection-status-badge'
 import { InspectionScoreBadge } from '@/components/inspections/inspection-score-badge'
 import { InspectionDetail } from '@/components/inspections/inspection-detail'
 import { Card, CardContent } from '@/components/ui/card'
-import { Separator } from '@/components/ui/separator'
 import { ArrowLeft, MapPin, User, CalendarDays, FileText } from 'lucide-react'
 import { format } from 'date-fns'
 
@@ -29,10 +28,8 @@ export async function generateMetadata({ params }: Props) {
 
 export default async function InspectionDetailPage({ params }: Props) {
   const { id } = await params
-  const supabase = await createClient()
-  const [{ data: { user } }, inspection, responses, correctiveActions] =
+  const [inspection, responses, correctiveActions] =
     await Promise.all([
-      supabase.auth.getUser(),
       getInspectionById(id),
       getInspectionResponses(id),
       getInspectionCorrectiveActions(id),
@@ -40,7 +37,7 @@ export default async function InspectionDetailPage({ params }: Props) {
 
   if (!inspection) notFound()
 
-  const canRaiseCa = !!user && user.id === inspection.conducted_by
+  const canRaiseCa = MOCK_USER_ID === inspection.conducted_by
 
   const project = inspection.project as
     | { id: string; name: string; location?: string }

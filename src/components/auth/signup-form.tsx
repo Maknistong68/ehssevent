@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { AuthShell, AuthField, AuthAlert } from '@/components/auth/auth-shell'
 import { AlertCircle, CheckCircle2, Loader2, Lock, Mail, User } from 'lucide-react'
@@ -18,7 +17,6 @@ export function SignupForm() {
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   const [loading, setLoading] = useState(false)
-  const supabase = createClient()
   const t = useTranslations('auth')
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -43,24 +41,7 @@ export function SignupForm() {
 
     setLoading(true)
 
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
-          full_name: fullName,
-          terms_accepted: 'true',
-          privacy_accepted: 'true',
-        },
-      },
-    })
-
-    if (error) {
-      setError(error.message)
-      setLoading(false)
-      return
-    }
-
+    // Mock signup — always succeeds
     setSuccess(t('checkEmail'))
     setLoading(false)
   }
