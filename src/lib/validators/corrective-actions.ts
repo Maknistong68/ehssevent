@@ -9,13 +9,24 @@ export const createCorrectiveActionSchema = z.object({
   item_id: z.string().optional(),
   item_label: z.string().optional(),
   assigned_to: z.string().uuid('Please select a responsible person'),
+  priority: z.enum(['low', 'medium', 'high', 'critical']).optional(),
+  due_date: z.string().optional(),
 })
 
 export const updateCorrectiveActionStatusSchema = z.object({
   corrective_action_id: z.string().uuid(),
-  status: z.enum(['pending_approval', 'approved', 'rejected']),
+  status: z.enum(['in_progress', 'pending_approval', 'approved', 'rejected']),
   rejection_reason: z.string().optional(),
   photo_urls: z.array(z.string()).optional(),
+})
+
+export const updateCorrectiveActionSchema = z.object({
+  corrective_action_id: z.string().uuid(),
+  title: z.string().min(3, 'Title must be at least 3 characters'),
+  description: z.string().optional(),
+  assigned_to: z.string().uuid('Please select a responsible person'),
+  priority: z.enum(['low', 'medium', 'high', 'critical']),
+  due_date: z.string().optional(),
 })
 
 export type CreateCorrectiveActionInput = z.infer<
@@ -23,4 +34,7 @@ export type CreateCorrectiveActionInput = z.infer<
 >
 export type UpdateCorrectiveActionStatusInput = z.infer<
   typeof updateCorrectiveActionStatusSchema
+>
+export type UpdateCorrectiveActionInput = z.infer<
+  typeof updateCorrectiveActionSchema
 >

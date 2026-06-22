@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { useAuth } from '@/components/auth/auth-provider'
 import { useTranslations } from 'next-intl'
 import { LanguageSwitcher } from '@/components/layout/language-switcher'
+import { NotificationBell } from '@/components/notifications/notification-bell'
 import { initials } from '@/lib/utils/people'
 
 export function Header() {
@@ -20,6 +21,7 @@ export function Header() {
         </div>
         <div className="flex items-center gap-2">
           <LanguageSwitcher variant="compact" />
+          <NotificationBell variant="compact" label={t('nav.notifications')} />
           <Link
             href="/profile"
             className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-semibold text-primary-foreground shadow-soft"

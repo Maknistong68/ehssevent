@@ -14,10 +14,13 @@ import {
   updateEventSchema,
   updateApprovalLevelSchema,
   closeoutEventSchema,
+  approveCloseoutSchema,
   createEventResponseSchema,
 } from '@/lib/validators/events'
 import { reduceGeoPrecision } from '@/lib/utils/geo'
 import { logAudit } from '@/lib/actions/audit'
+import { createNotification } from '@/lib/actions/notifications'
+import { EVENT_APPROVAL_LABELS } from '@/types/enums'
 import type { Event, EventResponse } from '@/types/database'
 
 export async function createEvent(input: unknown) {
@@ -80,6 +83,8 @@ export async function createEvent(input: unknown) {
     approver_id: data.approver_id || null,
     closeout_photo_urls: [],
     date_closure: null,
+    client_closeout_approved_at: null,
+    client_closeout_approved_by: null,
     reporting_deadline_24h: null,
     reporting_deadline_3day: null,
     deadline_24h_met: false,
@@ -181,13 +186,13 @@ export async function updateEvent(input: unknown) {
   for (const key of EDITABLE_EVENT_FIELDS) {
     if (!(key in data)) continue
     const next = normalize(key, (data as Record<string, unknown>)[key])
-    const prev = (event as Record<string, unknown>)[key]
+    const prev = (event as unknown as Record<string, unknown>)[key]
     const changed = Array.isArray(next)
       ? JSON.stringify(next) !== JSON.stringify(prev)
       : next !== prev
     if (changed) {
       diff[key] = { from: prev, to: next }
-      ;(event as Record<string, unknown>)[key] = next
+      ;(event as unknown as Record<string, unknown>)[key] = next
     }
   }
 
@@ -264,6 +269,19 @@ export async function updateEventApprovalLevel(input: unknown) {
       approval_level: { from: previousLevel, to: parsed.data.approval_level },
     },
   })
+
+  // Keep the event's reporter informed as it moves through the workflow.
+  if (event.created_by && event.created_by !== auth.profile.id) {
+    await createNotification({
+      user_id: event.created_by,
+      type: 'event_stage_changed',
+      title: `Event ${event.reference_number} moved to ${
+        EVENT_APPROVAL_LABELS[parsed.data.approval_level]
+      }`,
+      body: event.event_description ?? null,
+      link: `/events/${event.id}`,
+    })
+  }
 
   revalidatePath(`/events/${parsed.data.event_id}`)
   revalidatePath('/events')
@@ -345,6 +363,46 @@ export async function closeoutEvent(input: unknown) {
     target_id: event.id,
     target_label: event.reference_number,
     metadata: { photos: parsed.data.closeout_photo_urls.length },
+  })
+
+  revalidatePath(`/events/${parsed.data.event_id}`)
+  revalidatePath('/events')
+  revalidatePath('/dashboard')
+
+  return { success: true }
+}
+
+// Client sign-off on a contractor's closeout. Recorded against the event and
+// audited so the approval is accountable. Requires the event to be closed out
+// first.
+export async function approveCloseout(input: unknown) {
+  const auth = await requirePermission('event:manage')
+  if (!auth.ok) return { error: auth.error }
+
+  const parsed = approveCloseoutSchema.safeParse(input)
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0].message }
+  }
+
+  const event = MOCK_EVENTS.find((e) => e.id === parsed.data.event_id)
+  if (!event) return { error: 'Event not found' }
+  if (!event.date_closure) {
+    return { error: 'Event must be closed out before it can be approved' }
+  }
+  if (event.client_closeout_approved_at) {
+    return { error: 'Closeout has already been approved' }
+  }
+
+  const now = new Date().toISOString()
+  event.client_closeout_approved_at = now
+  event.client_closeout_approved_by = auth.profile.id
+  event.updated_at = now
+
+  await logAudit({
+    action: 'event.closeout_approved',
+    target_table: 'events',
+    target_id: event.id,
+    target_label: event.reference_number,
   })
 
   revalidatePath(`/events/${parsed.data.event_id}`)

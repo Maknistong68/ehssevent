@@ -21,6 +21,7 @@ import {
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
+import { DatePicker } from '@/components/ui/date-picker'
 import { Search, SlidersHorizontal } from 'lucide-react'
 
 export type ListFilterField =
@@ -32,6 +33,13 @@ export type ListFilterField =
       placeholder?: string
       options: { value: string; label: string }[]
     }
+  | { type: 'daterange'; fromKey: string; toKey: string; label: string }
+
+function fieldKeys(field: ListFilterField): string[] {
+  return field.type === 'daterange'
+    ? [field.fromKey, field.toKey]
+    : [field.key]
+}
 
 export interface ListFilterSortOption {
   value: string
@@ -73,7 +81,9 @@ export function ListFilters({
     if (next) {
       const fresh: Draft = {}
       for (const field of fields) {
-        fresh[field.key] = searchParams.get(field.key) ?? ''
+        for (const key of fieldKeys(field)) {
+          fresh[key] = searchParams.get(key) ?? ''
+        }
       }
       setDraft(fresh)
       setDraftSort(sortValueFromParams())
@@ -88,11 +98,13 @@ export function ListFilters({
     const params = new URLSearchParams(searchParams.toString())
 
     for (const field of fields) {
-      const value = draft[field.key] ?? ''
-      if (value && value !== 'all') {
-        params.set(field.key, value)
-      } else {
-        params.delete(field.key)
+      for (const key of fieldKeys(field)) {
+        const value = draft[key] ?? ''
+        if (value && value !== 'all') {
+          params.set(key, value)
+        } else {
+          params.delete(key)
+        }
       }
     }
 
@@ -113,7 +125,9 @@ export function ListFilters({
 
   const reset = () => {
     const cleared: Draft = {}
-    for (const field of fields) cleared[field.key] = ''
+    for (const field of fields) {
+      for (const key of fieldKeys(field)) cleared[key] = ''
+    }
     setDraft(cleared)
     setDraftSort('default')
     router.push(pathname)
@@ -125,7 +139,9 @@ export function ListFilters({
   const activeCount = (() => {
     let count = 0
     for (const field of fields) {
-      if (searchParams.get(field.key)) count += 1
+      for (const key of fieldKeys(field)) {
+        if (searchParams.get(key)) count += 1
+      }
     }
     if (sortOptions && sortValueFromParams() !== 'default') count += 1
     return count
@@ -167,6 +183,26 @@ export function ListFilters({
                     value={draft[field.key] ?? ''}
                     onChange={(e) => setField(field.key, e.target.value)}
                   />
+                </div>
+              )
+            }
+
+            if (field.type === 'daterange') {
+              return (
+                <div key={field.fromKey} className="space-y-2">
+                  <Label>{field.label}</Label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <DatePicker
+                      value={draft[field.fromKey] ?? ''}
+                      onChange={(v) => setField(field.fromKey, v)}
+                      placeholder="From"
+                    />
+                    <DatePicker
+                      value={draft[field.toKey] ?? ''}
+                      onChange={(v) => setField(field.toKey, v)}
+                      placeholder="To"
+                    />
+                  </div>
                 </div>
               )
             }

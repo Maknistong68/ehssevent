@@ -13,8 +13,10 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Card, CardContent } from '@/components/ui/card'
+import { DatePicker } from '@/components/ui/date-picker'
 import { AlertCircle, ArrowLeft, Loader2 } from 'lucide-react'
 import { createCorrectiveAction } from '@/lib/actions/corrective-actions'
+import { CA_PRIORITY_LABELS, type CorrectiveActionPriority } from '@/types/enums'
 import Link from 'next/link'
 
 interface CreateCaFormProps {
@@ -39,6 +41,8 @@ export function CreateCaForm({
   const [title, setTitle] = useState(itemLabel ? `Corrective action: ${itemLabel}` : '')
   const [description, setDescription] = useState('')
   const [assignedTo, setAssignedTo] = useState('')
+  const [priority, setPriority] = useState<CorrectiveActionPriority>('medium')
+  const [dueDate, setDueDate] = useState('')
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -60,6 +64,8 @@ export function CreateCaForm({
       item_id: itemId || undefined,
       item_label: itemLabel || undefined,
       assigned_to: assignedTo,
+      priority,
+      due_date: dueDate || undefined,
     })
 
     if (result?.error) {
@@ -72,7 +78,7 @@ export function CreateCaForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       {error && (
-        <div className="flex items-center gap-2 rounded-2xl bg-destructive/10 px-4 py-3 text-sm font-medium text-destructive">
+        <div role="alert" className="flex items-center gap-2 rounded-2xl bg-destructive/10 px-4 py-3 text-sm font-medium text-destructive">
           <AlertCircle className="h-4 w-4 shrink-0" />
           {error}
         </div>
@@ -129,6 +135,42 @@ export function CreateCaForm({
               The responsible person uploads the evidence to submit this action for
               your approval.
             </p>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-2">
+              <Label>Priority</Label>
+              <Select
+                value={priority}
+                onValueChange={(v) =>
+                  setPriority((v ?? 'medium') as CorrectiveActionPriority)
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {(
+                    Object.keys(CA_PRIORITY_LABELS) as CorrectiveActionPriority[]
+                  ).map((p) => (
+                    <SelectItem key={p} value={p}>
+                      {CA_PRIORITY_LABELS[p]}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="due_date">Due Date</Label>
+              <DatePicker
+                id="due_date"
+                value={dueDate}
+                onChange={setDueDate}
+                placeholder="Select due date"
+                disablePast
+              />
+            </div>
           </div>
         </CardContent>
       </Card>

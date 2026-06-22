@@ -6,9 +6,13 @@ import { CaTable } from '@/components/corrective-actions/ca-table'
 import { CaFilters } from '@/components/corrective-actions/ca-filters'
 import { EmptyState } from '@/components/shared/empty-state'
 import { Pagination } from '@/components/shared/pagination'
+import { ExportButton } from '@/components/shared/export-button'
 import { ListChecks } from 'lucide-react'
 import { sortItems, paginate, parsePageParams } from '@/lib/list-utils'
-import type { CorrectiveActionStatus } from '@/types/enums'
+import type {
+  CorrectiveActionStatus,
+  CorrectiveActionPriority,
+} from '@/types/enums'
 import type { CorrectiveAction } from '@/types/database'
 
 export const metadata = {
@@ -31,7 +35,11 @@ const caAccessors = {
 interface Props {
   searchParams: Promise<{
     status?: string
+    priority?: string
     search?: string
+    overdue?: string
+    date_from?: string
+    date_to?: string
     sort?: string
     dir?: string
     page?: string
@@ -43,6 +51,10 @@ export default async function CorrectiveActionsPage({ searchParams }: Props) {
   const params = await searchParams
   const correctiveActions = await getCorrectiveActions({
     status: params.status as CorrectiveActionStatus | undefined,
+    priority: params.priority as CorrectiveActionPriority | undefined,
+    overdue: params.overdue === '1',
+    date_from: params.date_from,
+    date_to: params.date_to,
     search: params.search,
   })
 
@@ -61,6 +73,17 @@ export default async function CorrectiveActionsPage({ searchParams }: Props) {
             {correctiveActions.length} corrective action{correctiveActions.length !== 1 ? 's' : ''}
           </p>
         </div>
+        <ExportButton
+          type="corrective-actions"
+          params={{
+            status: params.status,
+            priority: params.priority,
+            overdue: params.overdue,
+            date_from: params.date_from,
+            date_to: params.date_to,
+            search: params.search,
+          }}
+        />
       </div>
 
       <CaFilters />

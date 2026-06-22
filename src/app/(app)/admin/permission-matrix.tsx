@@ -52,10 +52,12 @@ const PERMISSION_LABELS: Record<Permission, string> = {
   'project:view': 'View projects',
   'project:manage': 'Manage projects',
   'team:view': 'View team',
+  'notification:view': 'View notifications',
   'org:manage': 'Manage organizations',
   'user:manage': 'Manage users',
   'admin:access': 'Access admin panel',
   'audit:view': 'View audit log',
+  'dsr:manage': 'Manage data subject requests',
   'impersonate:use': 'Impersonate ("view as")',
 }
 
@@ -66,10 +68,12 @@ const GROUP_LABELS: Record<string, string> = {
   inspection: 'Inspections',
   project: 'Projects',
   team: 'Team',
+  notification: 'Notifications',
   org: 'Administration',
   user: 'Administration',
   admin: 'Administration',
   audit: 'Administration',
+  dsr: 'Administration',
   impersonate: 'Administration',
 }
 

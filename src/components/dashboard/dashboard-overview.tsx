@@ -171,7 +171,7 @@ export function DashboardOverview({
           icon={Clock}
           color="bg-red-100 text-red-700"
           badge={kpis.overdueBadge}
-          href="/corrective-actions"
+          href="/corrective-actions?overdue=1"
           index={3}
         />
       </div>

@@ -8,7 +8,8 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Checkbox } from '@/components/ui/checkbox'
-import { Calendar } from '@/components/ui/calendar'
+import { DatePicker } from '@/components/ui/date-picker'
+import { TimePicker } from '@/components/ui/time-picker'
 import {
   Select,
   SelectContent,
@@ -16,21 +17,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover'
 import { Card, CardContent } from '@/components/ui/card'
 import { PhotoUpload } from '@/components/shared/photo-upload'
 import {
   AlertCircle,
   ArrowLeft,
-  Calendar as CalendarIcon,
   Loader2,
   MapPin,
 } from 'lucide-react'
-import { format } from 'date-fns'
 import { updateEvent } from '@/lib/actions/events'
 import {
   EVENT_TYPE_LABELS,
@@ -89,12 +83,11 @@ function CheckboxRow({
   )
 }
 
-function splitDate(value: string | null): { date?: Date; time: string } {
-  if (!value) return { date: undefined, time: '' }
+function splitDate(value: string | null): { date: string; time: string } {
+  if (!value) return { date: '', time: '' }
   const [datePart, timePart] = value.split('T')
-  const d = new Date(datePart)
   return {
-    date: isNaN(d.getTime()) ? undefined : d,
+    date: datePart ?? '',
     time: timePart ? timePart.slice(0, 5) : '',
   }
 }
@@ -106,7 +99,7 @@ export function EditEventForm({ event, projects, users }: EditEventFormProps) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [photos, setPhotos] = useState<string[]>(event.photo_urls ?? [])
-  const [eventDate, setEventDate] = useState<Date | undefined>(initialDate.date)
+  const [eventDate, setEventDate] = useState(initialDate.date)
   const [eventTime, setEventTime] = useState(initialDate.time)
   const [showGps, setShowGps] = useState(
     event.latitude != null || event.longitude != null
@@ -114,10 +107,10 @@ export function EditEventForm({ event, projects, users }: EditEventFormProps) {
   const [reason, setReason] = useState('')
 
   const type = event.type
-  const [classification, setClassification] = useState(
+  const [classification, setClassification] = useState<string>(
     event.classification ?? ''
   )
-  const [significantHazard, setSignificantHazard] = useState(
+  const [significantHazard, setSignificantHazard] = useState<string>(
     event.significant_hazard ?? ''
   )
   const [impactedParty, setImpactedParty] = useState(event.impacted_party ?? '')
@@ -206,7 +199,7 @@ export function EditEventForm({ event, projects, users }: EditEventFormProps) {
       latitude: showGps ? latitude || undefined : undefined,
       longitude: showGps ? longitude || undefined : undefined,
       event_date: eventDate
-        ? format(eventDate, 'yyyy-MM-dd') + (eventTime ? 'T' + eventTime : '')
+        ? eventDate + (eventTime ? 'T' + eventTime : '')
         : undefined,
       event_description: eventDescription || undefined,
       photo_urls: photos,
@@ -404,42 +397,18 @@ export function EditEventForm({ event, projects, users }: EditEventFormProps) {
           </h3>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="space-y-2">
-              <Label>Date</Label>
-              <Popover>
-                <PopoverTrigger
-                  render={
-                    <Button
-                      type="button"
-                      variant="outline"
-                      className="w-full justify-start font-normal data-[empty=true]:text-muted-foreground"
-                      data-empty={!eventDate}
-                      data-icon="inline-start"
-                    />
-                  }
-                >
-                  <CalendarIcon className="h-4 w-4" />
-                  {eventDate
-                    ? format(eventDate, 'dd MMM yyyy')
-                    : 'Select event date'}
-                </PopoverTrigger>
-                <PopoverContent>
-                  <Calendar
-                    mode="single"
-                    selected={eventDate}
-                    onSelect={setEventDate}
-                    disabled={{ after: new Date() }}
-                  />
-                </PopoverContent>
-              </Popover>
+              <Label htmlFor="event_date">Date</Label>
+              <DatePicker
+                id="event_date"
+                value={eventDate}
+                onChange={setEventDate}
+                placeholder="Select event date"
+                disableFuture
+              />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="event_time">Time (optional)</Label>
-              <Input
-                id="event_time"
-                type="time"
-                value={eventTime}
-                onChange={(e) => setEventTime(e.target.value)}
-              />
+              <Label>Time (optional)</Label>
+              <TimePicker value={eventTime} onChange={setEventTime} />
             </div>
           </div>
         </CardContent>

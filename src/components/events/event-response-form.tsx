@@ -57,7 +57,7 @@ export function EventResponseForm({ eventId, canClose = false }: EventResponseFo
       </CardHeader>
       <CardContent className="space-y-4">
         {error && (
-          <div className="flex items-center gap-2 rounded-2xl bg-destructive/10 px-4 py-3 text-sm font-medium text-destructive">
+          <div role="alert" className="flex items-center gap-2 rounded-2xl bg-destructive/10 px-4 py-3 text-sm font-medium text-destructive">
             <AlertCircle className="h-4 w-4 shrink-0" />
             {error}
           </div>

@@ -14,7 +14,8 @@ import { EventCard } from '@/components/events/event-card'
 import { ContractorManager } from '@/components/projects/contractor-manager'
 import { EmptyState } from '@/components/shared/empty-state'
 import { Button } from '@/components/ui/button'
-import { ArrowLeft, MapPin, Calendar, Plus } from 'lucide-react'
+import { Can } from '@/components/shared/role-gate'
+import { ArrowLeft, MapPin, Calendar, Plus, Pencil } from 'lucide-react'
 
 interface Props {
   params: Promise<{ id: string }>
@@ -61,6 +62,14 @@ export default async function ProjectDetailPage({ params }: Props) {
         <Badge variant="secondary">
           {project.is_active ? 'Active' : 'Inactive'}
         </Badge>
+        <Can permission="project:manage">
+          <Link href={`/projects/${project.id}/edit`}>
+            <Button variant="outline" size="sm" data-icon="inline-start">
+              <Pencil className="h-4 w-4" />
+              Edit
+            </Button>
+          </Link>
+        </Can>
       </div>
 
       {project.description && (

@@ -1,4 +1,5 @@
 import { MOCK_CORRECTIVE_ACTIONS } from '@/lib/mock-data'
+import { isCorrectiveActionOverdue } from '@/lib/utils/corrective-actions'
 import type { CorrectiveAction } from '@/types/database'
 import type {
   CorrectiveActionStatus,
@@ -11,6 +12,9 @@ interface CorrectiveActionFilters {
   project_id?: string
   event_id?: string
   inspection_id?: string
+  overdue?: boolean
+  date_from?: string
+  date_to?: string
   search?: string
 }
 
@@ -33,6 +37,15 @@ export async function getCorrectiveActions(
   }
   if (filters.inspection_id) {
     cas = cas.filter((ca) => ca.inspection_id === filters.inspection_id)
+  }
+  if (filters.overdue) {
+    cas = cas.filter((ca) => isCorrectiveActionOverdue(ca))
+  }
+  if (filters.date_from) {
+    cas = cas.filter((ca) => ca.created_at.slice(0, 10) >= filters.date_from!)
+  }
+  if (filters.date_to) {
+    cas = cas.filter((ca) => ca.created_at.slice(0, 10) <= filters.date_to!)
   }
   if (filters.search) {
     const q = filters.search.toLowerCase()

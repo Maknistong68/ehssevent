@@ -55,6 +55,35 @@ export interface DsrRequest {
   resolved_at: string | null
 }
 
+export type NotificationType =
+  | 'ca_assigned'
+  | 'ca_approved'
+  | 'ca_rejected'
+  | 'ca_submitted'
+  | 'event_stage_changed'
+  | 'deadline_approaching'
+
+export interface Notification {
+  id: string
+  user_id: string // recipient
+  type: NotificationType
+  title: string
+  body: string | null
+  link: string | null
+  read: boolean
+  created_at: string
+}
+
+// Per-user notification delivery preferences (Settings → Notifications).
+export interface NotificationPreferences {
+  user_id: string
+  email_enabled: boolean
+  ca_assigned: boolean
+  ca_status: boolean
+  event_stage: boolean
+  deadlines: boolean
+}
+
 export interface Project {
   id: string
   name: string
@@ -117,6 +146,8 @@ export interface Event {
   approver_id: string | null
   closeout_photo_urls: string[]
   date_closure: string | null
+  client_closeout_approved_at: string | null
+  client_closeout_approved_by: string | null
   reporting_deadline_24h: string | null
   reporting_deadline_3day: string | null
   deadline_24h_met: boolean

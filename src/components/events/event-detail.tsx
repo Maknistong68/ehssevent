@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label'
 import { CaCard } from '@/components/corrective-actions/ca-card'
 import { EventResponseTimeline } from './event-response-timeline'
 import { EventResponseForm } from './event-response-form'
-import { Plus, Timer } from 'lucide-react'
+import { Plus, Timer, Pencil } from 'lucide-react'
 import { toSecurePhotoUrl } from '@/lib/utils/photo-url'
 import { DeadlineBadge } from './deadline-badge'
 import {
@@ -28,7 +28,11 @@ import { ApprovalBadge } from './approval-badge'
 import { format } from 'date-fns'
 import { Loader2, CheckCircle2 } from 'lucide-react'
 import { toast } from 'sonner'
-import { updateEventApprovalLevel, closeoutEvent } from '@/lib/actions/events'
+import {
+  updateEventApprovalLevel,
+  closeoutEvent,
+  approveCloseout,
+} from '@/lib/actions/events'
 import {
   EVENT_APPROVAL_LABELS,
   EVENT_APPROVAL_SEQUENCE,
@@ -85,6 +89,7 @@ export function EventDetail({
     event.closeout_photo_urls || []
   )
   const [closing, setClosing] = useState(false)
+  const [approving, setApproving] = useState(false)
 
   const handleLevelChange = async (value: string | null) => {
     if (!value) return
@@ -118,6 +123,18 @@ export function EventDetail({
     }
   }
 
+  const handleApproveCloseout = async () => {
+    setApproving(true)
+    const res = await approveCloseout({ event_id: event.id })
+    setApproving(false)
+    if (res?.error) {
+      toast.error(res.error)
+    } else {
+      toast.success('Closeout approved')
+      router.refresh()
+    }
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -136,6 +153,16 @@ export function EventDetail({
             </span>
           </div>
         </div>
+        {event.approval_level !== 'closed' && (
+          <Can permission="event:manage">
+            <Link href={`/events/${event.id}/edit`}>
+              <Button variant="outline" size="sm" data-icon="inline-start">
+                <Pencil className="h-4 w-4" />
+                Edit
+              </Button>
+            </Link>
+          </Can>
+        )}
       </div>
 
       {canChangeLevel && (
@@ -423,7 +450,81 @@ export function EventDetail({
         <EventResponseForm eventId={event.id} canClose />
       </div>
 
-      {/* Closeout */}
+      {/* Closeout evidence — read-only preview visible to all viewers once the
+          event has been closed out. */}
+      {event.date_closure && (
+        <Card>
+          <CardContent className="space-y-4 p-4">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <h3 className="font-heading text-sm font-semibold tracking-tight">
+                Closeout Evidence
+              </h3>
+              <span className="inline-flex items-center gap-1 text-xs text-green-700">
+                <CheckCircle2 className="h-3.5 w-3.5" />
+                Closed {fmt(event.date_closure)}
+              </span>
+            </div>
+
+            {event.closeout_photo_urls.length > 0 ? (
+              <div className="flex flex-wrap gap-3">
+                {event.closeout_photo_urls.map((url, i) => (
+                  <div
+                    key={i}
+                    className="relative h-24 w-24 overflow-hidden rounded-md border"
+                  >
+                    <Image
+                      src={toSecurePhotoUrl(url)}
+                      alt={`Closeout photo ${i + 1}`}
+                      fill
+                      className="object-cover"
+                    />
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                No closeout photos were attached.
+              </p>
+            )}
+
+            {event.client_closeout_approved_at ? (
+              <div className="flex items-center gap-2 rounded-md bg-green-50 px-3 py-2 text-sm text-green-700">
+                <CheckCircle2 className="h-4 w-4 shrink-0" />
+                <span>
+                  Closeout approved
+                  {event.client_closeout_approved_by
+                    ? ` by ${resolvePerson(event.client_closeout_approved_by, users)}`
+                    : ''}{' '}
+                  on {fmt(event.client_closeout_approved_at)}
+                </span>
+              </div>
+            ) : (
+              <Can permission="event:manage">
+                <div className="space-y-2">
+                  <p className="text-sm text-muted-foreground">
+                    Confirm the corrective evidence is acceptable to sign off this
+                    closeout.
+                  </p>
+                  <Button
+                    variant="outline"
+                    onClick={handleApproveCloseout}
+                    disabled={approving}
+                  >
+                    {approving ? (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                      <CheckCircle2 className="mr-2 h-4 w-4" />
+                    )}
+                    Approve Closeout
+                  </Button>
+                </div>
+              </Can>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Closeout — manager upload / update of closeout photos. */}
       <Can permission="event:manage">
         <Card>
           <CardContent className="space-y-4 p-4">

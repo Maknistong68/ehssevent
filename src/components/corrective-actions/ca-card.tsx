@@ -1,6 +1,8 @@
 import Link from 'next/link'
 import { Card, CardContent } from '@/components/ui/card'
 import { CaStatusBadge } from './ca-status-badge'
+import { OverdueBadge } from './overdue-badge'
+import { isCorrectiveActionOverdue } from '@/lib/utils/corrective-actions'
 import { User, FileText, ClipboardCheck } from 'lucide-react'
 import type { CorrectiveAction } from '@/types/database'
 
@@ -12,6 +14,7 @@ export function CaCard({ correctiveAction }: CaCardProps) {
   const assignee = correctiveAction.assignee
   const event = correctiveAction.event
   const inspection = correctiveAction.inspection
+  const overdue = isCorrectiveActionOverdue(correctiveAction)
 
   return (
     <Link href={`/corrective-actions/${correctiveAction.id}`} className="block">
@@ -29,7 +32,10 @@ export function CaCard({ correctiveAction }: CaCardProps) {
                 {correctiveAction.title}
               </h3>
             </div>
-            <CaStatusBadge status={correctiveAction.status} />
+            <div className="flex shrink-0 flex-col items-end gap-1">
+              <CaStatusBadge status={correctiveAction.status} />
+              {overdue && <OverdueBadge />}
+            </div>
           </div>
 
           <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-muted-foreground">

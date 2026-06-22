@@ -148,7 +148,12 @@ export const closeoutEventSchema = z.object({
   date_closure: z.string().optional().or(z.literal('')),
 })
 
+export const approveCloseoutSchema = z.object({
+  event_id: z.string().uuid(),
+})
+
 export type CreateEventInput = z.infer<typeof createEventSchema>
 export type UpdateEventInput = z.infer<typeof updateEventSchema>
 export type UpdateApprovalLevelInput = z.infer<typeof updateApprovalLevelSchema>
 export type CloseoutEventInput = z.infer<typeof closeoutEventSchema>
+export type ApproveCloseoutInput = z.infer<typeof approveCloseoutSchema>

@@ -4,6 +4,7 @@ import { useState, useRef } from 'react'
 import { Button } from '@/components/ui/button'
 import { Camera, X, Loader2 } from 'lucide-react'
 import { toSecurePhotoUrl } from '@/lib/utils/photo-url'
+import { uploadToStorage } from '@/lib/storage'
 import Image from 'next/image'
 
 const ALLOWED_TYPES = [
@@ -26,7 +27,7 @@ export function PhotoUpload({
   photos,
   onPhotosChange,
   maxPhotos = 5,
-  bucket: _bucket = 'observation-photos',
+  bucket = 'observation-photos',
 }: PhotoUploadProps) {
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState('')
@@ -55,9 +56,11 @@ export function PhotoUpload({
         continue
       }
 
-      // Use local object URL instead of Supabase storage upload
-      const localUrl = URL.createObjectURL(file)
-      newPhotos.push(localUrl)
+      // Route through the mock storage seam (returns a usable URL + fake key
+      // and records an access-log entry). Swapped for real object storage in
+      // the prod phase.
+      const { url } = uploadToStorage(file, bucket)
+      newPhotos.push(url)
     }
 
     onPhotosChange([...photos, ...newPhotos])

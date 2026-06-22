@@ -6,8 +6,11 @@ import { ArrowLeft } from 'lucide-react'
 import { getEventById, getEventResponses } from '@/lib/queries/events'
 import { getEventCorrectiveActions } from '@/lib/queries/corrective-actions'
 import { getAssignableUsers } from '@/lib/queries/users'
+import { getRecordAuditLog } from '@/lib/queries/audit'
 import { EventDetail } from '@/components/events/event-detail'
+import { AuditTimeline } from '@/components/audit/audit-timeline'
 import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
 export const metadata = {
   title: 'Event - Event Report',
@@ -25,10 +28,11 @@ export default async function EventPage({ params }: Props) {
     notFound()
   }
 
-  const [correctiveActions, responses, users] = await Promise.all([
+  const [correctiveActions, responses, users, auditLog] = await Promise.all([
     getEventCorrectiveActions(id),
     getEventResponses(id),
     getAssignableUsers(),
+    getRecordAuditLog('events', id),
   ])
 
   return (
@@ -45,6 +49,17 @@ export default async function EventPage({ params }: Props) {
         responses={responses}
         users={users}
       />
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base">Activity</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <AuditTimeline
+            entries={auditLog}
+            emptyMessage="No activity recorded for this event yet."
+          />
+        </CardContent>
+      </Card>
     </div>
   )
 }

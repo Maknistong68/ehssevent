@@ -12,6 +12,8 @@ import type {
   InspectionResponse,
   InspectionStats,
   DsrRequest,
+  Notification,
+  NotificationPreferences,
 } from '@/types/database'
 import type {
   EventApprovalLevel,
@@ -247,6 +249,8 @@ function makeEvent(s: EventSeed): Event {
     approver_id: s.ap ? U(s.ap) : null,
     closeout_photo_urls: [],
     date_closure: s.lvl === 'closed' ? addHours(s.date, 120) : null,
+    client_closeout_approved_at: null,
+    client_closeout_approved_by: null,
     reporting_deadline_24h: addHours(s.date, 24),
     reporting_deadline_3day: addHours(s.date, 72),
     deadline_24h_met: beyond,
@@ -722,3 +726,24 @@ export const MOCK_AUDIT_LOGS: AuditLogEntry[] = [
 // the DPO works from.
 
 export const MOCK_DSR_REQUESTS: DsrRequest[] = []
+
+// ============================================================
+// Notifications
+// ============================================================
+// In-memory notification store. Mutating actions append here via
+// createNotification() so the bell menu and notifications page reflect activity
+// raised during the running session.
+// TODO(prod): replace with a `notifications` table (RLS: a user reads only
+// their own rows) and deliver via realtime / push.
+
+export const MOCK_NOTIFICATIONS: Notification[] = []
+
+// ============================================================
+// Notification preferences
+// ============================================================
+// Per-user delivery preferences (Settings → Notifications). Rows are created
+// lazily on first save; getNotificationPreferences() supplies defaults for
+// users without a stored row.
+// TODO(prod): replace with a `notification_preferences` table keyed by user_id.
+
+export const MOCK_NOTIFICATION_PREFS: NotificationPreferences[] = []

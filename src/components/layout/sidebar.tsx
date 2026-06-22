@@ -21,6 +21,7 @@ import { usePermissions } from '@/components/shared/role-gate'
 import { useAuth } from '@/components/auth/auth-provider'
 import { useTranslations } from 'next-intl'
 import { LanguageSwitcher } from '@/components/layout/language-switcher'
+import { NotificationBell } from '@/components/notifications/notification-bell'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -202,6 +203,11 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
               }
             />
           ))}
+          <NotificationBell
+            variant="sidebar"
+            collapsed={collapsed}
+            label={t('nav.notifications')}
+          />
         </div>
 
         <div className="mt-6">
@@ -291,6 +297,10 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
             <DropdownMenuItem render={<Link href="/profile" />}>
               <User className="h-4 w-4" />
               {t('nav.profile')}
+            </DropdownMenuItem>
+            <DropdownMenuItem render={<Link href="/settings" />}>
+              <Settings className="h-4 w-4" />
+              {t('nav.settings')}
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <form action={logout}>

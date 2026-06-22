@@ -3,7 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { requirePermission } from '@/lib/auth/guards'
-import { createProjectSchema } from '@/lib/validators/projects'
+import { createProjectSchema, updateProjectSchema } from '@/lib/validators/projects'
 import {
   MOCK_PROJECTS,
   MOCK_PROJECT_CONTRACTORS,
@@ -49,6 +49,37 @@ export async function createProject(input: unknown) {
 
   revalidatePath('/projects')
   redirect('/projects')
+}
+
+export async function updateProject(input: unknown) {
+  const auth = await requirePermission('project:manage')
+  if (!auth.ok) return { error: auth.error }
+
+  const parsed = updateProjectSchema.safeParse(input)
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0].message }
+  }
+
+  const data = parsed.data
+  const project = MOCK_PROJECTS.find((p) => p.id === data.id)
+  if (!project) return { error: 'Project not found' }
+
+  project.name = data.name
+  project.description = data.description || null
+  project.location = data.location || null
+  if (data.is_active !== undefined) project.is_active = data.is_active
+  project.updated_at = new Date().toISOString()
+
+  await logAudit({
+    action: 'project.update',
+    target_table: 'projects',
+    target_id: project.id,
+    target_label: project.name,
+  })
+
+  revalidatePath(`/projects/${project.id}`)
+  revalidatePath('/projects')
+  redirect(`/projects/${project.id}`)
 }
 
 export async function addContractorToProject(

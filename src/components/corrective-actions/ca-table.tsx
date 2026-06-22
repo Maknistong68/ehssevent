@@ -9,6 +9,8 @@ import {
 } from '@/components/ui/table'
 import { SortHeader } from '@/components/shared/sort-header'
 import { CaStatusBadge } from './ca-status-badge'
+import { OverdueBadge } from './overdue-badge'
+import { isCorrectiveActionOverdue } from '@/lib/utils/corrective-actions'
 import type { CorrectiveAction } from '@/types/database'
 
 export function CaTable({ correctiveActions }: { correctiveActions: CorrectiveAction[] }) {
@@ -41,7 +43,10 @@ export function CaTable({ correctiveActions }: { correctiveActions: CorrectiveAc
                 <span className="line-clamp-1">{ca.title}</span>
               </TableCell>
               <TableCell>
-                <CaStatusBadge status={ca.status} />
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <CaStatusBadge status={ca.status} />
+                  {isCorrectiveActionOverdue(ca) && <OverdueBadge />}
+                </div>
               </TableCell>
               <TableCell className="font-mono text-xs whitespace-nowrap text-muted-foreground">
                 {source}

@@ -44,6 +44,12 @@ export function EventFilters() {
           placeholder: 'All Classifications',
           options: toOptions(EVENT_CLASSIFICATION_LABELS),
         },
+        {
+          type: 'daterange',
+          fromKey: 'date_from',
+          toKey: 'date_to',
+          label: 'Event date',
+        },
       ]}
       sortOptions={[
         { value: 'date:desc', label: 'Newest first' },

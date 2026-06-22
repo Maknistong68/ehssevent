@@ -3,6 +3,8 @@ export const dynamic = 'force-dynamic'
 import { notFound } from 'next/navigation'
 import { MOCK_USER_ID, MOCK_CURRENT_USER } from '@/lib/mock-data'
 import { getCorrectiveActionById } from '@/lib/queries/corrective-actions'
+import { getAssignableUsers } from '@/lib/queries/users'
+import { getRecordAuditLog } from '@/lib/queries/audit'
 import { CaDetail } from '@/components/corrective-actions/ca-detail'
 
 interface Props {
@@ -21,7 +23,11 @@ export async function generateMetadata({ params }: Props) {
 
 export default async function CorrectiveActionDetailPage({ params }: Props) {
   const { id } = await params
-  const ca = await getCorrectiveActionById(id)
+  const [ca, users, auditLog] = await Promise.all([
+    getCorrectiveActionById(id),
+    getAssignableUsers(),
+    getRecordAuditLog('corrective_actions', id),
+  ])
 
   if (!ca) notFound()
 
@@ -34,6 +40,8 @@ export default async function CorrectiveActionDetailPage({ params }: Props) {
       correctiveAction={ca}
       currentUserId={MOCK_USER_ID}
       isAdmin={isAdmin}
+      users={users}
+      auditLog={auditLog}
     />
   )
 }

@@ -8,6 +8,7 @@ import { getInspectionCorrectiveActions } from '@/lib/queries/corrective-actions
 import { InspectionStatusBadge } from '@/components/inspections/inspection-status-badge'
 import { InspectionScoreBadge } from '@/components/inspections/inspection-score-badge'
 import { InspectionDetail } from '@/components/inspections/inspection-detail'
+import { ExportButton } from '@/components/shared/export-button'
 import { Card, CardContent } from '@/components/ui/card'
 import { ArrowLeft, MapPin, User, CalendarDays, FileText } from 'lucide-react'
 import { format } from 'date-fns'
@@ -67,6 +68,7 @@ export default async function InspectionDetailPage({ params }: Props) {
             {template?.name || 'Inspection'}
           </h1>
         </div>
+        <ExportButton type="inspection" params={{ id: inspection.id }} />
       </div>
 
       <div className="flex flex-wrap items-center gap-2">

@@ -7,6 +7,7 @@ import { EventsTable } from '@/components/events/events-table'
 import { EventFilters } from '@/components/events/event-filters'
 import { EmptyState } from '@/components/shared/empty-state'
 import { Pagination } from '@/components/shared/pagination'
+import { ExportButton } from '@/components/shared/export-button'
 import { Button } from '@/components/ui/button'
 import { Plus, Calendar } from 'lucide-react'
 import { sortItems, paginate, parsePageParams } from '@/lib/list-utils'
@@ -37,6 +38,8 @@ interface Props {
     classification?: string
     project_id?: string
     site?: string
+    date_from?: string
+    date_to?: string
     search?: string
     sort?: string
     dir?: string
@@ -54,6 +57,8 @@ export default async function EventsPage({ searchParams }: Props) {
     classification: params.classification as EventClassification | undefined,
     project_id: params.project_id,
     site: params.site,
+    date_from: params.date_from,
+    date_to: params.date_to,
     search: params.search,
   })
 
@@ -73,6 +78,19 @@ export default async function EventsPage({ searchParams }: Props) {
           </p>
         </div>
         <div className="flex gap-2">
+          <ExportButton
+            type="events"
+            params={{
+              approval_level: params.approval_level,
+              event_type: params.type,
+              classification: params.classification,
+              project_id: params.project_id,
+              site: params.site,
+              date_from: params.date_from,
+              date_to: params.date_to,
+              search: params.search,
+            }}
+          />
           <Link href="/events/new">
             <Button data-icon="inline-start">
               <Plus className="h-4 w-4" />

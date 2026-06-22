@@ -6,7 +6,8 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Checkbox } from '@/components/ui/checkbox'
-import { Calendar } from '@/components/ui/calendar'
+import { DatePicker } from '@/components/ui/date-picker'
+import { TimePicker } from '@/components/ui/time-picker'
 import {
   Select,
   SelectContent,
@@ -14,23 +15,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover'
 import { Card, CardContent } from '@/components/ui/card'
 import { PhotoUpload } from '@/components/shared/photo-upload'
 import {
   AlertCircle,
   ArrowLeft,
-  Calendar as CalendarIcon,
   CheckCircle2,
   Loader2,
   MapPin,
   Plus,
 } from 'lucide-react'
-import { format } from 'date-fns'
 import { createEvent } from '@/lib/actions/events'
 import {
   EVENT_TYPE_LABELS,
@@ -104,7 +98,7 @@ export function CreateEventForm({
   const [createdEventId, setCreatedEventId] = useState<string | null>(null)
   const [error, setError] = useState('')
   const [photos, setPhotos] = useState<string[]>([])
-  const [eventDate, setEventDate] = useState<Date | undefined>(undefined)
+  const [eventDate, setEventDate] = useState('')
   const [eventTime, setEventTime] = useState('')
   const [showGps, setShowGps] = useState(false)
 
@@ -182,7 +176,7 @@ export function CreateEventForm({
       latitude: showGps ? latitude || undefined : undefined,
       longitude: showGps ? longitude || undefined : undefined,
       event_date: eventDate
-        ? format(eventDate, 'yyyy-MM-dd') + (eventTime ? 'T' + eventTime : '')
+        ? eventDate + (eventTime ? 'T' + eventTime : '')
         : undefined,
       event_description: eventDescription || undefined,
       photo_urls: photos,
@@ -244,7 +238,7 @@ export function CreateEventForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       {error && (
-        <div className="flex items-center gap-2 rounded-2xl bg-destructive/10 px-4 py-3 text-sm font-medium text-destructive">
+        <div role="alert" className="flex items-center gap-2 rounded-2xl bg-destructive/10 px-4 py-3 text-sm font-medium text-destructive">
           <AlertCircle className="h-4 w-4 shrink-0" />
           {error}
         </div>
@@ -439,42 +433,18 @@ export function CreateEventForm({
           </h3>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="space-y-2">
-              <Label>Date</Label>
-              <Popover>
-                <PopoverTrigger
-                  render={
-                    <Button
-                      type="button"
-                      variant="outline"
-                      className="w-full justify-start font-normal data-[empty=true]:text-muted-foreground"
-                      data-empty={!eventDate}
-                      data-icon="inline-start"
-                    />
-                  }
-                >
-                  <CalendarIcon className="h-4 w-4" />
-                  {eventDate
-                    ? format(eventDate, 'dd MMM yyyy')
-                    : 'Select event date'}
-                </PopoverTrigger>
-                <PopoverContent>
-                  <Calendar
-                    mode="single"
-                    selected={eventDate}
-                    onSelect={setEventDate}
-                    disabled={{ after: new Date() }}
-                  />
-                </PopoverContent>
-              </Popover>
+              <Label htmlFor="event_date">Date</Label>
+              <DatePicker
+                id="event_date"
+                value={eventDate}
+                onChange={setEventDate}
+                placeholder="Select event date"
+                disableFuture
+              />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="event_time">Time (optional)</Label>
-              <Input
-                id="event_time"
-                type="time"
-                value={eventTime}
-                onChange={(e) => setEventTime(e.target.value)}
-              />
+              <Label>Time (optional)</Label>
+              <TimePicker value={eventTime} onChange={setEventTime} />
             </div>
           </div>
         </CardContent>

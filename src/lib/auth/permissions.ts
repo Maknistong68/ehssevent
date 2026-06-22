@@ -33,8 +33,10 @@ export type Permission =
   | 'org:manage'
   | 'user:manage'
   | 'team:view'
+  | 'notification:view'
   | 'admin:access'
   | 'audit:view'
+  | 'dsr:manage'
   | 'impersonate:use'
 
 // Permissions granted to every role (baseline viewer + creator experience).
@@ -47,6 +49,7 @@ const BASE_PERMISSIONS: Permission[] = [
   'inspection:view',
   'inspection:conduct',
   'project:view',
+  'notification:view',
 ]
 
 // Additional permissions for client managers / admins (advance approvals,
@@ -68,6 +71,7 @@ const ADMIN_PERMISSIONS: Permission[] = [
   'user:manage',
   'admin:access',
   'audit:view',
+  'dsr:manage',
   'impersonate:use',
 ]
 
@@ -90,10 +94,12 @@ export const ALL_PERMISSIONS: Permission[] = [
   'project:view',
   'project:manage',
   'team:view',
+  'notification:view',
   'org:manage',
   'user:manage',
   'admin:access',
   'audit:view',
+  'dsr:manage',
   'impersonate:use',
 ]
 

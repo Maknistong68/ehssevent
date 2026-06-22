@@ -12,6 +12,8 @@ interface EventFilters {
   classification?: EventClassification
   project_id?: string
   site?: string
+  date_from?: string
+  date_to?: string
   search?: string
 }
 
@@ -32,6 +34,16 @@ export async function getEvents(filters: EventFilters = {}): Promise<Event[]> {
   }
   if (filters.site) {
     events = events.filter((e) => e.site === filters.site)
+  }
+  if (filters.date_from) {
+    events = events.filter(
+      (e) => !!e.event_date && e.event_date.slice(0, 10) >= filters.date_from!
+    )
+  }
+  if (filters.date_to) {
+    events = events.filter(
+      (e) => !!e.event_date && e.event_date.slice(0, 10) <= filters.date_to!
+    )
   }
   if (filters.search) {
     const q = filters.search.toLowerCase()
