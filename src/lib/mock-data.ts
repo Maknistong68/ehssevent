@@ -14,6 +14,7 @@ import type {
   DsrRequest,
 } from '@/types/database'
 import type { AuditLogEntry } from '@/lib/queries/audit'
+import { buildCrcTemplates } from '@/lib/data/crc-checklists'
 
 // ============================================================
 // IDs
@@ -767,6 +768,11 @@ export const MOCK_INSPECTION_TEMPLATES: InspectionTemplate[] = [
     updated_at: '2025-02-15T00:00:00Z',
     creator: { id: MOCK_USER_ID, email: 'client.admin@example.test', full_name: 'Demo Client Admin', role: 'client_admin', organization_id: CLIENT_ORG_ID, status: 'active', terms_accepted_at: null, privacy_accepted_at: null, terms_version: null, privacy_version: null, created_at: '2025-01-01T00:00:00Z', updated_at: '2025-01-01T00:00:00Z' },
   },
+  ...buildCrcTemplates({
+    organizationId: CLIENT_ORG_ID,
+    createdBy: MOCK_USER_ID,
+    creator: { id: MOCK_USER_ID, email: 'client.admin@example.test', full_name: 'Demo Client Admin', role: 'client_admin' as const, organization_id: CLIENT_ORG_ID, status: 'active' as const, terms_accepted_at: null, privacy_accepted_at: null, terms_version: null, privacy_version: null, created_at: '2025-01-01T00:00:00Z', updated_at: '2025-01-01T00:00:00Z' },
+  }),
 ]
 
 // ============================================================

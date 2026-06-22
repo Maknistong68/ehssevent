@@ -163,6 +163,28 @@ export function InspectionDetail({
                       {getValueDisplay(response, item.field_type as InspectionFieldType)}
                     </div>
                   </div>
+                  {(response?.comment || response?.observation || response?.action_plan) && (
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                      {response.comment && (
+                        <div>
+                          <p className="text-[11px] font-medium text-muted-foreground">Comment</p>
+                          <p className="text-sm whitespace-pre-wrap">{response.comment}</p>
+                        </div>
+                      )}
+                      {response.observation && (
+                        <div>
+                          <p className="text-[11px] font-medium text-muted-foreground">Observation</p>
+                          <p className="text-sm whitespace-pre-wrap">{response.observation}</p>
+                        </div>
+                      )}
+                      {response.action_plan && (
+                        <div>
+                          <p className="text-[11px] font-medium text-muted-foreground">Action Plan</p>
+                          <p className="text-sm whitespace-pre-wrap">{response.action_plan}</p>
+                        </div>
+                      )}
+                    </div>
+                  )}
                   {isFailing && linkedCa && (
                     <div>
                       <Link href={`/corrective-actions/${linkedCa.id}`}>

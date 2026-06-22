@@ -30,11 +30,24 @@ interface InspectionFormProps {
   assignableUsers: AssignableUser[]
 }
 
+interface ItemResponse {
+  value: string | null
+  photo_urls: string[]
+  comment: string | null
+  observation: string | null
+  action_plan: string | null
+}
+
 interface ResponseState {
-  [key: string]: {
-    value: string | null
-    photo_urls: string[]
-  }
+  [key: string]: ItemResponse
+}
+
+const EMPTY_RESPONSE: ItemResponse = {
+  value: null,
+  photo_urls: [],
+  comment: null,
+  observation: null,
+  action_plan: null,
 }
 
 interface NonCompliantItem {
@@ -66,30 +79,49 @@ export function InspectionForm({
   })
   const [notes, setNotes] = useState('')
   const [responses, setResponses] = useState<ResponseState>({})
+  const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set())
   const [nonCompliantItems, setNonCompliantItems] = useState<NonCompliantItem[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
   const getResponseKey = (sectionId: string, itemId: string) => `${sectionId}:${itemId}`
 
-  const getResponse = (sectionId: string, itemId: string) => {
-    return responses[getResponseKey(sectionId, itemId)] || { value: null, photo_urls: [] }
+  const getResponse = (sectionId: string, itemId: string): ItemResponse => {
+    return responses[getResponseKey(sectionId, itemId)] || EMPTY_RESPONSE
+  }
+
+  const patchResponse = (
+    sectionId: string,
+    itemId: string,
+    patch: Partial<ItemResponse>
+  ) => {
+    const key = getResponseKey(sectionId, itemId)
+    setResponses((prev) => ({
+      ...prev,
+      [key]: { ...EMPTY_RESPONSE, ...prev[key], ...patch },
+    }))
   }
 
   const setResponseValue = (sectionId: string, itemId: string, value: string | null) => {
-    const key = getResponseKey(sectionId, itemId)
-    setResponses((prev) => ({
-      ...prev,
-      [key]: { ...prev[key], value, photo_urls: prev[key]?.photo_urls || [] },
-    }))
+    patchResponse(sectionId, itemId, { value })
+    // Auto-expand detail for non/partially-compliant items
+    if (value === 'non_compliant' || value === 'partially_compliant') {
+      setExpandedItems((prev) => new Set(prev).add(getResponseKey(sectionId, itemId)))
+    }
   }
 
   const setResponsePhotos = (sectionId: string, itemId: string, photos: string[]) => {
+    patchResponse(sectionId, itemId, { photo_urls: photos })
+  }
+
+  const toggleExpanded = (sectionId: string, itemId: string) => {
     const key = getResponseKey(sectionId, itemId)
-    setResponses((prev) => ({
-      ...prev,
-      [key]: { ...prev[key], value: prev[key]?.value ?? null, photo_urls: photos },
-    }))
+    setExpandedItems((prev) => {
+      const next = new Set(prev)
+      if (next.has(key)) next.delete(key)
+      else next.add(key)
+      return next
+    })
   }
 
   const buildResponseArray = () =>
@@ -101,6 +133,9 @@ export function InspectionForm({
           item_id: item.id,
           field_type: item.field_type,
           value: resp.value,
+          comment: resp.comment,
+          observation: resp.observation,
+          action_plan: resp.action_plan,
           photo_urls: resp.photo_urls,
         }
       })
@@ -358,11 +393,11 @@ export function InspectionForm({
             <div className="divide-y">
               {section.items.map((item) => {
                 const resp = getResponse(section.id, item.id)
+                const itemKey = getResponseKey(section.id, item.id)
+                const isExpanded = expandedItems.has(itemKey)
                 return (
-                  <div
-                    key={item.id}
-                    className="flex flex-col gap-2 px-6 py-3 sm:flex-row sm:items-center sm:justify-between"
-                  >
+                  <div key={item.id} className="flex flex-col gap-2 px-6 py-3">
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                     <Label className="flex-1 font-normal sm:font-medium">
                       {item.label}
                       {item.required && <span className="text-red-500 ml-1">*</span>}
@@ -461,6 +496,53 @@ export function InspectionForm({
                         />
                       )}
                     </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => toggleExpanded(section.id, item.id)}
+                      className="self-start text-xs text-muted-foreground hover:text-foreground"
+                    >
+                      {isExpanded ? 'Hide detail' : 'Add comment / observation / action'}
+                    </button>
+
+                    {isExpanded && (
+                      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                        <div className="space-y-1">
+                          <Label className="text-xs text-muted-foreground">Comment</Label>
+                          <Textarea
+                            value={resp.comment ?? ''}
+                            onChange={(e) =>
+                              patchResponse(section.id, item.id, { comment: e.target.value || null })
+                            }
+                            placeholder="Comment"
+                            rows={2}
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="text-xs text-muted-foreground">Observation</Label>
+                          <Textarea
+                            value={resp.observation ?? ''}
+                            onChange={(e) =>
+                              patchResponse(section.id, item.id, { observation: e.target.value || null })
+                            }
+                            placeholder="Observation"
+                            rows={2}
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="text-xs text-muted-foreground">Action Plan</Label>
+                          <Textarea
+                            value={resp.action_plan ?? ''}
+                            onChange={(e) =>
+                              patchResponse(section.id, item.id, { action_plan: e.target.value || null })
+                            }
+                            placeholder="Action Plan"
+                            rows={2}
+                          />
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )
               })}

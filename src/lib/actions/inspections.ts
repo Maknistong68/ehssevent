@@ -140,6 +140,9 @@ export async function submitInspection(input: unknown) {
       item_id: resp.item_id,
       field_type: resp.field_type,
       value: resp.value,
+      comment: resp.comment ?? null,
+      observation: resp.observation ?? null,
+      action_plan: resp.action_plan ?? null,
       photo_urls: resp.photo_urls,
       created_at: now,
     }

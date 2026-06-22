@@ -248,6 +248,9 @@ export interface InspectionResponse {
   item_id: string
   field_type: InspectionFieldType
   value: string | null
+  comment?: string | null
+  observation?: string | null
+  action_plan?: string | null
   photo_urls: string[]
   created_at: string
 }

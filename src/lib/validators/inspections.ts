@@ -35,6 +35,9 @@ const inspectionResponseSchema = z.object({
   item_id: z.string().min(1),
   field_type: z.enum(['text', 'yes_no', 'pass_fail', 'numeric', 'photo', 'dropdown', 'compliance']),
   value: z.string().nullable().default(null),
+  comment: z.string().nullable().default(null),
+  observation: z.string().nullable().default(null),
+  action_plan: z.string().nullable().default(null),
   photo_urls: z.array(z.string()).default([]),
 })
 
