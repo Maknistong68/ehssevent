@@ -4,31 +4,32 @@
 // fidelity is intentionally dropped here so no real company names or contract
 // numbers are stored — see the "fully sanitize" data-minimization decision.)
 
-export const SITE_OPTIONS: string[] = [
-  'Site 01 — Contractor A (Demo)',
-  'Site 02 — Contractor B (Demo)',
-  'Site 03 — Contractor C (Demo)',
-  'Site 04 — Contractor D (Demo)',
-  'Site 05 — Contractor E (Demo)',
-  'Site 06 — Contractor F (Demo)',
-  'Site 07 — Contractor G (Demo)',
-  'Site 08 — Contractor H (Demo)',
-  'Site 09 — Contractor I (Demo)',
-  'Site 10 — Contractor J (Demo)',
-]
+// Each site is paired one-to-one with the contractor working it. Site is the
+// single source of truth; contractor is derived from this map (never entered
+// directly) so the two values can never drift out of sync.
+export const SITE_CONTRACTOR_MAP: Record<string, string> = {
+  'Site 01': 'Contractor A',
+  'Site 02': 'Contractor B',
+  'Site 03': 'Contractor C',
+  'Site 04': 'Contractor D',
+  'Site 05': 'Contractor E',
+  'Site 06': 'Contractor F',
+  'Site 07': 'Contractor G',
+  'Site 08': 'Contractor H',
+  'Site 09': 'Contractor I',
+  'Site 10': 'Contractor J',
+}
 
-export const CONTRACTOR_OPTIONS: string[] = [
-  'Contractor A',
-  'Contractor B',
-  'Contractor C',
-  'Contractor D',
-  'Contractor E',
-  'Contractor F',
-  'Contractor G',
-  'Contractor H',
-  'Contractor I',
-  'Contractor J',
-]
+export const SITE_OPTIONS: string[] = Object.keys(SITE_CONTRACTOR_MAP)
+
+// Resolve the contractor responsible for a given site, or null when the site is
+// empty or unrecognized.
+export function contractorForSite(
+  site: string | null | undefined
+): string | null {
+  if (!site) return null
+  return SITE_CONTRACTOR_MAP[site] ?? null
+}
 
 // Exact ordered header row for the exported importable file.
 export const EXPORT_COLUMNS: string[] = [

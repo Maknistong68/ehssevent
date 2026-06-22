@@ -20,7 +20,14 @@ import {
 } from '@/lib/mock-data'
 import { COMPLIANCE_SCORE } from '@/types/enums'
 import type { ComplianceValue } from '@/types/enums'
-import type { Inspection, InspectionResponse, CorrectiveAction, Event } from '@/types/database'
+import type {
+  Inspection,
+  InspectionResponse,
+  CorrectiveAction,
+  Event,
+  InspectionTemplate,
+} from '@/types/database'
+import { logAudit } from '@/lib/actions/audit'
 import { randomUUID } from 'crypto'
 
 export async function createTemplate(input: unknown) {
@@ -31,6 +38,29 @@ export async function createTemplate(input: unknown) {
   if (!parsed.success) {
     return { error: parsed.error.issues[0].message }
   }
+
+  const now = new Date().toISOString()
+  const template: InspectionTemplate = {
+    id: randomUUID(),
+    organization_id: MOCK_CURRENT_USER.organization_id || '',
+    name: parsed.data.name,
+    description: parsed.data.description || null,
+    sections: parsed.data.sections,
+    is_active: true,
+    created_by: MOCK_USER_ID,
+    created_at: now,
+    updated_at: now,
+    creator: MOCK_CURRENT_USER,
+  }
+  MOCK_INSPECTION_TEMPLATES.push(template)
+
+  await logAudit({
+    action: 'inspection_template.create',
+    target_table: 'inspection_templates',
+    target_id: template.id,
+    target_label: template.name,
+    metadata: { sections: template.sections.length },
+  })
 
   revalidatePath('/inspections/templates')
   redirect('/inspections/templates')
@@ -45,17 +75,50 @@ export async function updateTemplate(input: unknown) {
     return { error: parsed.error.issues[0].message }
   }
 
+  const template = MOCK_INSPECTION_TEMPLATES.find((t) => t.id === parsed.data.id)
+  if (!template) return { error: 'Template not found' }
+
+  template.name = parsed.data.name
+  template.description = parsed.data.description || null
+  template.sections = parsed.data.sections
+  if (parsed.data.is_active !== undefined) {
+    template.is_active = parsed.data.is_active
+  }
+  template.updated_at = new Date().toISOString()
+
+  await logAudit({
+    action: 'inspection_template.update',
+    target_table: 'inspection_templates',
+    target_id: template.id,
+    target_label: template.name,
+  })
+
   revalidatePath('/inspections/templates')
   revalidatePath(`/inspections/templates/${parsed.data.id}`)
 
   return { success: true }
 }
 
-export async function toggleTemplateActive(_templateId: string) {
+export async function toggleTemplateActive(templateId: string) {
   const auth = await requirePermission('inspection:templates')
   if (!auth.ok) return { error: auth.error }
 
+  const template = MOCK_INSPECTION_TEMPLATES.find((t) => t.id === templateId)
+  if (!template) return { error: 'Template not found' }
+
+  template.is_active = !template.is_active
+  template.updated_at = new Date().toISOString()
+
+  await logAudit({
+    action: 'inspection_template.toggle_active',
+    target_table: 'inspection_templates',
+    target_id: template.id,
+    target_label: template.name,
+    metadata: { is_active: template.is_active },
+  })
+
   revalidatePath('/inspections/templates')
+  revalidatePath(`/inspections/templates/${templateId}`)
 
   return { success: true }
 }
@@ -189,6 +252,14 @@ export async function submitInspection(input: unknown) {
       MOCK_CORRECTIVE_ACTIONS.push(caRecord)
     }
   }
+
+  await logAudit({
+    action: 'inspection.complete',
+    target_table: 'inspections',
+    target_id: inspectionId,
+    target_label: refNum,
+    metadata: { score, total_items: responses.length },
+  })
 
   revalidatePath('/inspections')
   revalidatePath('/corrective-actions')

@@ -30,11 +30,31 @@ export async function updateUserProfile(input: {
 
   const profile = MOCK_PROFILES.find((p) => p.id === input.user_id)
   if (profile) {
+    const before = {
+      role: profile.role,
+      organization_id: profile.organization_id,
+      status: profile.status,
+    }
     if (input.role) profile.role = input.role
     if (input.organization_id !== undefined)
       profile.organization_id = input.organization_id
     if (input.status) profile.status = input.status
     profile.updated_at = new Date().toISOString()
+
+    await logAudit({
+      action: 'user.update',
+      target_table: 'profiles',
+      target_id: profile.id,
+      target_label: profile.email,
+      metadata: {
+        from: before,
+        to: {
+          role: profile.role,
+          organization_id: profile.organization_id,
+          status: profile.status,
+        },
+      },
+    })
   }
 
   revalidatePath('/admin')

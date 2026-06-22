@@ -116,6 +116,18 @@ export const createEventSchema = z.object({
   photo_urls: z.array(z.string()).default([]),
 })
 
+// Editing an existing event. The event type is immutable (omitted here) and
+// changing it would invalidate the workflow, so only the create fields minus
+// `type`/`approval_level` are editable. `expected_updated_at` powers the
+// optimistic-concurrency check; `reason` is an optional change justification.
+export const updateEventSchema = createEventSchema
+  .omit({ type: true, approval_level: true })
+  .extend({
+    event_id: z.string().uuid(),
+    reason: z.string().optional(),
+    expected_updated_at: z.string().optional(),
+  })
+
 export const updateApprovalLevelSchema = z.object({
   event_id: z.string().uuid(),
   approval_level: z.enum([
@@ -137,5 +149,6 @@ export const closeoutEventSchema = z.object({
 })
 
 export type CreateEventInput = z.infer<typeof createEventSchema>
+export type UpdateEventInput = z.infer<typeof updateEventSchema>
 export type UpdateApprovalLevelInput = z.infer<typeof updateApprovalLevelSchema>
 export type CloseoutEventInput = z.infer<typeof closeoutEventSchema>

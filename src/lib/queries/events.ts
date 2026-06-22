@@ -11,6 +11,7 @@ interface EventFilters {
   type?: EventType
   classification?: EventClassification
   project_id?: string
+  site?: string
   search?: string
 }
 
@@ -28,6 +29,9 @@ export async function getEvents(filters: EventFilters = {}): Promise<Event[]> {
   }
   if (filters.project_id) {
     events = events.filter((e) => e.project_id === filters.project_id)
+  }
+  if (filters.site) {
+    events = events.filter((e) => e.site === filters.site)
   }
   if (filters.search) {
     const q = filters.search.toLowerCase()

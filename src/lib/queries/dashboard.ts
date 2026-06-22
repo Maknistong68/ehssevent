@@ -3,6 +3,8 @@ import {
   MOCK_EVENTS,
   MOCK_CORRECTIVE_ACTIONS,
   MOCK_INSPECTION_STATS,
+  MOCK_ORGANIZATIONS,
+  MOCK_PROFILES,
 } from '@/lib/mock-data'
 import { getSessionProfile } from '@/lib/auth/guards'
 import type {
@@ -21,10 +23,10 @@ export interface AdminStats {
 
 export async function getAdminStats(): Promise<AdminStats> {
   return {
-    total_organizations: 4,
-    total_users: 6,
-    inactive_users: 0,
-    pending_approvals: 1,
+    total_organizations: MOCK_ORGANIZATIONS.length,
+    total_users: MOCK_PROFILES.length,
+    inactive_users: MOCK_PROFILES.filter((p) => p.status !== 'active').length,
+    pending_approvals: MOCK_PROFILES.filter((p) => p.status === 'pending').length,
   }
 }
 

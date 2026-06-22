@@ -36,6 +36,7 @@ interface Props {
     type?: string
     classification?: string
     project_id?: string
+    site?: string
     search?: string
     sort?: string
     dir?: string
@@ -52,6 +53,7 @@ export default async function EventsPage({ searchParams }: Props) {
     type: params.type as EventType | undefined,
     classification: params.classification as EventClassification | undefined,
     project_id: params.project_id,
+    site: params.site,
     search: params.search,
   })
 

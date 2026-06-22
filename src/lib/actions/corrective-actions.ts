@@ -8,6 +8,7 @@ import {
   updateCorrectiveActionStatusSchema,
 } from '@/lib/validators/corrective-actions'
 import { MOCK_CORRECTIVE_ACTIONS, MOCK_PROFILES } from '@/lib/mock-data'
+import { logAudit } from '@/lib/actions/audit'
 import type { CorrectiveAction } from '@/types/database'
 
 export async function createCorrectiveAction(input: unknown) {
@@ -61,6 +62,14 @@ export async function createCorrectiveAction(input: unknown) {
 
   MOCK_CORRECTIVE_ACTIONS.unshift(newCa)
 
+  await logAudit({
+    action: 'corrective_action.create',
+    target_table: 'corrective_actions',
+    target_id: newCa.id,
+    target_label: newCa.reference_number,
+    metadata: { priority: newCa.priority, assigned_to: newCa.assigned_to },
+  })
+
   revalidatePath('/corrective-actions')
   revalidatePath('/dashboard')
   redirect('/corrective-actions')
@@ -82,6 +91,7 @@ export async function updateCorrectiveActionStatus(input: unknown) {
   if (!ca) return { error: 'Corrective action not found' }
 
   const now = new Date().toISOString()
+  const previousStatus = ca.status
   ca.status = data.status
   ca.updated_at = now
 
@@ -94,6 +104,14 @@ export async function updateCorrectiveActionStatus(input: unknown) {
   } else if (data.status === 'rejected') {
     ca.rejection_reason = data.rejection_reason ?? null
   }
+
+  await logAudit({
+    action: `corrective_action.${data.status}`,
+    target_table: 'corrective_actions',
+    target_id: ca.id,
+    target_label: ca.reference_number,
+    metadata: { status: { from: previousStatus, to: data.status } },
+  })
 
   revalidatePath(`/corrective-actions/${data.corrective_action_id}`)
   revalidatePath('/corrective-actions')

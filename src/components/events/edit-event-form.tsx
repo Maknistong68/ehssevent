@@ -1,6 +1,8 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -25,13 +27,11 @@ import {
   AlertCircle,
   ArrowLeft,
   Calendar as CalendarIcon,
-  CheckCircle2,
   Loader2,
   MapPin,
-  Plus,
 } from 'lucide-react'
 import { format } from 'date-fns'
-import { createEvent } from '@/lib/actions/events'
+import { updateEvent } from '@/lib/actions/events'
 import {
   EVENT_TYPE_LABELS,
   EVENT_CLASSIFICATION_LABELS,
@@ -40,7 +40,7 @@ import {
   type EventType,
 } from '@/types/enums'
 import { SITE_OPTIONS, contractorForSite } from '@/lib/constants/events'
-import type { Project } from '@/types/database'
+import type { Event, Project } from '@/types/database'
 import type { AssignableUser } from '@/lib/queries/users'
 import { displayName } from '@/lib/utils/people'
 import Link from 'next/link'
@@ -48,13 +48,12 @@ import Link from 'next/link'
 const PII_HINT =
   'Avoid names, ID numbers, or health details — reference people by their account or role.'
 
-interface CreateEventFormProps {
+interface EditEventFormProps {
+  event: Event
   projects: Project[]
   users: AssignableUser[]
-  defaultProjectId?: string
 }
 
-// Classifications offered in the dropdown for the variable types.
 const CLASSIFICATION_OPTIONS: Array<keyof typeof EVENT_CLASSIFICATION_LABELS> = [
   'safety',
   'fire',
@@ -66,11 +65,7 @@ const CLASSIFICATION_OPTIONS: Array<keyof typeof EVENT_CLASSIFICATION_LABELS> = 
   'to_be_determined',
 ]
 
-const WITH_RESPONSE: EventType[] = [
-  'near_miss',
-  'incident',
-  'hazard_identification',
-]
+const WITH_RESPONSE: EventType[] = ['near_miss', 'incident', 'hazard_identification']
 
 function CheckboxRow({
   id,
@@ -94,50 +89,77 @@ function CheckboxRow({
   )
 }
 
-export function CreateEventForm({
-  projects,
-  users,
-  defaultProjectId = '',
-}: CreateEventFormProps) {
+function splitDate(value: string | null): { date?: Date; time: string } {
+  if (!value) return { date: undefined, time: '' }
+  const [datePart, timePart] = value.split('T')
+  const d = new Date(datePart)
+  return {
+    date: isNaN(d.getTime()) ? undefined : d,
+    time: timePart ? timePart.slice(0, 5) : '',
+  }
+}
+
+export function EditEventForm({ event, projects, users }: EditEventFormProps) {
+  const router = useRouter()
+  const initialDate = splitDate(event.event_date)
+
   const [loading, setLoading] = useState(false)
-  const [created, setCreated] = useState(false)
-  const [createdEventId, setCreatedEventId] = useState<string | null>(null)
   const [error, setError] = useState('')
-  const [photos, setPhotos] = useState<string[]>([])
-  const [eventDate, setEventDate] = useState<Date | undefined>(undefined)
-  const [eventTime, setEventTime] = useState('')
-  const [showGps, setShowGps] = useState(false)
+  const [photos, setPhotos] = useState<string[]>(event.photo_urls ?? [])
+  const [eventDate, setEventDate] = useState<Date | undefined>(initialDate.date)
+  const [eventTime, setEventTime] = useState(initialDate.time)
+  const [showGps, setShowGps] = useState(
+    event.latitude != null || event.longitude != null
+  )
+  const [reason, setReason] = useState('')
 
-  const [type, setType] = useState<EventType>('hazard_identification')
-  const [classification, setClassification] = useState('')
-  const [significantHazard, setSignificantHazard] = useState('')
-  const [impactedParty, setImpactedParty] = useState('')
-  const [site, setSite] = useState('')
-  const [projectId, setProjectId] = useState(defaultProjectId)
+  const type = event.type
+  const [classification, setClassification] = useState(
+    event.classification ?? ''
+  )
+  const [significantHazard, setSignificantHazard] = useState(
+    event.significant_hazard ?? ''
+  )
+  const [impactedParty, setImpactedParty] = useState(event.impacted_party ?? '')
+  const [site, setSite] = useState(event.site ?? '')
+  const [projectId, setProjectId] = useState(event.project_id ?? '')
 
-  // Contractor is derived from the selected site, never entered directly.
   const contractor = contractorForSite(site)
 
-  const [specificArea, setSpecificArea] = useState('')
-  const [latitude, setLatitude] = useState('')
-  const [longitude, setLongitude] = useState('')
-  const [eventDescription, setEventDescription] = useState('')
-  const [immediateCorrectiveActions, setImmediateCorrectiveActions] =
-    useState('')
-  const [stopWorkDetails, setStopWorkDetails] = useState('')
-  const [leadershipMemberId, setLeadershipMemberId] = useState('')
-  const [attendeeIds, setAttendeeIds] = useState<string[]>([])
-  const [impactOther, setImpactOther] = useState('')
+  const [specificArea, setSpecificArea] = useState(event.specific_area ?? '')
+  const [latitude, setLatitude] = useState(
+    event.latitude != null ? String(event.latitude) : ''
+  )
+  const [longitude, setLongitude] = useState(
+    event.longitude != null ? String(event.longitude) : ''
+  )
+  const [eventDescription, setEventDescription] = useState(
+    event.event_description ?? ''
+  )
+  const [immediateCorrectiveActions, setImmediateCorrectiveActions] = useState(
+    event.immediate_corrective_actions ?? ''
+  )
+  const [stopWorkDetails, setStopWorkDetails] = useState(
+    event.stop_work_details ?? ''
+  )
+  const [leadershipMemberId, setLeadershipMemberId] = useState(
+    event.leadership_member_id ?? ''
+  )
+  const [attendeeIds, setAttendeeIds] = useState<string[]>(
+    event.attendee_ids ?? []
+  )
+  const [impactOther, setImpactOther] = useState(event.impact_other ?? '')
 
-  const [wasFire, setWasFire] = useState(false)
-  const [wasInjury, setWasInjury] = useState(false)
-  const [wasEnvironment, setWasEnvironment] = useState(false)
-  const [wasSecurity, setWasSecurity] = useState(false)
-  const [workRelated, setWorkRelated] = useState(true)
-  const [repeatIncident, setRepeatIncident] = useState(false)
-  const [stopWork, setStopWork] = useState(false)
+  const [wasFire, setWasFire] = useState(event.was_fire)
+  const [wasInjury, setWasInjury] = useState(event.was_injury)
+  const [wasEnvironment, setWasEnvironment] = useState(
+    event.was_environment_impacted
+  )
+  const [wasSecurity, setWasSecurity] = useState(event.was_security)
+  const [workRelated, setWorkRelated] = useState(event.work_related)
+  const [repeatIncident, setRepeatIncident] = useState(event.repeat_incident)
+  const [stopWork, setStopWork] = useState(event.stop_work)
 
-  // Field visibility derived from the selected type.
   const isIncident = type === 'incident'
   const isLeadership = type === 'leadership_event'
   const showClassification = WITH_RESPONSE.includes(type)
@@ -150,8 +172,10 @@ export function CreateEventForm({
     setError('')
     setLoading(true)
 
-    const result = await createEvent({
-      type,
+    const result = await updateEvent({
+      event_id: event.id,
+      expected_updated_at: event.updated_at,
+      reason: reason || undefined,
       classification:
         showClassification && classification ? classification : undefined,
       significant_hazard:
@@ -190,91 +214,40 @@ export function CreateEventForm({
 
     if (result?.error) {
       setError(result.error)
+      toast.error(result.error)
       setLoading(false)
       return
     }
 
-    if (result?.success) {
-      setCreatedEventId(result.event_id ?? null)
-      setCreated(true)
-      setLoading(false)
-    }
-  }
-
-  if (created) {
-    return (
-      <Card>
-        <CardContent className="flex flex-col items-center gap-4 p-8 text-center">
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary">
-            <CheckCircle2 className="h-6 w-6" />
-          </div>
-          <div className="space-y-1">
-            <h3 className="font-heading text-lg font-semibold tracking-tight">
-              Event created.
-            </h3>
-            <p className="text-sm text-muted-foreground">
-              Add a corrective action to track follow-up for this event.
-            </p>
-          </div>
-          <div className="flex w-full flex-col gap-3 sm:flex-row sm:justify-center">
-            <Link
-              href={
-                createdEventId
-                  ? `/corrective-actions/new?event_id=${createdEventId}`
-                  : '/corrective-actions/new'
-              }
-              className="flex-1 sm:flex-none"
-            >
-              <Button className="w-full" data-icon="inline-start">
-                <Plus className="h-4 w-4" />
-                Add Corrective Action
-              </Button>
-            </Link>
-            <Link href="/events" className="flex-1 sm:flex-none">
-              <Button variant="outline" className="w-full">
-                Back to Events
-              </Button>
-            </Link>
-          </div>
-        </CardContent>
-      </Card>
-    )
+    toast.success('Event updated')
+    router.push(`/events/${event.id}`)
+    router.refresh()
   }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       {error && (
-        <div className="flex items-center gap-2 rounded-2xl bg-destructive/10 px-4 py-3 text-sm font-medium text-destructive">
+        <div
+          role="alert"
+          aria-live="assertive"
+          className="flex items-center gap-2 rounded-2xl bg-destructive/10 px-4 py-3 text-sm font-medium text-destructive"
+        >
           <AlertCircle className="h-4 w-4 shrink-0" />
           {error}
         </div>
       )}
 
-      {/* Type */}
+      {/* Type (locked) */}
       <Card>
         <CardContent className="p-4 space-y-4">
           <h3 className="font-heading text-sm font-semibold tracking-tight">
             Event Type
           </h3>
           <div className="space-y-2">
-            <Label>Type *</Label>
-            <Select
-              value={type}
-              onValueChange={(v) =>
-                setType((v ?? 'hazard_identification') as EventType)
-              }
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {Object.entries(EVENT_TYPE_LABELS).map(([v, l]) => (
-                  <SelectItem key={v} value={v}>
-                    {l}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Label>Type</Label>
+            <div className="flex h-11 w-full items-center rounded-xl border border-input bg-secondary/30 px-4 text-sm text-muted-foreground">
+              {EVENT_TYPE_LABELS[type]} (cannot be changed)
+            </div>
           </div>
 
           {showClassification && (
@@ -300,10 +273,7 @@ export function CreateEventForm({
 
           {showSignificantHazard && (
             <div className="space-y-2">
-              <Label>
-                Significant Hazard
-                {isIncident || type === 'hazard_identification' ? ' *' : ''}
-              </Label>
+              <Label>Significant Hazard</Label>
               <Select
                 value={significantHazard || null}
                 onValueChange={(v) => setSignificantHazard(v ?? '')}
@@ -330,14 +300,10 @@ export function CreateEventForm({
           <h3 className="font-heading text-sm font-semibold tracking-tight">
             Location
           </h3>
-
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <Label>Site</Label>
-              <Select
-                value={site || null}
-                onValueChange={(v) => setSite(v ?? '')}
-              >
+              <Select value={site || null} onValueChange={(v) => setSite(v ?? '')}>
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Select site" />
                 </SelectTrigger>
@@ -350,7 +316,6 @@ export function CreateEventForm({
                 </SelectContent>
               </Select>
             </div>
-
             <div className="space-y-2">
               <Label>Contractor</Label>
               <div className="flex h-11 w-full items-center rounded-xl border border-input bg-secondary/30 px-4 text-sm text-muted-foreground">
@@ -513,7 +478,6 @@ export function CreateEventForm({
                 onChange={setWasSecurity}
               />
             </div>
-
             <div className="space-y-2">
               <Label htmlFor="impact_other">Other impact (optional)</Label>
               <Input
@@ -523,7 +487,6 @@ export function CreateEventForm({
                 placeholder="Describe any other impact"
               />
             </div>
-
             <div className="space-y-2">
               <Label>Impacted Party</Label>
               <Select
@@ -590,9 +553,7 @@ export function CreateEventForm({
                         checked={attendeeIds.includes(u.id)}
                         onCheckedChange={(v) =>
                           setAttendeeIds((prev) =>
-                            v
-                              ? [...prev, u.id]
-                              : prev.filter((id) => id !== u.id)
+                            v ? [...prev, u.id] : prev.filter((id) => id !== u.id)
                           )
                         }
                       />
@@ -613,7 +574,6 @@ export function CreateEventForm({
           <h3 className="font-heading text-sm font-semibold tracking-tight">
             Details
           </h3>
-
           <div className="space-y-2">
             <Label htmlFor="event_description">Event Description</Label>
             <Textarea
@@ -652,7 +612,6 @@ export function CreateEventForm({
             <h3 className="font-heading text-sm font-semibold tracking-tight">
               Immediate Corrective Action
             </h3>
-
             <div className="space-y-2">
               <Label htmlFor="immediate_corrective_actions">
                 Immediate corrective action taken
@@ -661,20 +620,16 @@ export function CreateEventForm({
                 id="immediate_corrective_actions"
                 rows={3}
                 value={immediateCorrectiveActions}
-                onChange={(e) =>
-                  setImmediateCorrectiveActions(e.target.value)
-                }
+                onChange={(e) => setImmediateCorrectiveActions(e.target.value)}
               />
               <p className="text-xs text-muted-foreground">{PII_HINT}</p>
             </div>
-
             <CheckboxRow
               id="stop_work"
               label="Stop Work?"
               checked={stopWork}
               onChange={setStopWork}
             />
-
             {stopWork && (
               <div className="space-y-2">
                 <Label htmlFor="stop_work_details">Stop Work Details</Label>
@@ -705,8 +660,22 @@ export function CreateEventForm({
         </CardContent>
       </Card>
 
+      {/* Reason for change */}
+      <Card>
+        <CardContent className="p-4 space-y-2">
+          <Label htmlFor="reason">Reason for change (optional)</Label>
+          <Textarea
+            id="reason"
+            rows={2}
+            value={reason}
+            onChange={(e) => setReason(e.target.value)}
+            placeholder="Why is this event being edited? Recorded in the audit trail."
+          />
+        </CardContent>
+      </Card>
+
       <div className="flex gap-3">
-        <Link href="/events" className="flex-1">
+        <Link href={`/events/${event.id}`} className="flex-1">
           <Button type="button" variant="outline" className="w-full">
             <ArrowLeft className="mr-2 h-4 w-4" />
             Cancel
@@ -714,7 +683,7 @@ export function CreateEventForm({
         </Link>
         <Button type="submit" className="flex-1" disabled={loading}>
           {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          Create Event
+          Save Changes
         </Button>
       </div>
     </form>
