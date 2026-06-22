@@ -72,6 +72,10 @@ export function EventResponseForm({ eventId, canClose = false }: EventResponseFo
             value={responseText}
             onChange={(e) => setResponseText(e.target.value)}
           />
+          <p className="text-xs text-muted-foreground">
+            Avoid names, ID numbers, or health details — reference people by their
+            account or role.
+          </p>
         </div>
 
         <PhotoUpload photos={photos} onPhotosChange={setPhotos} bucket="event-photos" />

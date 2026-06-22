@@ -41,10 +41,16 @@ import {
 } from '@/types/enums'
 import { SITE_OPTIONS, CONTRACTOR_OPTIONS } from '@/lib/constants/events'
 import type { Project } from '@/types/database'
+import type { AssignableUser } from '@/lib/queries/users'
+import { displayName } from '@/lib/utils/people'
 import Link from 'next/link'
+
+const PII_HINT =
+  'Avoid names, ID numbers, or health details — reference people by their account or role.'
 
 interface CreateEventFormProps {
   projects: Project[]
+  users: AssignableUser[]
   defaultProjectId?: string
 }
 
@@ -88,7 +94,11 @@ function CheckboxRow({
   )
 }
 
-export function CreateEventForm({ projects, defaultProjectId = '' }: CreateEventFormProps) {
+export function CreateEventForm({
+  projects,
+  users,
+  defaultProjectId = '',
+}: CreateEventFormProps) {
   const [loading, setLoading] = useState(false)
   const [created, setCreated] = useState(false)
   const [createdEventId, setCreatedEventId] = useState<string | null>(null)
@@ -113,8 +123,8 @@ export function CreateEventForm({ projects, defaultProjectId = '' }: CreateEvent
   const [immediateCorrectiveActions, setImmediateCorrectiveActions] =
     useState('')
   const [stopWorkDetails, setStopWorkDetails] = useState('')
-  const [leadershipMemberName, setLeadershipMemberName] = useState('')
-  const [attendees, setAttendees] = useState('')
+  const [leadershipMemberId, setLeadershipMemberId] = useState('')
+  const [attendeeIds, setAttendeeIds] = useState<string[]>([])
   const [impactOther, setImpactOther] = useState('')
 
   const [wasFire, setWasFire] = useState(false)
@@ -159,10 +169,10 @@ export function CreateEventForm({ projects, defaultProjectId = '' }: CreateEvent
       immediate_corrective_actions: showResponse
         ? immediateCorrectiveActions || undefined
         : undefined,
-      leadership_member_name: isLeadership
-        ? leadershipMemberName || undefined
+      leadership_member_id: isLeadership
+        ? leadershipMemberId || undefined
         : undefined,
-      attendees: isLeadership ? attendees || undefined : undefined,
+      attendee_ids: isLeadership ? attendeeIds : [],
       project_id: projectId || undefined,
       site: site || undefined,
       contractor: contractor || undefined,
@@ -423,6 +433,9 @@ export function CreateEventForm({ projects, defaultProjectId = '' }: CreateEvent
                   onChange={(e) => setLongitude(e.target.value)}
                 />
               </div>
+              <p className="text-xs text-muted-foreground sm:col-span-2">
+                Coordinates are reduced to ~100 m precision to protect privacy.
+              </p>
             </div>
           )}
         </CardContent>
@@ -551,23 +564,54 @@ export function CreateEventForm({ projects, defaultProjectId = '' }: CreateEvent
               Leadership
             </h3>
             <div className="space-y-2">
-              <Label htmlFor="leadership_member_name">
-                Leadership Member Name
-              </Label>
-              <Input
-                id="leadership_member_name"
-                value={leadershipMemberName}
-                onChange={(e) => setLeadershipMemberName(e.target.value)}
-              />
+              <Label>Leadership Member</Label>
+              <Select
+                value={leadershipMemberId || null}
+                onValueChange={(v) => setLeadershipMemberId(v ?? '')}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select member" />
+                </SelectTrigger>
+                <SelectContent>
+                  {users.map((u) => (
+                    <SelectItem key={u.id} value={u.id}>
+                      {displayName(u)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="attendees">Attendees</Label>
-              <Textarea
-                id="attendees"
-                rows={2}
-                value={attendees}
-                onChange={(e) => setAttendees(e.target.value)}
-              />
+              <Label>Attendees</Label>
+              <div className="space-y-2 rounded-xl border border-input bg-secondary/30 p-3">
+                {users.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">
+                    No active users available.
+                  </p>
+                ) : (
+                  users.map((u) => (
+                    <label
+                      key={u.id}
+                      htmlFor={`attendee-${u.id}`}
+                      className="flex cursor-pointer items-center gap-3 text-sm font-medium"
+                    >
+                      <Checkbox
+                        id={`attendee-${u.id}`}
+                        checked={attendeeIds.includes(u.id)}
+                        onCheckedChange={(v) =>
+                          setAttendeeIds((prev) =>
+                            v
+                              ? [...prev, u.id]
+                              : prev.filter((id) => id !== u.id)
+                          )
+                        }
+                      />
+                      {displayName(u)}
+                    </label>
+                  ))
+                )}
+              </div>
+              <p className="text-xs text-muted-foreground">{PII_HINT}</p>
             </div>
           </CardContent>
         </Card>
@@ -589,6 +633,7 @@ export function CreateEventForm({ projects, defaultProjectId = '' }: CreateEvent
               onChange={(e) => setEventDescription(e.target.value)}
               placeholder="Describe what was observed..."
             />
+            <p className="text-xs text-muted-foreground">{PII_HINT}</p>
           </div>
 
           {showWorkRepeat && (
@@ -630,6 +675,7 @@ export function CreateEventForm({ projects, defaultProjectId = '' }: CreateEvent
                   setImmediateCorrectiveActions(e.target.value)
                 }
               />
+              <p className="text-xs text-muted-foreground">{PII_HINT}</p>
             </div>
 
             <CheckboxRow
@@ -648,6 +694,7 @@ export function CreateEventForm({ projects, defaultProjectId = '' }: CreateEvent
                   value={stopWorkDetails}
                   onChange={(e) => setStopWorkDetails(e.target.value)}
                 />
+                <p className="text-xs text-muted-foreground">{PII_HINT}</p>
               </div>
             )}
           </CardContent>

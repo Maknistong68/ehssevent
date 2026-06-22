@@ -1,43 +1,33 @@
 // Picklists and export configuration for the event reporting module.
-// Site and contractor values mirror the importable-file dropdowns exactly so
-// that exported files map back to the upstream import template.
+// Site and contractor values are synthetic demo placeholders. (The original
+// production picklists mirrored an upstream import template one-to-one; that
+// fidelity is intentionally dropped here so no real company names or contract
+// numbers are stored — see the "fully sanitize" data-minimization decision.)
 
 export const SITE_OPTIONS: string[] = [
-  '1100000094-4100001496 [Shapoorji] Pallonji',
-  '4800000823 [Al Fahd Earthwork]Zone C Bulk Earthworks and Retaining Walls for OXAGON Port Development',
-  '4800000796 [TAMIMI-AMT] D&B of Community School Grade 1-12 with ECC and Type A Offices',
-  '4800000876 [Archirodon] Design and Build for OXAGON Terminal 2 (T2) Dredging and Quay Walls-D&B',
-  '4800000882 [AL-FAHD] South Business Community High Density Expansion',
-  '4800000892 [TDP] Highway 55 Upgrade - Cut & Cover Tunnel Earthworks',
-  '4800000838 [SIBS] OXAGON South Business Community Expansion - Package 1 Residential MMC Phases',
-  '4800001112 [ABYATONA] OXAGON Village Utility Culverts',
-  '4800000731 [Thyssenkrupp] EBC Contract for Methanol-to-Gasoline Demo Plants',
-  '4800001131 [Consortium - China Harbor, El Seif & Hassan Allam] Terminal T1 Infra & Building Work',
-  '4800001271 [SAMA] Design, Build & Commission of MV 33/13.8 Kv SubStations in OXAGON',
-  '4800001272 [AL Fahd Coastguard] Coast Guard Facilities Infrastructure and Building Work',
-  '4800001322 [PPC] Supply & Installation of 1200 water pipeline - Water Supply to NGHP',
-  '4200001383 [SAMA] ENOWA HV Corridor and TZE plot Earthworks',
-  '4800001405 [Tamimi] OXAGON HIVE \u2013 Central Production Unit (CPU)',
-  '4200000031 - WO - 029 [SAMA] Additional Earthworks at Zone E',
-  '4800001440 [RPCO] SOUTHERN PLOTS ROADS NETWORK PACKAGE 1',
-  '4200000029/026 - WADI Jubbah Permanent channel phase-1',
-  '4800001134 [ABYATONA] Construction and Extension of Box Culvert under HWY 55.',
+  'Site 01 — Contractor A (Demo)',
+  'Site 02 — Contractor B (Demo)',
+  'Site 03 — Contractor C (Demo)',
+  'Site 04 — Contractor D (Demo)',
+  'Site 05 — Contractor E (Demo)',
+  'Site 06 — Contractor F (Demo)',
+  'Site 07 — Contractor G (Demo)',
+  'Site 08 — Contractor H (Demo)',
+  'Site 09 — Contractor I (Demo)',
+  'Site 10 — Contractor J (Demo)',
 ]
 
 export const CONTRACTOR_OPTIONS: string[] = [
-  'Al Fahd',
-  'Shapoorji',
-  'TAMIMI-AMT',
-  'Archirodon',
-  'TDP',
-  'SIBS',
-  'ABYATONA',
-  'Thyssenkrupp',
-  'Consortium - China Harbor, El Seif & Hassan Allam',
-  'SAMA',
-  'PPC',
-  'RPCO',
-  'NBC',
+  'Contractor A',
+  'Contractor B',
+  'Contractor C',
+  'Contractor D',
+  'Contractor E',
+  'Contractor F',
+  'Contractor G',
+  'Contractor H',
+  'Contractor I',
+  'Contractor J',
 ]
 
 // Exact ordered header row for the exported importable file.

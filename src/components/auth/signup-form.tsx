@@ -58,7 +58,7 @@ export function SignupForm() {
       return
     }
 
-    setSuccess(result.success ?? t('checkEmail'))
+    setSuccess(result.success ?? t('pendingApproval'))
     setLoading(false)
   }
 

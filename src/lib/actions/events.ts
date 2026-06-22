@@ -10,6 +10,7 @@ import {
   closeoutEventSchema,
   createEventResponseSchema,
 } from '@/lib/validators/events'
+import { reduceGeoPrecision } from '@/lib/utils/geo'
 import type { Event } from '@/types/database'
 
 export async function createEvent(input: unknown) {
@@ -43,14 +44,17 @@ export async function createEvent(input: unknown) {
     site: data.site ?? null,
     contractor: data.contractor ?? null,
     specific_area: data.specific_area ?? null,
-    latitude: typeof data.latitude === 'number' ? data.latitude : null,
-    longitude: typeof data.longitude === 'number' ? data.longitude : null,
+    // GPS is precision-reduced to ~100 m to avoid pinpointing individuals.
+    latitude:
+      typeof data.latitude === 'number' ? reduceGeoPrecision(data.latitude) : null,
+    longitude:
+      typeof data.longitude === 'number' ? reduceGeoPrecision(data.longitude) : null,
     event_date: data.event_date ?? null,
     reported_date: now,
     work_related: data.work_related,
     impacted_party: data.impacted_party ?? null,
-    leadership_member_name: data.leadership_member_name ?? null,
-    attendees: data.attendees ?? null,
+    leadership_member_id: data.leadership_member_id || null,
+    attendee_ids: data.attendee_ids ?? [],
     notify_attendees_by_email: data.notify_attendees_by_email,
     event_description: data.event_description ?? null,
     conditions: data.conditions ?? null,
@@ -61,13 +65,12 @@ export async function createEvent(input: unknown) {
     stop_work_details: data.stop_work_details ?? null,
     further_action_required: data.further_action_required,
     photo_urls: data.photo_urls,
-    contractor_reviewer: data.contractor_reviewer ?? null,
-    reviewer: data.reviewer ?? null,
-    contractor_investigator: data.contractor_investigator ?? null,
-    lead_investigator: data.lead_investigator ?? null,
-    validator: data.validator ?? null,
-    approver: data.approver ?? null,
-    created_by_name: data.created_by_name ?? null,
+    contractor_reviewer_id: data.contractor_reviewer_id || null,
+    reviewer_id: data.reviewer_id || null,
+    contractor_investigator_id: data.contractor_investigator_id || null,
+    lead_investigator_id: data.lead_investigator_id || null,
+    validator_id: data.validator_id || null,
+    approver_id: data.approver_id || null,
     closeout_photo_urls: [],
     date_closure: null,
     reporting_deadline_24h: null,

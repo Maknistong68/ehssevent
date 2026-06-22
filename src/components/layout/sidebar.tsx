@@ -31,6 +31,7 @@ import {
   DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu'
 import { logout } from '@/lib/actions/auth'
+import { initials } from '@/lib/utils/people'
 
 const mainNavItems = [
   { href: '/dashboard', labelKey: 'nav.dashboard' as const, icon: Home },
@@ -38,15 +39,6 @@ const mainNavItems = [
   { href: '/corrective-actions', labelKey: 'nav.correctiveActions' as const, icon: ListChecks },
   { href: '/inspections', labelKey: 'nav.inspections' as const, icon: ClipboardCheck },
 ]
-
-function initials(name?: string | null, email?: string | null) {
-  const source = name?.trim() || email?.split('@')[0] || 'U'
-  return source
-    .split(/[\s._-]+/)
-    .slice(0, 2)
-    .map((p) => p[0]?.toUpperCase())
-    .join('')
-}
 
 function NavLink({
   href,

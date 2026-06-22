@@ -16,6 +16,22 @@ export const CLIENT_ROLES: UserRole[] = [
 
 export const ADMIN_ROLES: UserRole[] = ['system_admin', 'support']
 
+// User lifecycle status. Replaces the binary `is_active` so onboarding
+// (invite → restricted signup → approve) and offboarding (deactivate) are
+// explicit, demonstrable states rather than a single boolean.
+//   invited     — admin created the account; awaiting invite acceptance.
+//   pending     — self-signup; awaiting administrator approval.
+//   active      — full access granted.
+//   deactivated — offboarded; access revoked but history preserved.
+export type UserStatus = 'invited' | 'pending' | 'active' | 'deactivated'
+
+export const USER_STATUS_LABELS: Record<UserStatus, string> = {
+  invited: 'Invited',
+  pending: 'Pending approval',
+  active: 'Active',
+  deactivated: 'Deactivated',
+}
+
 // Inspection enums
 export type InspectionFieldType =
   | 'text'

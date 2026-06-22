@@ -120,7 +120,7 @@ export async function submitInspection(input: unknown) {
       full_name: MOCK_CURRENT_USER.full_name,
       role: MOCK_CURRENT_USER.role,
       organization_id: MOCK_CURRENT_USER.organization_id,
-      is_active: true,
+      status: 'active',
       terms_accepted_at: null,
       privacy_accepted_at: null,
       terms_version: null,

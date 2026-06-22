@@ -1,5 +1,5 @@
 import { cookies } from 'next/headers'
-import { ADMIN_ROLES, type UserRole } from '@/types/enums'
+import { ADMIN_ROLES, type UserRole, type UserStatus } from '@/types/enums'
 import { can, isViewPermission, type Permission } from '@/lib/auth/permissions'
 
 export const IMPERSONATION_COOKIE = 'impersonate_uid'
@@ -8,14 +8,14 @@ export interface SessionProfile {
   id: string
   role: UserRole
   organization_id: string | null
-  is_active: boolean
+  status: UserStatus
 }
 
 const MOCK_SESSION: SessionProfile = {
   id: '00000000-0000-0000-0000-000000000001',
   role: 'client_admin',
   organization_id: '10000000-0000-0000-0000-000000000001',
-  is_active: true,
+  status: 'active',
 }
 
 export async function getSessionProfile(): Promise<SessionProfile | null> {
@@ -27,12 +27,27 @@ type GuardResult =
   | { ok: false; error: string }
 
 export async function requireUser(): Promise<GuardResult> {
-  // Deactivated accounts must not pass authentication, even if a session
-  // exists (offboarding / SOC 2 access-revocation requirement).
-  if (!MOCK_SESSION.is_active) {
-    return { ok: false, error: 'Account is inactive' }
+  // Only fully `active` accounts may pass authentication. Each non-active
+  // status is reported distinctly so the lifecycle is observable:
+  //   pending     — self-signup awaiting administrator approval.
+  //   invited     — invite not yet accepted.
+  //   deactivated — offboarded; access revoked (SOC 2 access-revocation).
+  switch (MOCK_SESSION.status) {
+    case 'active':
+      return { ok: true, profile: MOCK_SESSION }
+    case 'pending':
+      return {
+        ok: false,
+        error: 'Your account is awaiting administrator approval',
+      }
+    case 'invited':
+      return {
+        ok: false,
+        error: 'Please accept your invitation to activate your account',
+      }
+    case 'deactivated':
+      return { ok: false, error: 'Account is deactivated' }
   }
-  return { ok: true, profile: MOCK_SESSION }
 }
 
 export async function requireAdmin(): Promise<GuardResult> {

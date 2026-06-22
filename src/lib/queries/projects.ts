@@ -26,6 +26,6 @@ export async function getContractorOrganizations(): Promise<Organization[]> {
 
 export async function getOrganizationUsers(orgId: string): Promise<Profile[]> {
   return MOCK_PROFILES.filter(
-    (p) => p.organization_id === orgId && p.is_active
+    (p) => p.organization_id === orgId && p.status === 'active'
   )
 }

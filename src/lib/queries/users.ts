@@ -7,7 +7,7 @@ export interface AssignableUser {
 }
 
 export async function getAssignableUsers(): Promise<AssignableUser[]> {
-  return MOCK_PROFILES.filter((p) => p.is_active).map((p) => ({
+  return MOCK_PROFILES.filter((p) => p.status === 'active').map((p) => ({
     id: p.id,
     full_name: p.full_name,
     email: p.email,

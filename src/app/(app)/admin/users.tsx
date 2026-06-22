@@ -12,6 +12,7 @@ import {
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import {
   Dialog,
   DialogContent,
@@ -20,13 +21,15 @@ import {
 } from '@/components/ui/dialog'
 import { Label } from '@/components/ui/label'
 import { Separator } from '@/components/ui/separator'
-import { Pencil, Loader2, Eye, ShieldCheck, Power } from 'lucide-react'
+import { Pencil, Loader2, Eye, ShieldCheck, Power, UserPlus, Check } from 'lucide-react'
 import { useTranslations } from 'next-intl'
-import { updateUserProfile } from '@/lib/actions/admin'
+import { updateUserProfile, inviteUser, approveUser } from '@/lib/actions/admin'
 import { startImpersonation } from '@/lib/actions/impersonation'
 import { ROLE_PERMISSIONS } from '@/lib/auth/permissions'
+import { initials } from '@/lib/utils/people'
 import type { Profile, Organization } from '@/types/database'
-import type { UserRole } from '@/types/enums'
+import type { UserRole, UserStatus } from '@/types/enums'
+import { USER_STATUS_LABELS } from '@/types/enums'
 import { toast } from 'sonner'
 
 const ROLE_OPTIONS: { value: UserRole; label: string }[] = [
@@ -37,6 +40,16 @@ const ROLE_OPTIONS: { value: UserRole; label: string }[] = [
   { value: 'client_user', label: 'Client User' },
   { value: 'contractor_user', label: 'Contractor User' },
 ]
+
+const STATUS_VARIANT: Record<
+  UserStatus,
+  'accent' | 'secondary' | 'outline' | 'destructive'
+> = {
+  active: 'accent',
+  pending: 'secondary',
+  invited: 'outline',
+  deactivated: 'destructive',
+}
 
 interface AdminUsersProps {
   profiles: Profile[]
@@ -50,6 +63,14 @@ export function AdminUsers({ profiles, organizations, currentUserId }: AdminUser
   const [orgId, setOrgId] = useState('')
   const [loading, setLoading] = useState(false)
   const [busy, setBusy] = useState(false)
+
+  // Invite dialog state
+  const [inviteOpen, setInviteOpen] = useState(false)
+  const [inviteEmail, setInviteEmail] = useState('')
+  const [inviteRole, setInviteRole] = useState<UserRole>('client_user')
+  const [inviteOrg, setInviteOrg] = useState('')
+  const [inviting, setInviting] = useState(false)
+
   const router = useRouter()
   const t = useTranslations()
 
@@ -79,21 +100,55 @@ export function AdminUsers({ profiles, organizations, currentUserId }: AdminUser
     setLoading(false)
   }
 
-  const handleToggleActive = async () => {
+  const handleSetStatus = async (status: UserStatus) => {
     if (!editUser) return
     setBusy(true)
-    const result = await updateUserProfile({
-      user_id: editUser.id,
-      is_active: !editUser.is_active,
-    })
+    const result = await updateUserProfile({ user_id: editUser.id, status })
     if (result.error) {
       toast.error(result.error)
     } else {
-      toast.success(editUser.is_active ? 'User deactivated' : 'User activated')
+      toast.success(status === 'active' ? 'User activated' : 'User deactivated')
       setEditUser(null)
       router.refresh()
     }
     setBusy(false)
+  }
+
+  const handleApprove = async () => {
+    if (!editUser) return
+    setBusy(true)
+    const result = await approveUser({
+      user_id: editUser.id,
+      role,
+      organization_id: orgId || null,
+    })
+    if (result.error) {
+      toast.error(result.error)
+    } else {
+      toast.success('User approved')
+      setEditUser(null)
+      router.refresh()
+    }
+    setBusy(false)
+  }
+
+  const handleInvite = async () => {
+    setInviting(true)
+    const result = await inviteUser({
+      email: inviteEmail,
+      role: inviteRole,
+      organization_id: inviteOrg || null,
+    })
+    if (result.error) {
+      toast.error(result.error)
+    } else {
+      toast.success('Invitation sent')
+      setInviteOpen(false)
+      setInviteEmail('')
+      setInviteOrg('')
+      router.refresh()
+    }
+    setInviting(false)
   }
 
   const handleViewAs = async () => {
@@ -117,6 +172,72 @@ export function AdminUsers({ profiles, organizations, currentUserId }: AdminUser
 
   return (
     <div className="space-y-3">
+      <div className="flex justify-end">
+        <Button onClick={() => setInviteOpen(true)} data-icon="inline-start">
+          <UserPlus className="h-4 w-4" />
+          Invite User
+        </Button>
+      </div>
+
+      {/* Invite dialog */}
+      <Dialog open={inviteOpen} onOpenChange={setInviteOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Invite User</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Email</Label>
+              <Input
+                type="email"
+                placeholder="name@company.com"
+                value={inviteEmail}
+                onChange={(e) => setInviteEmail(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Role</Label>
+              <Select value={inviteRole} onValueChange={(v) => v && setInviteRole(v as UserRole)}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {ROLE_OPTIONS.map((opt) => (
+                    <SelectItem key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Organization</Label>
+              <Select value={inviteOrg || 'none'} onValueChange={(v) => setInviteOrg(v === 'none' ? '' : (v ?? ''))}>
+                <SelectTrigger>
+                  <SelectValue placeholder="No organization" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">No Organization</SelectItem>
+                  {organizations.map((org) => (
+                    <SelectItem key={org.id} value={org.id}>
+                      {org.name} ({org.org_type})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <Button
+              onClick={handleInvite}
+              disabled={inviting || !inviteEmail.trim()}
+              className="w-full"
+            >
+              {inviting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Send Invitation
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       <Dialog open={!!editUser} onOpenChange={(open) => !open && setEditUser(null)}>
         <DialogContent className="max-h-[85vh] overflow-y-auto">
           <DialogHeader>
@@ -129,8 +250,8 @@ export function AdminUsers({ profiles, organizations, currentUserId }: AdminUser
                 <p className="text-sm text-muted-foreground">{editUser.email}</p>
                 <div className="flex flex-wrap items-center gap-2 pt-1">
                   <Badge variant="secondary">{t(`roles.${editUser.role}`)}</Badge>
-                  <Badge variant={editUser.is_active ? 'accent' : 'destructive'}>
-                    {editUser.is_active ? 'Active' : 'Inactive'}
+                  <Badge variant={STATUS_VARIANT[editUser.status]}>
+                    {USER_STATUS_LABELS[editUser.status]}
                   </Badge>
                   {editOrg && <Badge variant="outline">{editOrg.name}</Badge>}
                 </div>
@@ -176,6 +297,19 @@ export function AdminUsers({ profiles, organizations, currentUserId }: AdminUser
                 Save Changes
               </Button>
 
+              {editUser.status === 'pending' && (
+                <Button
+                  onClick={handleApprove}
+                  disabled={busy}
+                  variant="accent"
+                  className="w-full"
+                  data-icon="inline-start"
+                >
+                  <Check className="h-4 w-4" />
+                  Approve Access
+                </Button>
+              )}
+
               <Separator />
 
               <div className="space-y-2">
@@ -197,12 +331,16 @@ export function AdminUsers({ profiles, organizations, currentUserId }: AdminUser
               <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                 <Button
                   variant="outline"
-                  onClick={handleToggleActive}
+                  onClick={() =>
+                    handleSetStatus(
+                      editUser.status === 'active' ? 'deactivated' : 'active'
+                    )
+                  }
                   disabled={busy || isSelf}
                   data-icon="inline-start"
                 >
                   <Power className="h-4 w-4" />
-                  {editUser.is_active ? 'Deactivate' : 'Activate'}
+                  {editUser.status === 'active' ? 'Deactivate' : 'Activate'}
                 </Button>
                 <Button
                   variant="outline"
@@ -233,12 +371,6 @@ export function AdminUsers({ profiles, organizations, currentUserId }: AdminUser
           | { id: string; name: string; org_type: string }
           | undefined
 
-        const initials = (profile.full_name || profile.email || 'U')
-          .split(/[\s._@-]+/)
-          .slice(0, 2)
-          .map((p) => p[0]?.toUpperCase())
-          .join('')
-
         return (
           <Card
             key={profile.id}
@@ -249,7 +381,7 @@ export function AdminUsers({ profiles, organizations, currentUserId }: AdminUser
             <CardContent className="flex items-center justify-between gap-3">
               <div className="flex min-w-0 items-center gap-3">
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-secondary font-heading text-sm font-bold text-brand-green">
-                  {initials}
+                  {initials(profile.full_name, profile.email)}
                 </div>
                 <div className="min-w-0">
                   <p className="truncate font-medium">
@@ -265,9 +397,9 @@ export function AdminUsers({ profiles, organizations, currentUserId }: AdminUser
               </div>
               <div className="flex shrink-0 items-center gap-2">
                 <Badge variant="secondary">{profile.role}</Badge>
-                {!profile.is_active && (
-                  <Badge variant="destructive">Inactive</Badge>
-                )}
+                <Badge variant={STATUS_VARIANT[profile.status]}>
+                  {USER_STATUS_LABELS[profile.status]}
+                </Badge>
                 <Button
                   variant="ghost"
                   size="sm"

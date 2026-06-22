@@ -1,6 +1,7 @@
 import { z } from 'zod'
 
 const optionalText = z.string().optional().or(z.literal(''))
+const optionalUuid = z.string().uuid().optional().or(z.literal(''))
 
 export const createEventResponseSchema = z.object({
   event_id: z.string().uuid(),
@@ -94,22 +95,23 @@ export const createEventSchema = z.object({
   // Impact detail
   impact_other: optionalText,
 
+  // People are referenced by account ID (pseudonymous), not free-text names.
+  leadership_member_id: optionalUuid,
+  attendee_ids: z.array(z.string().uuid()).default([]),
+
   // Narrative
-  leadership_member_name: optionalText,
-  attendees: optionalText,
   event_description: optionalText,
   conditions: optionalText,
   immediate_corrective_actions: optionalText,
   stop_work_details: optionalText,
 
-  // Workflow people
-  contractor_reviewer: optionalText,
-  reviewer: optionalText,
-  contractor_investigator: optionalText,
-  lead_investigator: optionalText,
-  validator: optionalText,
-  approver: optionalText,
-  created_by_name: optionalText,
+  // Workflow people (account ID references)
+  contractor_reviewer_id: optionalUuid,
+  reviewer_id: optionalUuid,
+  contractor_investigator_id: optionalUuid,
+  lead_investigator_id: optionalUuid,
+  validator_id: optionalUuid,
+  approver_id: optionalUuid,
 
   photo_urls: z.array(z.string()).default([]),
 })

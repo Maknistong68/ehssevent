@@ -38,6 +38,8 @@ import {
   EVENT_IMPACTED_PARTY_LABELS,
 } from '@/types/enums'
 import type { Event, CorrectiveAction, EventResponse } from '@/types/database'
+import type { AssignableUser } from '@/lib/queries/users'
+import { resolvePerson, displayName } from '@/lib/utils/people'
 
 function Field({ label, value }: { label: string; value?: React.ReactNode }) {
   if (value === null || value === undefined || value === '') return null
@@ -57,10 +59,12 @@ export function EventDetail({
   event,
   correctiveActions = [],
   responses = [],
+  users = [],
 }: {
   event: Event
   correctiveActions?: CorrectiveAction[]
   responses?: EventResponse[]
+  users?: AssignableUser[]
 }) {
   const router = useRouter()
   const { effectiveProfile, isImpersonating } = useAuth()
@@ -223,10 +227,23 @@ export function EventDetail({
             value={yesNo(event.further_action_required)}
           />
           <Field
-            label="Leadership Member Name"
-            value={event.leadership_member_name}
+            label="Leadership Member"
+            value={
+              event.leadership_member_id
+                ? resolvePerson(event.leadership_member_id, users)
+                : undefined
+            }
           />
-          <Field label="Attendees" value={event.attendees} />
+          <Field
+            label="Attendees"
+            value={
+              event.attendee_ids && event.attendee_ids.length > 0
+                ? event.attendee_ids
+                    .map((id) => resolvePerson(id, users))
+                    .join(', ')
+                : undefined
+            }
+          />
           <Field
             label="Notify attendees by email"
             value={yesNo(event.notify_attendees_by_email)}
@@ -257,25 +274,67 @@ export function EventDetail({
         </Card>
       )}
 
-      {(event.contractor_reviewer ||
-        event.reviewer ||
-        event.contractor_investigator ||
-        event.lead_investigator ||
-        event.validator ||
-        event.approver ||
-        event.created_by_name) && (
+      {(event.contractor_reviewer_id ||
+        event.reviewer_id ||
+        event.contractor_investigator_id ||
+        event.lead_investigator_id ||
+        event.validator_id ||
+        event.approver_id ||
+        event.creator) && (
         <Card>
           <CardContent className="grid grid-cols-1 gap-4 p-4 sm:grid-cols-2">
-            <Field label="Contractor Reviewer" value={event.contractor_reviewer} />
-            <Field label="Reviewer" value={event.reviewer} />
+            <Field
+              label="Contractor Reviewer"
+              value={
+                event.contractor_reviewer_id
+                  ? resolvePerson(event.contractor_reviewer_id, users)
+                  : undefined
+              }
+            />
+            <Field
+              label="Reviewer"
+              value={
+                event.reviewer_id
+                  ? resolvePerson(event.reviewer_id, users)
+                  : undefined
+              }
+            />
             <Field
               label="Contractor Investigator"
-              value={event.contractor_investigator}
+              value={
+                event.contractor_investigator_id
+                  ? resolvePerson(event.contractor_investigator_id, users)
+                  : undefined
+              }
             />
-            <Field label="Lead Investigator" value={event.lead_investigator} />
-            <Field label="Validator" value={event.validator} />
-            <Field label="Approver" value={event.approver} />
-            <Field label="Created By" value={event.created_by_name} />
+            <Field
+              label="Lead Investigator"
+              value={
+                event.lead_investigator_id
+                  ? resolvePerson(event.lead_investigator_id, users)
+                  : undefined
+              }
+            />
+            <Field
+              label="Validator"
+              value={
+                event.validator_id
+                  ? resolvePerson(event.validator_id, users)
+                  : undefined
+              }
+            />
+            <Field
+              label="Approver"
+              value={
+                event.approver_id
+                  ? resolvePerson(event.approver_id, users)
+                  : undefined
+              }
+            />
+            <Field
+              label="Created By"
+              value={event.creator ? displayName(event.creator) : undefined}
+            />
           </CardContent>
         </Card>
       )}

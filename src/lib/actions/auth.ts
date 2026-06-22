@@ -11,6 +11,8 @@ import {
   CURRENT_TERMS_VERSION,
   CURRENT_PRIVACY_VERSION,
 } from '@/lib/constants/legal'
+import { MOCK_PROFILES } from '@/lib/mock-data'
+import type { Profile } from '@/types/database'
 
 export async function login(formData: FormData) {
   const parsed = loginSchema.safeParse({
@@ -43,12 +45,48 @@ export async function signup(input: SignupInput) {
     privacy_version: CURRENT_PRIVACY_VERSION,
   }
 
+  // Restricted signup: a self-registered account lands in `pending` and cannot
+  // authenticate until an administrator reviews and approves it (assigning a
+  // real role and organization). Role/org are placeholders until then.
   // TODO(prod): create the auth user and INSERT the profile row with these
   // consent fields (resolve the new user id from Supabase Auth). The consent
   // stamp must be persisted, not just computed.
-  void consent
+  const newProfile: Profile = {
+    id: crypto.randomUUID(),
+    email: parsed.data.email,
+    full_name: parsed.data.full_name,
+    role: 'client_user',
+    organization_id: null,
+    status: 'pending',
+    ...consent,
+    created_at: now,
+    updated_at: now,
+  }
+  MOCK_PROFILES.push(newProfile)
 
-  return { success: 'Check your email for a confirmation link.' }
+  return {
+    success:
+      'Account created — an administrator will review and activate your access.',
+  }
+}
+
+/**
+ * Mock invite acceptance. In production this would be reached via a signed
+ * invite token; here it flips the matching `invited` profile to `active`
+ * (the "set password" step is represented by the form that calls this).
+ */
+export async function acceptInvite(input: {
+  email: string
+}): Promise<{ success?: string; error?: string }> {
+  const profile = MOCK_PROFILES.find(
+    (p) => p.email.toLowerCase() === input.email.trim().toLowerCase()
+  )
+  if (!profile || profile.status !== 'invited') {
+    return { error: 'No pending invitation was found for this email.' }
+  }
+  profile.status = 'active'
+  profile.updated_at = new Date().toISOString()
+  return { success: 'Invitation accepted — your account is now active.' }
 }
 
 export async function forgotPassword(formData: FormData) {

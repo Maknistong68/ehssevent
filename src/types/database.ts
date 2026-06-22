@@ -10,6 +10,7 @@ import type {
   EventImpactedParty,
   CorrectiveActionStatus,
   CorrectiveActionPriority,
+  UserStatus,
 } from './enums'
 
 export interface Organization {
@@ -29,7 +30,7 @@ export interface Profile {
   full_name: string | null
   role: UserRole
   organization_id: string | null
-  is_active: boolean
+  status: UserStatus
   terms_accepted_at: string | null
   privacy_accepted_at: string | null
   terms_version: string | null
@@ -96,8 +97,8 @@ export interface Event {
   reported_date: string | null
   work_related: boolean
   impacted_party: EventImpactedParty | null
-  leadership_member_name: string | null
-  attendees: string | null
+  leadership_member_id: string | null
+  attendee_ids: string[]
   notify_attendees_by_email: boolean
   event_description: string | null
   conditions: string | null
@@ -108,13 +109,12 @@ export interface Event {
   stop_work_details: string | null
   further_action_required: boolean
   photo_urls: string[]
-  contractor_reviewer: string | null
-  reviewer: string | null
-  contractor_investigator: string | null
-  lead_investigator: string | null
-  validator: string | null
-  approver: string | null
-  created_by_name: string | null
+  contractor_reviewer_id: string | null
+  reviewer_id: string | null
+  contractor_investigator_id: string | null
+  lead_investigator_id: string | null
+  validator_id: string | null
+  approver_id: string | null
   closeout_photo_urls: string[]
   date_closure: string | null
   reporting_deadline_24h: string | null

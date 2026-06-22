@@ -4,15 +4,7 @@ import Link from 'next/link'
 import { useAuth } from '@/components/auth/auth-provider'
 import { useTranslations } from 'next-intl'
 import { LanguageSwitcher } from '@/components/layout/language-switcher'
-
-function initials(name?: string | null, email?: string | null) {
-  const source = name?.trim() || email?.split('@')[0] || 'U'
-  return source
-    .split(/[\s._-]+/)
-    .slice(0, 2)
-    .map((p) => p[0]?.toUpperCase())
-    .join('')
-}
+import { initials } from '@/lib/utils/people'
 
 export function Header() {
   const { profile } = useAuth()

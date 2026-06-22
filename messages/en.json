@@ -65,6 +65,7 @@
     "sendResetLink": "Send Reset Link",
     "backToSignIn": "Back to sign in",
     "checkEmail": "Check your email for a confirmation link.",
+    "pendingApproval": "Account created — an administrator will review and activate your access.",
     "checkEmailReset": "Check your email for a password reset link.",
     "passwordsNoMatch": "Passwords do not match",
     "passwordTooShort": "Password must be at least 6 characters",

@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { ArrowLeft } from 'lucide-react'
 import { getEventById, getEventResponses } from '@/lib/queries/events'
 import { getEventCorrectiveActions } from '@/lib/queries/corrective-actions'
+import { getAssignableUsers } from '@/lib/queries/users'
 import { EventDetail } from '@/components/events/event-detail'
 import { Button } from '@/components/ui/button'
 
@@ -24,9 +25,10 @@ export default async function EventPage({ params }: Props) {
     notFound()
   }
 
-  const [correctiveActions, responses] = await Promise.all([
+  const [correctiveActions, responses, users] = await Promise.all([
     getEventCorrectiveActions(id),
     getEventResponses(id),
+    getAssignableUsers(),
   ])
 
   return (
@@ -41,6 +43,7 @@ export default async function EventPage({ params }: Props) {
         event={event}
         correctiveActions={correctiveActions}
         responses={responses}
+        users={users}
       />
     </div>
   )
