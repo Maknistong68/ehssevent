@@ -7,8 +7,14 @@ export const loginSchema = z.object({
 
 export const signupSchema = z
   .object({
-    email: z.string().email('Please enter a valid email address'),
-    full_name: z.string().min(2, 'Full name must be at least 2 characters'),
+    username: z
+      .string()
+      .min(3, 'Username must be at least 3 characters')
+      .max(30, 'Username must be at most 30 characters')
+      .regex(
+        /^[a-zA-Z0-9_]+$/,
+        'Username may only contain letters, numbers, and underscores'
+      ),
     password: z.string().min(6, 'Password must be at least 6 characters'),
     confirm_password: z.string(),
     // PDPL consent must be provable: the controller has to record that the

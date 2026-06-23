@@ -83,6 +83,7 @@ function makeProfile(
   n: number,
   full_name: string,
   email: string,
+  username: string,
   role: UserRole,
   orgId: string,
   day: string,
@@ -92,6 +93,7 @@ function makeProfile(
   const accepted = status === 'active'
   return {
     id: U(n),
+    username,
     email,
     full_name,
     role,
@@ -114,12 +116,14 @@ function makePlatformProfile(
   n: number,
   full_name: string,
   email: string,
+  username: string,
   role: UserRole,
   day: string
 ): Profile {
   const ts = `${day}T00:00:00Z`
   return {
     id: U(n),
+    username,
     email,
     full_name,
     role,
@@ -136,23 +140,23 @@ function makePlatformProfile(
 }
 
 export const MOCK_PROFILES: Profile[] = [
-  makeProfile(1, 'Sarah Mitchell', 'client.admin@example.test', 'client_admin', ORG(1), '2025-01-01'),
-  makeProfile(2, 'James Okafor', 'james.okafor@example.test', 'client_manager', ORG(1), '2025-01-02'),
-  makeProfile(3, 'Priya Raman', 'priya.raman@example.test', 'client_user', ORG(1), '2025-01-03'),
-  makeProfile(4, 'Daniel Cho', 'daniel.cho@example.test', 'client_user', ORG(1), '2025-01-08'),
-  makeProfile(5, 'Aisha Rahman', 'aisha.rahman@example.test', 'client_manager', ORG(1), '2025-01-09'),
-  makeProfile(6, 'Carlos Mendez', 'carlos.mendez@example.test', 'contractor_user', ORG(2), '2025-01-06'),
-  makeProfile(7, 'Lena Fischer', 'lena.fischer@example.test', 'contractor_user', ORG(2), '2025-01-12'),
-  makeProfile(8, 'Raj Patel', 'raj.patel@example.test', 'contractor_user', ORG(3), '2025-01-11'),
-  makeProfile(9, 'Mohammed Al-Farsi', 'mohammed.alfarsi@example.test', 'contractor_user', ORG(4), '2025-01-15'),
-  makeProfile(10, 'Grace Liu', 'grace.liu@example.test', 'contractor_user', ORG(5), '2025-01-18'),
-  makeProfile(11, 'Owen Walsh', 'owen.walsh@example.test', 'contractor_user', ORG(6), '2025-01-20'),
-  makeProfile(12, 'Sofia Romano', 'sofia.romano@example.test', 'contractor_user', ORG(7), '2025-02-02'),
-  makeProfile(13, 'Hassan Karim', 'hassan.karim@example.test', 'contractor_user', ORG(8), '2025-02-05', 'deactivated'),
-  makeProfile(14, 'Tom Becker', 'tom.becker@example.test', 'client_user', ORG(1), '2025-02-10', 'pending'),
-  makeProfile(15, 'Emma Schmidt', 'emma.schmidt@example.test', 'contractor_user', ORG(3), '2025-02-12'),
-  makePlatformProfile(100, 'Platform Admin', 'sysadmin@example.test', 'system_admin', '2025-01-01'),
-  makePlatformProfile(101, 'Platform Support', 'support@example.test', 'support', '2025-01-01'),
+  makeProfile(1, 'Sarah Mitchell', 'client.admin@example.test', 'clientadmin01', 'client_admin', ORG(1), '2025-01-01'),
+  makeProfile(2, 'James Okafor', 'james.okafor@example.test', 'manager01', 'client_manager', ORG(1), '2025-01-02'),
+  makeProfile(3, 'Priya Raman', 'priya.raman@example.test', 'user01', 'client_user', ORG(1), '2025-01-03'),
+  makeProfile(4, 'Daniel Cho', 'daniel.cho@example.test', 'user02', 'client_user', ORG(1), '2025-01-08'),
+  makeProfile(5, 'Aisha Rahman', 'aisha.rahman@example.test', 'manager02', 'client_manager', ORG(1), '2025-01-09'),
+  makeProfile(6, 'Carlos Mendez', 'carlos.mendez@example.test', 'contractor01', 'contractor_user', ORG(2), '2025-01-06'),
+  makeProfile(7, 'Lena Fischer', 'lena.fischer@example.test', 'contractor02', 'contractor_user', ORG(2), '2025-01-12'),
+  makeProfile(8, 'Raj Patel', 'raj.patel@example.test', 'contractor03', 'contractor_user', ORG(3), '2025-01-11'),
+  makeProfile(9, 'Mohammed Al-Farsi', 'mohammed.alfarsi@example.test', 'contractor04', 'contractor_user', ORG(4), '2025-01-15'),
+  makeProfile(10, 'Grace Liu', 'grace.liu@example.test', 'contractor05', 'contractor_user', ORG(5), '2025-01-18'),
+  makeProfile(11, 'Owen Walsh', 'owen.walsh@example.test', 'contractor06', 'contractor_user', ORG(6), '2025-01-20'),
+  makeProfile(12, 'Sofia Romano', 'sofia.romano@example.test', 'contractor07', 'contractor_user', ORG(7), '2025-02-02'),
+  makeProfile(13, 'Hassan Karim', 'hassan.karim@example.test', 'contractor08', 'contractor_user', ORG(8), '2025-02-05', 'deactivated'),
+  makeProfile(14, 'Tom Becker', 'tom.becker@example.test', 'user03', 'client_user', ORG(1), '2025-02-10', 'pending'),
+  makeProfile(15, 'Emma Schmidt', 'emma.schmidt@example.test', 'contractor09', 'contractor_user', ORG(3), '2025-02-12'),
+  makePlatformProfile(100, 'Platform Admin', 'sysadmin@example.test', 'sysadmin01', 'system_admin', '2025-01-01'),
+  makePlatformProfile(101, 'Platform Support', 'support@example.test', 'support01', 'support', '2025-01-01'),
 ]
 
 export const MOCK_CURRENT_USER: Profile = MOCK_PROFILES[0]

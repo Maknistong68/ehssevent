@@ -56,7 +56,7 @@ export async function submitDsrRequest(
   const request: DsrRequest = {
     id: crypto.randomUUID(),
     requester_id: requester.id,
-    requester_email: requester.email,
+    requester_email: requester.email ?? '',
     type: input.type,
     note: input.note?.trim() || null,
     status: 'received',

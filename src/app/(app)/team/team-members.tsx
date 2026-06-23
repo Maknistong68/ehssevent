@@ -29,7 +29,7 @@ import {
   approveTeamMember,
 } from '@/lib/actions/team'
 import { ROLE_PERMISSIONS } from '@/lib/auth/permissions'
-import { initials } from '@/lib/utils/people'
+import { initials, displayName } from '@/lib/utils/people'
 import type { Profile } from '@/types/database'
 import type { UserRole, UserStatus } from '@/types/enums'
 import { USER_STATUS_LABELS } from '@/types/enums'
@@ -66,7 +66,7 @@ export function TeamMembers({ members, currentUserId }: TeamMembersProps) {
 
   // Invite dialog state
   const [inviteOpen, setInviteOpen] = useState(false)
-  const [inviteEmail, setInviteEmail] = useState('')
+  const [inviteUsername, setInviteUsername] = useState('')
   const [inviteRole, setInviteRole] = useState<UserRole>('client_user')
   const [inviting, setInviting] = useState(false)
 
@@ -130,7 +130,7 @@ export function TeamMembers({ members, currentUserId }: TeamMembersProps) {
   const handleInvite = async () => {
     setInviting(true)
     const result = await inviteTeamMember({
-      email: inviteEmail,
+      username: inviteUsername,
       role: inviteRole,
     })
     if (result.error) {
@@ -138,7 +138,7 @@ export function TeamMembers({ members, currentUserId }: TeamMembersProps) {
     } else {
       toast.success('Invitation sent')
       setInviteOpen(false)
-      setInviteEmail('')
+      setInviteUsername('')
       router.refresh()
     }
     setInviting(false)
@@ -166,12 +166,12 @@ export function TeamMembers({ members, currentUserId }: TeamMembersProps) {
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label>Email</Label>
+              <Label>Username</Label>
               <Input
-                type="email"
-                placeholder="name@company.com"
-                value={inviteEmail}
-                onChange={(e) => setInviteEmail(e.target.value)}
+                type="text"
+                placeholder="username"
+                value={inviteUsername}
+                onChange={(e) => setInviteUsername(e.target.value)}
               />
             </div>
             <div className="space-y-2">
@@ -194,7 +194,7 @@ export function TeamMembers({ members, currentUserId }: TeamMembersProps) {
             </div>
             <Button
               onClick={handleInvite}
-              disabled={inviting || !inviteEmail.trim()}
+              disabled={inviting || !inviteUsername.trim()}
               className="w-full"
             >
               {inviting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
@@ -215,9 +215,9 @@ export function TeamMembers({ members, currentUserId }: TeamMembersProps) {
           {editUser && (
             <div className="space-y-5">
               <div className="space-y-1">
-                <p className="font-medium">{editUser.full_name || 'No name'}</p>
+                <p className="font-medium">{displayName(editUser)}</p>
                 <p className="text-sm text-muted-foreground">
-                  {editUser.email}
+                  {editUser.username}
                 </p>
                 <div className="flex flex-wrap items-center gap-2 pt-1">
                   <Badge variant="secondary">
@@ -327,14 +327,12 @@ export function TeamMembers({ members, currentUserId }: TeamMembersProps) {
           <CardContent className="flex items-center justify-between gap-3">
             <div className="flex min-w-0 items-center gap-3">
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-secondary font-heading text-sm font-bold text-brand-green">
-                {initials(member.full_name, member.email)}
+                {initials(member.full_name, member.email, member.username)}
               </div>
               <div className="min-w-0">
-                <p className="truncate font-medium">
-                  {member.full_name || 'No name'}
-                </p>
+                <p className="truncate font-medium">{displayName(member)}</p>
                 <p className="truncate text-xs text-muted-foreground">
-                  {member.email}
+                  {member.username}
                 </p>
               </div>
             </div>

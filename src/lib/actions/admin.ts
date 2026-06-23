@@ -67,22 +67,27 @@ export async function updateUserProfile(input: {
  * accept the invitation.
  */
 export async function inviteUser(input: {
-  email: string
+  username: string
   role: UserRole
   organization_id?: string | null
 }) {
   const auth = await requireAdmin()
   if (!auth.ok) return { error: auth.error }
 
-  const email = input.email.trim().toLowerCase()
-  if (MOCK_PROFILES.some((p) => p.email.toLowerCase() === email)) {
-    return { error: 'A user with this email already exists.' }
+  const username = input.username.trim()
+  if (
+    MOCK_PROFILES.some(
+      (p) => p.username?.toLowerCase() === username.toLowerCase()
+    )
+  ) {
+    return { error: 'A user with this username already exists.' }
   }
 
   const now = new Date().toISOString()
   const newProfile: Profile = {
     id: crypto.randomUUID(),
-    email: input.email.trim(),
+    username,
+    email: null,
     full_name: null,
     role: input.role,
     organization_id: input.organization_id ?? null,
@@ -100,7 +105,7 @@ export async function inviteUser(input: {
     action: 'user.invite',
     target_table: 'profiles',
     target_id: newProfile.id,
-    target_label: newProfile.email,
+    target_label: newProfile.username,
     metadata: {
       role: input.role,
       organization_id: input.organization_id ?? null,

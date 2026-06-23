@@ -34,7 +34,7 @@ import { useTranslations } from 'next-intl'
 import { updateUserProfile, inviteUser, approveUser } from '@/lib/actions/admin'
 import { startImpersonation } from '@/lib/actions/impersonation'
 import { ROLE_PERMISSIONS } from '@/lib/auth/permissions'
-import { initials } from '@/lib/utils/people'
+import { initials, displayName } from '@/lib/utils/people'
 import type { Profile, Organization } from '@/types/database'
 import type { UserRole, UserStatus } from '@/types/enums'
 import { USER_STATUS_LABELS } from '@/types/enums'
@@ -78,7 +78,7 @@ export function AdminUsers({
 
   // Invite dialog state
   const [inviteOpen, setInviteOpen] = useState(false)
-  const [inviteEmail, setInviteEmail] = useState('')
+  const [inviteUsername, setInviteUsername] = useState('')
   const [inviteRole, setInviteRole] = useState<UserRole>('client_user')
   const [inviteOrg, setInviteOrg] = useState('')
   const [inviting, setInviting] = useState(false)
@@ -147,7 +147,7 @@ export function AdminUsers({
   const handleInvite = async () => {
     setInviting(true)
     const result = await inviteUser({
-      email: inviteEmail,
+      username: inviteUsername,
       role: inviteRole,
       organization_id: inviteOrg || null,
     })
@@ -156,7 +156,7 @@ export function AdminUsers({
     } else {
       toast.success('Invitation sent')
       setInviteOpen(false)
-      setInviteEmail('')
+      setInviteUsername('')
       setInviteOrg('')
       router.refresh()
     }
@@ -201,12 +201,12 @@ export function AdminUsers({
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label>Email</Label>
+              <Label>Username</Label>
               <Input
-                type="email"
-                placeholder="name@company.com"
-                value={inviteEmail}
-                onChange={(e) => setInviteEmail(e.target.value)}
+                type="text"
+                placeholder="username"
+                value={inviteUsername}
+                onChange={(e) => setInviteUsername(e.target.value)}
               />
             </div>
             <div className="space-y-2">
@@ -250,7 +250,7 @@ export function AdminUsers({
             </div>
             <Button
               onClick={handleInvite}
-              disabled={inviting || !inviteEmail.trim()}
+              disabled={inviting || !inviteUsername.trim()}
               className="w-full"
             >
               {inviting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
@@ -271,9 +271,9 @@ export function AdminUsers({
           {editUser && (
             <div className="space-y-5">
               <div className="space-y-1">
-                <p className="font-medium">{editUser.full_name || 'No name'}</p>
+                <p className="font-medium">{displayName(editUser)}</p>
                 <p className="text-sm text-muted-foreground">
-                  {editUser.email}
+                  {editUser.username}
                 </p>
                 <div className="flex flex-wrap items-center gap-2 pt-1">
                   <Badge variant="secondary">
@@ -423,14 +423,14 @@ export function AdminUsers({
             <CardContent className="flex items-center justify-between gap-3">
               <div className="flex min-w-0 items-center gap-3">
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-secondary font-heading text-sm font-bold text-brand-green">
-                  {initials(profile.full_name, profile.email)}
+                  {initials(profile.full_name, profile.email, profile.username)}
                 </div>
                 <div className="min-w-0">
                   <p className="truncate font-medium">
-                    {profile.full_name || 'No name'}
+                    {displayName(profile)}
                   </p>
                   <p className="truncate text-xs text-muted-foreground">
-                    {profile.email}
+                    {profile.username}
                   </p>
                   {org && (
                     <p className="truncate text-xs text-muted-foreground">

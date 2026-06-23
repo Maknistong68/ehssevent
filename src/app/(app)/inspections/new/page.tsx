@@ -10,6 +10,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { ClipboardCheck } from 'lucide-react'
 import { MOCK_CURRENT_USER, MOCK_ORGANIZATIONS } from '@/lib/mock-data'
+import { displayName } from '@/lib/utils/people'
 
 export const metadata = {
   title: 'New Inspection - Event Report',
@@ -28,7 +29,7 @@ export default async function NewInspectionPage({ searchParams }: Props) {
   ])
 
   const organizationName = MOCK_ORGANIZATIONS[0]?.name || 'Unknown Organization'
-  const conductedByName = MOCK_CURRENT_USER.full_name || MOCK_CURRENT_USER.email
+  const conductedByName = displayName(MOCK_CURRENT_USER)
 
   // If template_id is in search params, use that template
   const selectedTemplate = params.template_id

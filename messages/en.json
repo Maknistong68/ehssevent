@@ -30,7 +30,8 @@
     "newCorrectiveAction": "New Corrective Action",
     "newInspection": "New Inspection",
     "collapseSidebar": "Collapse sidebar",
-    "expandSidebar": "Expand sidebar"
+    "expandSidebar": "Expand sidebar",
+    "more": "More"
   },
   "admin": {
     "auditLog": "Audit Log",
@@ -55,6 +56,8 @@
     "signUpSubtitle": "Join your team on Event Report",
     "email": "Email",
     "emailPlaceholder": "name@company.com",
+    "username": "Username",
+    "usernamePlaceholder": "Choose a username",
     "password": "Password",
     "confirmPassword": "Confirm password",
     "fullName": "Full name",

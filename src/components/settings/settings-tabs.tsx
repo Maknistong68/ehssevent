@@ -122,7 +122,7 @@ function ProfilePanel({ profile }: { profile: Profile }) {
 
         <div className="space-y-2">
           <Label htmlFor="email">Email</Label>
-          <Input id="email" value={profile.email} disabled readOnly />
+          <Input id="email" value={profile.email ?? ''} disabled readOnly />
         </div>
 
         <div className="space-y-1.5">

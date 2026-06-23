@@ -23,7 +23,7 @@ import {
 import Link from 'next/link'
 
 interface CreateCaFormProps {
-  users: { id: string; full_name: string | null; email: string }[]
+  users: { id: string; full_name: string | null; email: string | null }[]
   eventId?: string
   inspectionId?: string
   sectionId?: string

@@ -4,11 +4,11 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { AuthShell, AuthField, AuthAlert } from '@/components/auth/auth-shell'
-import { AlertCircle, CheckCircle2, Loader2, Lock, Mail } from 'lucide-react'
+import { AlertCircle, CheckCircle2, Loader2, Lock, User } from 'lucide-react'
 import { acceptInvite } from '@/lib/actions/auth'
 
 export function AcceptInviteForm() {
-  const [email, setEmail] = useState('')
+  const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [error, setError] = useState('')
@@ -30,7 +30,7 @@ export function AcceptInviteForm() {
     }
 
     setLoading(true)
-    const result = await acceptInvite({ email })
+    const result = await acceptInvite({ username })
     if (result.error) {
       setError(result.error)
       setLoading(false)
@@ -68,12 +68,12 @@ export function AcceptInviteForm() {
         )}
 
         <AuthField
-          icon={<Mail className="h-5 w-5" />}
-          type="email"
-          placeholder="name@company.com"
-          autoComplete="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
+          icon={<User className="h-5 w-5" />}
+          type="text"
+          placeholder="username"
+          autoComplete="username"
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
           required
         />
         <AuthField

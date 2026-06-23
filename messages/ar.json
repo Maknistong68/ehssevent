@@ -30,7 +30,8 @@
     "newCorrectiveAction": "إجراء تصحيحي جديد",
     "newInspection": "تفتيش جديد",
     "collapseSidebar": "طي الشريط الجانبي",
-    "expandSidebar": "توسيع الشريط الجانبي"
+    "expandSidebar": "توسيع الشريط الجانبي",
+    "more": "المزيد"
   },
   "admin": {
     "auditLog": "سجل التدقيق",
@@ -55,6 +56,8 @@
     "signUpSubtitle": "انضم إلى فريقك في تقرير الحوادث",
     "email": "البريد الإلكتروني",
     "emailPlaceholder": "name@company.com",
+    "username": "اسم المستخدم",
+    "usernamePlaceholder": "اختر اسم مستخدم",
     "password": "كلمة المرور",
     "confirmPassword": "تأكيد كلمة المرور",
     "fullName": "الاسم الكامل",

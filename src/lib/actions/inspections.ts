@@ -183,6 +183,7 @@ export async function submitInspection(input: unknown) {
     project: project || undefined,
     conductor: {
       id: MOCK_USER_ID,
+      username: MOCK_CURRENT_USER.username,
       email: MOCK_CURRENT_USER.email,
       full_name: MOCK_CURRENT_USER.full_name,
       role: MOCK_CURRENT_USER.role,

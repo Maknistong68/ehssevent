@@ -31,7 +31,7 @@ export async function updateTeamMember(input: {
  * profile scoped to that organization.
  */
 export async function inviteTeamMember(input: {
-  email: string
+  username: string
   role: UserRole
 }) {
   const auth = await requirePermission('user:manage')
@@ -40,15 +40,20 @@ export async function inviteTeamMember(input: {
     return { error: 'You are not assigned to an organization.' }
   }
 
-  const email = input.email.trim().toLowerCase()
-  if (MOCK_PROFILES.some((p) => p.email.toLowerCase() === email)) {
-    return { error: 'A user with this email already exists.' }
+  const username = input.username.trim()
+  if (
+    MOCK_PROFILES.some(
+      (p) => p.username?.toLowerCase() === username.toLowerCase()
+    )
+  ) {
+    return { error: 'A user with this username already exists.' }
   }
 
   const now = new Date().toISOString()
   const newProfile: Profile = {
     id: crypto.randomUUID(),
-    email: input.email.trim(),
+    username,
+    email: null,
     full_name: null,
     role: input.role,
     organization_id: auth.profile.organization_id,
@@ -66,7 +71,7 @@ export async function inviteTeamMember(input: {
     action: 'user.invite',
     target_table: 'profiles',
     target_id: newProfile.id,
-    target_label: newProfile.email,
+    target_label: newProfile.username,
     metadata: {
       role: input.role,
       organization_id: auth.profile.organization_id,

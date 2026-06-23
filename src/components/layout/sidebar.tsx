@@ -103,6 +103,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
 
   const displayName =
     effectiveProfile?.full_name ||
+    effectiveProfile?.username ||
     effectiveProfile?.email?.split('@')[0] ||
     'User'
   const roleLabel = effectiveProfile ? t(`roles.${effectiveProfile.role}`) : ''
@@ -282,7 +283,8 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
                 <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-sidebar-primary text-sm font-semibold text-sidebar-primary-foreground">
                   {initials(
                     effectiveProfile?.full_name,
-                    effectiveProfile?.email
+                    effectiveProfile?.email,
+                    effectiveProfile?.username
                   )}
                 </span>
                 {!collapsed && (
@@ -305,7 +307,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
                   {displayName}
                 </span>
                 <span className="block truncate text-xs font-normal text-muted-foreground">
-                  {effectiveProfile?.email}
+                  {effectiveProfile?.username}
                 </span>
               </DropdownMenuLabel>
             </DropdownMenuGroup>

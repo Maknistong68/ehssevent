@@ -180,15 +180,6 @@ export function LoginForm() {
           {loading && <Loader2 className="mr-1 h-4 w-4 animate-spin" />}
           {t('login')}
         </Button>
-
-        <div className="pt-1 text-center">
-          <Link
-            href="/forgot-password"
-            className="text-sm text-white/60 transition-colors hover:text-white"
-          >
-            {t('forgotPassword')}
-          </Link>
-        </div>
       </form>
     </AuthShell>
   )

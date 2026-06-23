@@ -3,7 +3,8 @@ import { MOCK_PROFILES } from '@/lib/mock-data'
 export interface AssignableUser {
   id: string
   full_name: string | null
-  email: string
+  email: string | null
+  username: string | null
 }
 
 export async function getAssignableUsers(): Promise<AssignableUser[]> {
@@ -11,5 +12,6 @@ export async function getAssignableUsers(): Promise<AssignableUser[]> {
     id: p.id,
     full_name: p.full_name,
     email: p.email,
+    username: p.username,
   }))
 }

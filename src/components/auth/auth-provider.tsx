@@ -12,7 +12,7 @@ import type { Profile } from '@/types/database'
 
 interface MockUser {
   id: string
-  email: string
+  email: string | null
 }
 
 interface AuthContextType {

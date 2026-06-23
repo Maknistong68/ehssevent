@@ -62,6 +62,17 @@ export async function signup(input: SignupInput) {
     return { error: parsed.error.issues[0].message }
   }
 
+  // Username is the identity key — reject duplicates (case-insensitive) so two
+  // accounts can never collide on sign-in.
+  const username = parsed.data.username.trim()
+  if (
+    MOCK_PROFILES.some(
+      (p) => p.username?.toLowerCase() === username.toLowerCase()
+    )
+  ) {
+    return { error: 'This username is already taken.' }
+  }
+
   // Record provable consent at the moment of acceptance: timestamp + the exact
   // policy version the user agreed to. This is what lets the controller later
   // demonstrate a valid lawful basis under the PDPL.
@@ -81,8 +92,9 @@ export async function signup(input: SignupInput) {
   // stamp must be persisted, not just computed.
   const newProfile: Profile = {
     id: crypto.randomUUID(),
-    email: parsed.data.email,
-    full_name: parsed.data.full_name,
+    username,
+    email: null,
+    full_name: null,
     role: 'client_user',
     organization_id: null,
     status: 'pending',
@@ -104,13 +116,13 @@ export async function signup(input: SignupInput) {
  * (the "set password" step is represented by the form that calls this).
  */
 export async function acceptInvite(input: {
-  email: string
+  username: string
 }): Promise<{ success?: string; error?: string }> {
   const profile = MOCK_PROFILES.find(
-    (p) => p.email.toLowerCase() === input.email.trim().toLowerCase()
+    (p) => p.username?.toLowerCase() === input.username.trim().toLowerCase()
   )
   if (!profile || profile.status !== 'invited') {
-    return { error: 'No pending invitation was found for this email.' }
+    return { error: 'No pending invitation was found for this username.' }
   }
   profile.status = 'active'
   profile.updated_at = new Date().toISOString()

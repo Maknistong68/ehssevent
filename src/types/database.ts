@@ -26,7 +26,8 @@ export interface Organization {
 
 export interface Profile {
   id: string
-  email: string
+  username: string
+  email: string | null
   full_name: string | null
   role: UserRole
   organization_id: string | null

@@ -7,27 +7,36 @@ export interface PersonLike {
   id?: string
   full_name?: string | null
   email?: string | null
+  username?: string | null
 }
 
 /**
- * Display label for a person: their full name, or the local-part of their
- * email as a fallback. Centralizes the inline `full_name || email` pattern.
+ * Display label for a person: their full name, then username, then the
+ * local-part of their email as a fallback. Username-only accounts (no name or
+ * email) render cleanly via the username step.
  */
 export function displayName(p: {
   full_name?: string | null
   email?: string | null
+  username?: string | null
 }): string {
   if (p.full_name && p.full_name.trim()) return p.full_name.trim()
+  if (p.username && p.username.trim()) return p.username.trim()
   if (p.email && p.email.trim()) return p.email.split('@')[0]
   return '—'
 }
 
 /**
- * Up-to-two-letter initials for an avatar, derived from name or email.
- * Shared by the sidebar/header so the logic lives in one place.
+ * Up-to-two-letter initials for an avatar, derived from name, username, or
+ * email. Including username keeps username-only accounts from collapsing to
+ * the generic 'U'.
  */
-export function initials(name?: string | null, email?: string | null): string {
-  const source = name?.trim() || email?.split('@')[0] || 'U'
+export function initials(
+  name?: string | null,
+  email?: string | null,
+  username?: string | null
+): string {
+  const source = name?.trim() || username?.trim() || email?.split('@')[0] || 'U'
   return source
     .split(/[\s._@-]+/)
     .slice(0, 2)
