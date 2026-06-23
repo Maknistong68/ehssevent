@@ -107,6 +107,34 @@ function makeProfile(
   }
 }
 
+// Platform roles are not tied to a client/contractor organization, so they
+// can't go through `makeProfile` (which requires an org). They seed the two
+// `ADMIN_ROLES` (system_admin, support) that gate `/admin`.
+function makePlatformProfile(
+  n: number,
+  full_name: string,
+  email: string,
+  role: UserRole,
+  day: string
+): Profile {
+  const ts = `${day}T00:00:00Z`
+  return {
+    id: U(n),
+    email,
+    full_name,
+    role,
+    organization_id: null,
+    status: 'active',
+    terms_accepted_at: ts,
+    privacy_accepted_at: ts,
+    terms_version: '1.0',
+    privacy_version: '1.0',
+    created_at: ts,
+    updated_at: ts,
+    organization: undefined,
+  }
+}
+
 export const MOCK_PROFILES: Profile[] = [
   makeProfile(1, 'Sarah Mitchell', 'client.admin@example.test', 'client_admin', ORG(1), '2025-01-01'),
   makeProfile(2, 'James Okafor', 'james.okafor@example.test', 'client_manager', ORG(1), '2025-01-02'),
@@ -123,6 +151,8 @@ export const MOCK_PROFILES: Profile[] = [
   makeProfile(13, 'Hassan Karim', 'hassan.karim@example.test', 'contractor_user', ORG(8), '2025-02-05', 'deactivated'),
   makeProfile(14, 'Tom Becker', 'tom.becker@example.test', 'client_user', ORG(1), '2025-02-10', 'pending'),
   makeProfile(15, 'Emma Schmidt', 'emma.schmidt@example.test', 'contractor_user', ORG(3), '2025-02-12'),
+  makePlatformProfile(100, 'Platform Admin', 'sysadmin@example.test', 'system_admin', '2025-01-01'),
+  makePlatformProfile(101, 'Platform Support', 'support@example.test', 'support', '2025-01-01'),
 ]
 
 export const MOCK_CURRENT_USER: Profile = MOCK_PROFILES[0]

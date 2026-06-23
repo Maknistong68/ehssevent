@@ -29,8 +29,12 @@ export async function getEffectiveProfile(): Promise<EffectiveProfileResult> {
     }
   }
 
+  // Not impersonating: the effective profile is the real signed-in role (chosen
+  // in the login launcher), so the client nav + <Can> gating reflect it.
+  const realProfile =
+    MOCK_PROFILES.find((p) => p.id === realProfileId) ?? MOCK_CURRENT_USER
   return {
-    profile: MOCK_CURRENT_USER,
+    profile: realProfile,
     isImpersonating: false,
     realProfileId,
   }

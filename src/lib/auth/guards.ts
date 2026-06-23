@@ -1,8 +1,13 @@
 import { cookies } from 'next/headers'
 import { ADMIN_ROLES, type UserRole, type UserStatus } from '@/types/enums'
 import { can, isViewPermission, type Permission } from '@/lib/auth/permissions'
+import { MOCK_PROFILES } from '@/lib/mock-data'
 
 export const IMPERSONATION_COOKIE = 'impersonate_uid'
+// The chosen mock identity from the login role launcher. Both the server guards
+// (here) and the client effective-profile resolver read it, so a selected role
+// flows through the whole stack — mirroring IMPERSONATION_COOKIE.
+export const MOCK_SESSION_COOKIE = 'mock_session_uid'
 
 export interface SessionProfile {
   id: string
@@ -19,6 +24,19 @@ const MOCK_SESSION: SessionProfile = {
 }
 
 export async function getSessionProfile(): Promise<SessionProfile | null> {
+  const cookieStore = await cookies()
+  const uid = cookieStore.get(MOCK_SESSION_COOKIE)?.value
+  if (uid) {
+    const profile = MOCK_PROFILES.find((p) => p.id === uid)
+    if (profile) {
+      return {
+        id: profile.id,
+        role: profile.role,
+        organization_id: profile.organization_id,
+        status: profile.status,
+      }
+    }
+  }
   return MOCK_SESSION
 }
 
@@ -27,14 +45,18 @@ type GuardResult =
   | { ok: false; error: string }
 
 export async function requireUser(): Promise<GuardResult> {
+  // Resolve the live session (reflects the role chosen in the login launcher)
+  // rather than the hardcoded default, so requireAdmin/requirePermission
+  // authorize against the selected role.
+  const profile = (await getSessionProfile()) ?? MOCK_SESSION
   // Only fully `active` accounts may pass authentication. Each non-active
   // status is reported distinctly so the lifecycle is observable:
   //   pending     — self-signup awaiting administrator approval.
   //   invited     — invite not yet accepted.
   //   deactivated — offboarded; access revoked (SOC 2 access-revocation).
-  switch (MOCK_SESSION.status) {
+  switch (profile.status) {
     case 'active':
-      return { ok: true, profile: MOCK_SESSION }
+      return { ok: true, profile }
     case 'pending':
       return {
         ok: false,

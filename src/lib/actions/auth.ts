@@ -1,5 +1,6 @@
 'use server'
 
+import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import {
   loginSchema,
@@ -11,6 +12,7 @@ import {
   CURRENT_TERMS_VERSION,
   CURRENT_PRIVACY_VERSION,
 } from '@/lib/constants/legal'
+import { IMPERSONATION_COOKIE, MOCK_SESSION_COOKIE } from '@/lib/auth/guards'
 import { MOCK_PROFILES } from '@/lib/mock-data'
 import type { Profile } from '@/types/database'
 
@@ -23,6 +25,32 @@ export async function login(formData: FormData) {
   if (!parsed.success) {
     return { error: parsed.error.issues[0].message }
   }
+
+  redirect('/dashboard')
+}
+
+/**
+ * Mock role launcher. Sets the `mock_session_uid` cookie to the chosen profile
+ * so the whole stack (server guards + client effective profile) signs in as
+ * that role, then lands on the role-aware dashboard. No PII is collected — the
+ * caller only passes a profile id selected from the login role cards.
+ */
+export async function loginAs(profileId: string) {
+  const profile = MOCK_PROFILES.find((p) => p.id === profileId)
+  if (!profile) {
+    return { error: 'Unknown role selected.' }
+  }
+
+  // httpOnly so the mock session is set only via this server action, mirroring
+  // startImpersonation.
+  const cookieStore = await cookies()
+  cookieStore.set(MOCK_SESSION_COOKIE, profileId, {
+    httpOnly: true,
+    sameSite: 'lax',
+    path: '/',
+  })
+  // Clear any leftover impersonation so the freshly selected role is clean.
+  cookieStore.delete(IMPERSONATION_COOKIE)
 
   redirect('/dashboard')
 }
@@ -102,6 +130,11 @@ export async function forgotPassword(formData: FormData) {
 }
 
 export async function logout() {
+  // Clear both the selected mock session and any active impersonation so
+  // switching roles starts from a clean slate.
+  const cookieStore = await cookies()
+  cookieStore.delete(MOCK_SESSION_COOKIE)
+  cookieStore.delete(IMPERSONATION_COOKIE)
   redirect('/login')
 }
 
