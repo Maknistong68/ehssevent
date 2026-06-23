@@ -1,7 +1,11 @@
 'use client'
 
 import { useAuth } from '@/components/auth/auth-provider'
-import { can as roleCan, isViewPermission, type Permission } from '@/lib/auth/permissions'
+import {
+  can as roleCan,
+  isViewPermission,
+  type Permission,
+} from '@/lib/auth/permissions'
 import type { UserRole } from '@/types/enums'
 
 interface RoleGateProps {
@@ -13,7 +17,11 @@ interface RoleGateProps {
 /**
  * Legacy role-list gate. Prefer <Can permission="..."> for new code.
  */
-export function RoleGate({ allowedRoles, children, fallback = null }: RoleGateProps) {
+export function RoleGate({
+  allowedRoles,
+  children,
+  fallback = null,
+}: RoleGateProps) {
   const { effectiveProfile, loading } = useAuth()
 
   if (loading) return null

@@ -16,7 +16,10 @@ import { Card, CardContent } from '@/components/ui/card'
 import { DatePicker } from '@/components/ui/date-picker'
 import { AlertCircle, ArrowLeft, Loader2 } from 'lucide-react'
 import { createCorrectiveAction } from '@/lib/actions/corrective-actions'
-import { CA_PRIORITY_LABELS, type CorrectiveActionPriority } from '@/types/enums'
+import {
+  CA_PRIORITY_LABELS,
+  type CorrectiveActionPriority,
+} from '@/types/enums'
 import Link from 'next/link'
 
 interface CreateCaFormProps {
@@ -38,7 +41,9 @@ export function CreateCaForm({
 }: CreateCaFormProps) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-  const [title, setTitle] = useState(itemLabel ? `Corrective action: ${itemLabel}` : '')
+  const [title, setTitle] = useState(
+    itemLabel ? `Corrective action: ${itemLabel}` : ''
+  )
   const [description, setDescription] = useState('')
   const [assignedTo, setAssignedTo] = useState('')
   const [priority, setPriority] = useState<CorrectiveActionPriority>('medium')
@@ -78,7 +83,10 @@ export function CreateCaForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       {error && (
-        <div role="alert" className="flex items-center gap-2 rounded-2xl bg-destructive/10 px-4 py-3 text-sm font-medium text-destructive">
+        <div
+          role="alert"
+          className="flex items-center gap-2 rounded-2xl bg-destructive/10 px-4 py-3 text-sm font-medium text-destructive"
+        >
           <AlertCircle className="h-4 w-4 shrink-0" />
           {error}
         </div>
@@ -86,7 +94,9 @@ export function CreateCaForm({
 
       {inspectionId && itemLabel && (
         <div className="rounded-2xl border border-input bg-secondary/40 px-4 py-3 text-sm">
-          <span className="text-muted-foreground">Source: inspection item — </span>
+          <span className="text-muted-foreground">
+            Source: inspection item —{' '}
+          </span>
           <span className="font-medium">{itemLabel}</span>
         </div>
       )}
@@ -119,7 +129,10 @@ export function CreateCaForm({
 
           <div className="space-y-2">
             <Label>Responsible Person *</Label>
-            <Select value={assignedTo} onValueChange={(v) => setAssignedTo(v ?? '')}>
+            <Select
+              value={assignedTo}
+              onValueChange={(v) => setAssignedTo(v ?? '')}
+            >
               <SelectTrigger>
                 <SelectValue placeholder="Select responsible person" />
               </SelectTrigger>
@@ -132,8 +145,8 @@ export function CreateCaForm({
               </SelectContent>
             </Select>
             <p className="text-xs text-muted-foreground">
-              The responsible person uploads the evidence to submit this action for
-              your approval.
+              The responsible person uploads the evidence to submit this action
+              for your approval.
             </p>
           </div>
 
@@ -151,7 +164,9 @@ export function CreateCaForm({
                 </SelectTrigger>
                 <SelectContent>
                   {(
-                    Object.keys(CA_PRIORITY_LABELS) as CorrectiveActionPriority[]
+                    Object.keys(
+                      CA_PRIORITY_LABELS
+                    ) as CorrectiveActionPriority[]
                   ).map((p) => (
                     <SelectItem key={p} value={p}>
                       {CA_PRIORITY_LABELS[p]}

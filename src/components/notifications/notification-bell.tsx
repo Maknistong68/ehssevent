@@ -11,6 +11,7 @@ import {
   DropdownMenuTrigger,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuGroup,
   DropdownMenuLabel,
   DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu'
@@ -119,19 +120,21 @@ export function NotificationBell({
         }
       />
       <DropdownMenuContent align="end" className="w-80">
-        <DropdownMenuLabel className="flex items-center justify-between gap-2">
-          <span className="font-semibold">{label}</span>
-          {unread > 0 && (
-            <button
-              type="button"
-              onClick={handleMarkAll}
-              className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
-            >
-              <CheckCheck className="h-3.5 w-3.5" />
-              Mark all read
-            </button>
-          )}
-        </DropdownMenuLabel>
+        <DropdownMenuGroup>
+          <DropdownMenuLabel className="flex items-center justify-between gap-2">
+            <span className="font-semibold">{label}</span>
+            {unread > 0 && (
+              <button
+                type="button"
+                onClick={handleMarkAll}
+                className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
+              >
+                <CheckCheck className="h-3.5 w-3.5" />
+                Mark all read
+              </button>
+            )}
+          </DropdownMenuLabel>
+        </DropdownMenuGroup>
         <DropdownMenuSeparator />
 
         {items.length === 0 ? (

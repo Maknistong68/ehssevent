@@ -26,12 +26,15 @@ export async function getAdminStats(): Promise<AdminStats> {
     total_organizations: MOCK_ORGANIZATIONS.length,
     total_users: MOCK_PROFILES.length,
     inactive_users: MOCK_PROFILES.filter((p) => p.status !== 'active').length,
-    pending_approvals: MOCK_PROFILES.filter((p) => p.status === 'pending').length,
+    pending_approvals: MOCK_PROFILES.filter((p) => p.status === 'pending')
+      .length,
   }
 }
 
 export async function getPendingApprovalCount(): Promise<number> {
-  return MOCK_CORRECTIVE_ACTIONS.filter((ca) => ca.status === 'pending_approval').length
+  return MOCK_CORRECTIVE_ACTIONS.filter(
+    (ca) => ca.status === 'pending_approval'
+  ).length
 }
 
 export async function getDashboardStats(): Promise<DashboardStats> {
@@ -45,9 +48,9 @@ export async function getRecentEvents(limit = 5): Promise<Event[]> {
 export async function getOpenCorrectiveActions(
   limit = 5
 ): Promise<CorrectiveAction[]> {
-  return MOCK_CORRECTIVE_ACTIONS
-    .filter((ca) => ca.status !== 'approved' && ca.status !== 'rejected')
-    .slice(0, limit)
+  return MOCK_CORRECTIVE_ACTIONS.filter(
+    (ca) => ca.status !== 'approved' && ca.status !== 'rejected'
+  ).slice(0, limit)
 }
 
 export async function getInspectionStats(): Promise<InspectionStats> {
@@ -62,7 +65,9 @@ export async function getAllCorrectiveActions(): Promise<CorrectiveAction[]> {
   return MOCK_CORRECTIVE_ACTIONS
 }
 
-export async function getMyPendingCorrectiveActions(): Promise<CorrectiveAction[]> {
+export async function getMyPendingCorrectiveActions(): Promise<
+  CorrectiveAction[]
+> {
   const profile = await getSessionProfile()
   if (!profile) return []
   return MOCK_CORRECTIVE_ACTIONS.filter(

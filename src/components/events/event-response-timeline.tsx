@@ -10,7 +10,9 @@ interface EventResponseTimelineProps {
   responses: EventResponse[]
 }
 
-export function EventResponseTimeline({ responses }: EventResponseTimelineProps) {
+export function EventResponseTimeline({
+  responses,
+}: EventResponseTimelineProps) {
   if (responses.length === 0) {
     return (
       <div className="text-center py-8 text-sm text-muted-foreground">
@@ -32,7 +34,9 @@ export function EventResponseTimeline({ responses }: EventResponseTimelineProps)
         return (
           <Card
             key={response.id}
-            className={response.is_closing ? 'border-green-200 bg-green-50/50' : ''}
+            className={
+              response.is_closing ? 'border-green-200 bg-green-50/50' : ''
+            }
           >
             <CardContent className="p-4">
               <div className="flex items-start justify-between gap-2 mb-2">
@@ -47,13 +51,17 @@ export function EventResponseTimeline({ responses }: EventResponseTimelineProps)
                       {responder?.full_name || responder?.email || 'Unknown'}
                     </p>
                     {org && (
-                      <p className="text-xs text-muted-foreground">{org.name}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {org.name}
+                      </p>
                     )}
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
                   {response.is_closing && (
-                    <Badge className="bg-green-100 text-green-800">Closing Response</Badge>
+                    <Badge className="bg-green-100 text-green-800">
+                      Closing Response
+                    </Badge>
                   )}
                   <span className="text-xs text-muted-foreground whitespace-nowrap">
                     {format(new Date(response.created_at), 'dd MMM yyyy HH:mm')}
@@ -61,13 +69,23 @@ export function EventResponseTimeline({ responses }: EventResponseTimelineProps)
                 </div>
               </div>
 
-              <p className="text-sm whitespace-pre-wrap">{response.response_text}</p>
+              <p className="text-sm whitespace-pre-wrap">
+                {response.response_text}
+              </p>
 
               {response.photo_urls && response.photo_urls.length > 0 && (
                 <div className="flex flex-wrap gap-2 mt-3">
                   {response.photo_urls.map((url, i) => (
-                    <div key={i} className="relative h-16 w-16 rounded-md overflow-hidden border">
-                      <Image src={toSecurePhotoUrl(url)} alt={`Response photo ${i + 1}`} fill className="object-cover" />
+                    <div
+                      key={i}
+                      className="relative h-16 w-16 rounded-md overflow-hidden border"
+                    >
+                      <Image
+                        src={toSecurePhotoUrl(url)}
+                        alt={`Response photo ${i + 1}`}
+                        fill
+                        className="object-cover"
+                      />
                     </div>
                   ))}
                 </div>

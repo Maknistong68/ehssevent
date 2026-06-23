@@ -28,6 +28,7 @@ import {
   DropdownMenuTrigger,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuGroup,
   DropdownMenuLabel,
   DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu'
@@ -37,8 +38,16 @@ import { initials } from '@/lib/utils/people'
 const mainNavItems = [
   { href: '/dashboard', labelKey: 'nav.dashboard' as const, icon: Home },
   { href: '/events', labelKey: 'nav.events' as const, icon: Calendar },
-  { href: '/corrective-actions', labelKey: 'nav.correctiveActions' as const, icon: ListChecks },
-  { href: '/inspections', labelKey: 'nav.inspections' as const, icon: ClipboardCheck },
+  {
+    href: '/corrective-actions',
+    labelKey: 'nav.correctiveActions' as const,
+    icon: ListChecks,
+  },
+  {
+    href: '/inspections',
+    labelKey: 'nav.inspections' as const,
+    icon: ClipboardCheck,
+  },
 ]
 
 function NavLink({
@@ -93,7 +102,10 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
   const canCreateInspection = can('inspection:conduct')
   const showQuickCreate = canCreateEvent || canCreateCa || canCreateInspection
 
-  const displayName = effectiveProfile?.full_name || effectiveProfile?.email?.split('@')[0] || 'User'
+  const displayName =
+    effectiveProfile?.full_name ||
+    effectiveProfile?.email?.split('@')[0] ||
+    'User'
   const roleLabel = effectiveProfile ? t(`roles.${effectiveProfile.role}`) : ''
 
   return (
@@ -172,7 +184,9 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
                 </DropdownMenuItem>
               )}
               {canCreateCa && (
-                <DropdownMenuItem render={<Link href="/corrective-actions/new" />}>
+                <DropdownMenuItem
+                  render={<Link href="/corrective-actions/new" />}
+                >
                   <ListChecks className="h-4 w-4" />
                   {t('nav.newCorrectiveAction')}
                 </DropdownMenuItem>
@@ -199,7 +213,8 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
               icon={item.icon}
               collapsed={collapsed}
               isActive={
-                strippedPathname === item.href || strippedPathname.startsWith(item.href + '/')
+                strippedPathname === item.href ||
+                strippedPathname.startsWith(item.href + '/')
               }
             />
           ))}
@@ -221,7 +236,10 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
             label={t('nav.projects')}
             icon={FolderOpen}
             collapsed={collapsed}
-            isActive={strippedPathname === '/projects' || strippedPathname.startsWith('/projects/')}
+            isActive={
+              strippedPathname === '/projects' ||
+              strippedPathname.startsWith('/projects/')
+            }
           />
           {can('user:manage') && (
             <NavLink
@@ -271,7 +289,10 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
                 )}
               >
                 <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-sidebar-primary text-sm font-semibold text-sidebar-primary-foreground">
-                  {initials(effectiveProfile?.full_name, effectiveProfile?.email)}
+                  {initials(
+                    effectiveProfile?.full_name,
+                    effectiveProfile?.email
+                  )}
                 </span>
                 {!collapsed && (
                   <span className="min-w-0 flex-1">
@@ -287,12 +308,16 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
             }
           />
           <DropdownMenuContent side="top" align="start" className="w-56">
-            <DropdownMenuLabel>
-              <span className="block truncate font-semibold text-foreground">{displayName}</span>
-              <span className="block truncate text-xs font-normal text-muted-foreground">
-                {effectiveProfile?.email}
-              </span>
-            </DropdownMenuLabel>
+            <DropdownMenuGroup>
+              <DropdownMenuLabel>
+                <span className="block truncate font-semibold text-foreground">
+                  {displayName}
+                </span>
+                <span className="block truncate text-xs font-normal text-muted-foreground">
+                  {effectiveProfile?.email}
+                </span>
+              </DropdownMenuLabel>
+            </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuItem render={<Link href="/profile" />}>
               <User className="h-4 w-4" />
@@ -304,7 +329,12 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <form action={logout}>
-              <DropdownMenuItem variant="destructive" render={<button type="submit" />} className="w-full">
+              <DropdownMenuItem
+                variant="destructive"
+                nativeButton
+                render={<button type="submit" />}
+                className="w-full"
+              >
                 <LogOut className="h-4 w-4" />
                 {t('profile.signOut')}
               </DropdownMenuItem>

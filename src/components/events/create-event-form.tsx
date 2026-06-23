@@ -49,16 +49,17 @@ interface CreateEventFormProps {
 }
 
 // Classifications offered in the dropdown for the variable types.
-const CLASSIFICATION_OPTIONS: Array<keyof typeof EVENT_CLASSIFICATION_LABELS> = [
-  'safety',
-  'fire',
-  'environment',
-  'welfare',
-  'unsafe_act',
-  'unsafe_condition',
-  'non_conformance',
-  'to_be_determined',
-]
+const CLASSIFICATION_OPTIONS: Array<keyof typeof EVENT_CLASSIFICATION_LABELS> =
+  [
+    'safety',
+    'fire',
+    'environment',
+    'welfare',
+    'unsafe_act',
+    'unsafe_condition',
+    'non_conformance',
+    'to_be_determined',
+  ]
 
 const WITH_RESPONSE: EventType[] = [
   'near_miss',
@@ -82,7 +83,11 @@ function CheckboxRow({
       htmlFor={id}
       className="flex cursor-pointer items-center gap-3 rounded-xl border border-input bg-secondary/30 px-4 py-3 text-sm font-medium transition-colors hover:bg-secondary/60"
     >
-      <Checkbox id={id} checked={checked} onCheckedChange={(v) => onChange(v)} />
+      <Checkbox
+        id={id}
+        checked={checked}
+        onCheckedChange={(v) => onChange(v)}
+      />
       {label}
     </label>
   )
@@ -161,7 +166,9 @@ export function CreateEventForm({
       work_related: showWorkRepeat ? workRelated : true,
       repeat_incident: showWorkRepeat ? repeatIncident : false,
       stop_work: showResponse ? stopWork : false,
-      stop_work_details: showResponse ? stopWorkDetails || undefined : undefined,
+      stop_work_details: showResponse
+        ? stopWorkDetails || undefined
+        : undefined,
       immediate_corrective_actions: showResponse
         ? immediateCorrectiveActions || undefined
         : undefined,
@@ -238,7 +245,10 @@ export function CreateEventForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       {error && (
-        <div role="alert" className="flex items-center gap-2 rounded-2xl bg-destructive/10 px-4 py-3 text-sm font-medium text-destructive">
+        <div
+          role="alert"
+          className="flex items-center gap-2 rounded-2xl bg-destructive/10 px-4 py-3 text-sm font-medium text-destructive"
+        >
           <AlertCircle className="h-4 w-4 shrink-0" />
           {error}
         </div>
@@ -631,9 +641,7 @@ export function CreateEventForm({
                 id="immediate_corrective_actions"
                 rows={3}
                 value={immediateCorrectiveActions}
-                onChange={(e) =>
-                  setImmediateCorrectiveActions(e.target.value)
-                }
+                onChange={(e) => setImmediateCorrectiveActions(e.target.value)}
               />
               <p className="text-xs text-muted-foreground">{PII_HINT}</p>
             </div>

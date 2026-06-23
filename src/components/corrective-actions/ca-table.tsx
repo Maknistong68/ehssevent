@@ -13,7 +13,11 @@ import { OverdueBadge } from './overdue-badge'
 import { isCorrectiveActionOverdue } from '@/lib/utils/corrective-actions'
 import type { CorrectiveAction } from '@/types/database'
 
-export function CaTable({ correctiveActions }: { correctiveActions: CorrectiveAction[] }) {
+export function CaTable({
+  correctiveActions,
+}: {
+  correctiveActions: CorrectiveAction[]
+}) {
   return (
     <Table>
       <TableHeader>

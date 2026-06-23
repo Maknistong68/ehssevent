@@ -4,7 +4,14 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { AuthShell, AuthField, AuthAlert } from '@/components/auth/auth-shell'
-import { AlertCircle, CheckCircle2, Loader2, Lock, Mail, User } from 'lucide-react'
+import {
+  AlertCircle,
+  CheckCircle2,
+  Loader2,
+  Lock,
+  Mail,
+  User,
+} from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { signup } from '@/lib/actions/auth'
 
@@ -69,7 +76,10 @@ export function SignupForm() {
       footer={
         <p className="text-center text-sm text-white/60">
           {t('hasAccount')}{' '}
-          <Link href="/login" className="font-semibold text-brand-yellow hover:underline">
+          <Link
+            href="/login"
+            className="font-semibold text-brand-yellow hover:underline"
+          >
             {t('signIn')}
           </Link>
         </p>
@@ -77,7 +87,9 @@ export function SignupForm() {
     >
       <form onSubmit={handleSubmit} className="space-y-4">
         {error && (
-          <AuthAlert icon={<AlertCircle className="h-4 w-4" />}>{error}</AuthAlert>
+          <AuthAlert icon={<AlertCircle className="h-4 w-4" />}>
+            {error}
+          </AuthAlert>
         )}
         {success && (
           <AuthAlert tone="success" icon={<CheckCircle2 className="h-4 w-4" />}>

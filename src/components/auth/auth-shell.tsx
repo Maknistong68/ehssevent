@@ -49,7 +49,12 @@ interface AuthShellProps {
   footer?: React.ReactNode
 }
 
-export function AuthShell({ title, subtitle, children, footer }: AuthShellProps) {
+export function AuthShell({
+  title,
+  subtitle,
+  children,
+  footer,
+}: AuthShellProps) {
   const t = useTranslations('common')
 
   // Support multiline title strings (from translations with \n)
@@ -81,9 +86,7 @@ export function AuthShell({ title, subtitle, children, footer }: AuthShellProps)
         <h1 className="font-heading text-[2.75rem] leading-[1.02] font-bold lowercase tracking-tight">
           {renderTitle()}
         </h1>
-        {subtitle && (
-          <p className="mt-3 text-sm text-white/65">{subtitle}</p>
-        )}
+        {subtitle && <p className="mt-3 text-sm text-white/65">{subtitle}</p>}
 
         <div className="mt-9">{children}</div>
         {footer && <div className="mt-7">{footer}</div>}
@@ -98,7 +101,12 @@ interface AuthFieldProps extends React.ComponentProps<typeof Input> {
 }
 
 /** Input styled for the dark green hero panel: translucent, icon-leading. */
-export function AuthField({ icon, endAdornment, className, ...props }: AuthFieldProps) {
+export function AuthField({
+  icon,
+  endAdornment,
+  className,
+  ...props
+}: AuthFieldProps) {
   return (
     <div className="relative">
       <span className="pointer-events-none absolute start-4 top-1/2 -translate-y-1/2 text-white/55">

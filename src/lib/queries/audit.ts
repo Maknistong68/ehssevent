@@ -44,7 +44,9 @@ export async function getAuditLogs(
   }
   if (filters.actor) {
     const needle = filters.actor.toLowerCase()
-    logs = logs.filter((l) => (l.actor_email ?? '').toLowerCase().includes(needle))
+    logs = logs.filter((l) =>
+      (l.actor_email ?? '').toLowerCase().includes(needle)
+    )
   }
   if (filters.table) {
     logs = logs.filter((l) => l.target_table === filters.table)

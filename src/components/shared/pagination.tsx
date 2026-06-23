@@ -22,7 +22,14 @@ interface PaginationProps {
   to: number
 }
 
-export function Pagination({ total, page, per, totalPages, from, to }: PaginationProps) {
+export function Pagination({
+  total,
+  page,
+  per,
+  totalPages,
+  from,
+  to,
+}: PaginationProps) {
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
@@ -90,7 +97,10 @@ export function Pagination({ total, page, per, totalPages, from, to }: Paginatio
                 size="icon-sm"
                 onClick={() => goToPage(n)}
                 aria-current={n === page ? 'page' : undefined}
-                className={cn('hidden sm:inline-flex', n === page && 'inline-flex')}
+                className={cn(
+                  'hidden sm:inline-flex',
+                  n === page && 'inline-flex'
+                )}
               >
                 {n}
               </Button>

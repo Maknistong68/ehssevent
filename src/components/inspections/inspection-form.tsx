@@ -18,7 +18,11 @@ import { PhotoUpload } from '@/components/shared/photo-upload'
 import { AlertCircle, ArrowLeft, ArrowRight, Loader2 } from 'lucide-react'
 import { submitInspection } from '@/lib/actions/inspections'
 import type { InspectionTemplate, Project } from '@/types/database'
-import { COMPLIANCE_LABELS, COMPLIANCE_COLORS, type ComplianceValue } from '@/types/enums'
+import {
+  COMPLIANCE_LABELS,
+  COMPLIANCE_COLORS,
+  type ComplianceValue,
+} from '@/types/enums'
 import type { AssignableUser } from '@/lib/queries/users'
 import Link from 'next/link'
 
@@ -80,11 +84,14 @@ export function InspectionForm({
   const [notes, setNotes] = useState('')
   const [responses, setResponses] = useState<ResponseState>({})
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set())
-  const [nonCompliantItems, setNonCompliantItems] = useState<NonCompliantItem[]>([])
+  const [nonCompliantItems, setNonCompliantItems] = useState<
+    NonCompliantItem[]
+  >([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
-  const getResponseKey = (sectionId: string, itemId: string) => `${sectionId}:${itemId}`
+  const getResponseKey = (sectionId: string, itemId: string) =>
+    `${sectionId}:${itemId}`
 
   const getResponse = (sectionId: string, itemId: string): ItemResponse => {
     return responses[getResponseKey(sectionId, itemId)] || EMPTY_RESPONSE
@@ -102,15 +109,25 @@ export function InspectionForm({
     }))
   }
 
-  const setResponseValue = (sectionId: string, itemId: string, value: string | null) => {
+  const setResponseValue = (
+    sectionId: string,
+    itemId: string,
+    value: string | null
+  ) => {
     patchResponse(sectionId, itemId, { value })
     // Auto-expand detail for non/partially-compliant items
     if (value === 'non_compliant' || value === 'partially_compliant') {
-      setExpandedItems((prev) => new Set(prev).add(getResponseKey(sectionId, itemId)))
+      setExpandedItems((prev) =>
+        new Set(prev).add(getResponseKey(sectionId, itemId))
+      )
     }
   }
 
-  const setResponsePhotos = (sectionId: string, itemId: string, photos: string[]) => {
+  const setResponsePhotos = (
+    sectionId: string,
+    itemId: string,
+    photos: string[]
+  ) => {
     patchResponse(sectionId, itemId, { photo_urls: photos })
   }
 
@@ -151,7 +168,10 @@ export function InspectionForm({
       for (const item of section.items) {
         if (item.field_type === 'compliance') {
           const resp = getResponse(section.id, item.id)
-          if (resp.value === 'non_compliant' || resp.value === 'partially_compliant') {
+          if (
+            resp.value === 'non_compliant' ||
+            resp.value === 'partially_compliant'
+          ) {
             failingItems.push({
               section_id: section.id,
               section_title: section.title,
@@ -185,7 +205,9 @@ export function InspectionForm({
       return
     }
 
-    const invalidTitle = nonCompliantItems.some((item) => item.ca_title.trim().length < 3)
+    const invalidTitle = nonCompliantItems.some(
+      (item) => item.ca_title.trim().length < 3
+    )
     if (invalidTitle) {
       setError('Each corrective action title must be at least 3 characters.')
       return
@@ -226,7 +248,11 @@ export function InspectionForm({
     // On success, the server action redirects
   }
 
-  const updateCaItem = (index: number, field: keyof NonCompliantItem, value: string) => {
+  const updateCaItem = (
+    index: number,
+    field: keyof NonCompliantItem,
+    value: string
+  ) => {
     setNonCompliantItems((prev) =>
       prev.map((item, i) => (i === index ? { ...item, [field]: value } : item))
     )
@@ -236,7 +262,10 @@ export function InspectionForm({
     return (
       <form onSubmit={handleCaSubmit} className="space-y-6">
         {error && (
-          <div role="alert" className="flex items-center gap-2 rounded-md bg-destructive/10 p-3 text-sm text-destructive">
+          <div
+            role="alert"
+            className="flex items-center gap-2 rounded-md bg-destructive/10 p-3 text-sm text-destructive"
+          >
             <AlertCircle className="h-4 w-4 shrink-0" />
             {error}
           </div>
@@ -244,20 +273,28 @@ export function InspectionForm({
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Assign Corrective Actions</CardTitle>
+            <CardTitle className="text-base">
+              Assign Corrective Actions
+            </CardTitle>
             <p className="text-sm text-muted-foreground">
-              The following items were marked as non-compliant or partially compliant.
-              Please assign a responsible person for each corrective action.
+              The following items were marked as non-compliant or partially
+              compliant. Please assign a responsible person for each corrective
+              action.
             </p>
           </CardHeader>
           <CardContent>
             <div className="divide-y">
               {nonCompliantItems.map((item, index) => (
-                <div key={`${item.section_id}:${item.item_id}`} className="py-4 first:pt-0 last:pb-0 space-y-3">
+                <div
+                  key={`${item.section_id}:${item.item_id}`}
+                  className="py-4 first:pt-0 last:pb-0 space-y-3"
+                >
                   <div className="flex items-start justify-between gap-2">
                     <div>
                       <p className="text-sm font-medium">{item.item_label}</p>
-                      <p className="text-xs text-muted-foreground">{item.section_title}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {item.section_title}
+                      </p>
                     </div>
                     <Badge
                       variant="secondary"
@@ -270,7 +307,9 @@ export function InspectionForm({
                     <Label className="text-xs">CA Title</Label>
                     <Input
                       value={item.ca_title}
-                      onChange={(e) => updateCaItem(index, 'ca_title', e.target.value)}
+                      onChange={(e) =>
+                        updateCaItem(index, 'ca_title', e.target.value)
+                      }
                       placeholder="Corrective action title"
                       className="h-8 text-sm"
                     />
@@ -279,7 +318,9 @@ export function InspectionForm({
                     <Label className="text-xs">Responsible Person *</Label>
                     <Select
                       value={item.assigned_to}
-                      onValueChange={(v) => updateCaItem(index, 'assigned_to', v ?? '')}
+                      onValueChange={(v) =>
+                        updateCaItem(index, 'assigned_to', v ?? '')
+                      }
                     >
                       <SelectTrigger className="h-8 text-sm">
                         <SelectValue placeholder="Select person" />
@@ -366,7 +407,11 @@ export function InspectionForm({
             </div>
             <div className="space-y-2">
               <Label htmlFor="project">Project *</Label>
-              <Select value={projectId} onValueChange={(v) => setProjectId(v ?? '')} required>
+              <Select
+                value={projectId}
+                onValueChange={(v) => setProjectId(v ?? '')}
+                required
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Select a project" />
                 </SelectTrigger>
@@ -398,104 +443,136 @@ export function InspectionForm({
                 return (
                   <div key={item.id} className="flex flex-col gap-2 px-6 py-3">
                     <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                    <Label className="flex-1 font-normal sm:font-medium">
-                      {item.label}
-                      {item.required && <span className="text-red-500 ml-1">*</span>}
-                    </Label>
+                      <Label className="flex-1 font-normal sm:font-medium">
+                        {item.label}
+                        {item.required && (
+                          <span className="text-red-500 ml-1">*</span>
+                        )}
+                      </Label>
 
-                    <div className="w-full sm:w-56 shrink-0">
-                      {item.field_type === 'compliance' && (
-                        <Select
-                          value={resp.value || ''}
-                          onValueChange={(v) => setResponseValue(section.id, item.id, v)}
-                        >
-                          <SelectTrigger className="h-9">
-                            <SelectValue placeholder="Select status" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="fully_compliant">Fully Compliant</SelectItem>
-                            <SelectItem value="partially_compliant">Partially Compliant</SelectItem>
-                            <SelectItem value="non_compliant">Non-Compliant</SelectItem>
-                            <SelectItem value="not_applicable">Not Applicable</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      )}
-
-                      {item.field_type === 'yes_no' && (
-                        <Select
-                          value={resp.value || ''}
-                          onValueChange={(v) => setResponseValue(section.id, item.id, v)}
-                        >
-                          <SelectTrigger className="h-9">
-                            <SelectValue placeholder="Select" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="yes">Yes</SelectItem>
-                            <SelectItem value="no">No</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      )}
-
-                      {item.field_type === 'pass_fail' && (
-                        <Select
-                          value={resp.value || ''}
-                          onValueChange={(v) => setResponseValue(section.id, item.id, v)}
-                        >
-                          <SelectTrigger className="h-9">
-                            <SelectValue placeholder="Select" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="pass">Pass</SelectItem>
-                            <SelectItem value="fail">Fail</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      )}
-
-                      {item.field_type === 'text' && (
-                        <Textarea
-                          value={resp.value || ''}
-                          onChange={(e) => setResponseValue(section.id, item.id, e.target.value)}
-                          placeholder="Enter response..."
-                          rows={2}
-                        />
-                      )}
-
-                      {item.field_type === 'numeric' && (
-                        <Input
-                          type="number"
-                          value={resp.value || ''}
-                          onChange={(e) => setResponseValue(section.id, item.id, e.target.value)}
-                          placeholder="Enter a number..."
-                          className="h-9"
-                        />
-                      )}
-
-                      {item.field_type === 'dropdown' && item.options && (
-                        <Select
-                          value={resp.value || ''}
-                          onValueChange={(v) => setResponseValue(section.id, item.id, v)}
-                        >
-                          <SelectTrigger className="h-9">
-                            <SelectValue placeholder="Select an option" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {item.options.map((option) => (
-                              <SelectItem key={option} value={option}>
-                                {option}
+                      <div className="w-full sm:w-56 shrink-0">
+                        {item.field_type === 'compliance' && (
+                          <Select
+                            value={resp.value || ''}
+                            onValueChange={(v) =>
+                              setResponseValue(section.id, item.id, v)
+                            }
+                          >
+                            <SelectTrigger className="h-9">
+                              <SelectValue placeholder="Select status" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="fully_compliant">
+                                Fully Compliant
                               </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      )}
+                              <SelectItem value="partially_compliant">
+                                Partially Compliant
+                              </SelectItem>
+                              <SelectItem value="non_compliant">
+                                Non-Compliant
+                              </SelectItem>
+                              <SelectItem value="not_applicable">
+                                Not Applicable
+                              </SelectItem>
+                            </SelectContent>
+                          </Select>
+                        )}
 
-                      {item.field_type === 'photo' && (
-                        <PhotoUpload
-                          photos={resp.photo_urls}
-                          onPhotosChange={(photos) => setResponsePhotos(section.id, item.id, photos)}
-                          bucket="inspection-photos"
-                        />
-                      )}
-                    </div>
+                        {item.field_type === 'yes_no' && (
+                          <Select
+                            value={resp.value || ''}
+                            onValueChange={(v) =>
+                              setResponseValue(section.id, item.id, v)
+                            }
+                          >
+                            <SelectTrigger className="h-9">
+                              <SelectValue placeholder="Select" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="yes">Yes</SelectItem>
+                              <SelectItem value="no">No</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        )}
+
+                        {item.field_type === 'pass_fail' && (
+                          <Select
+                            value={resp.value || ''}
+                            onValueChange={(v) =>
+                              setResponseValue(section.id, item.id, v)
+                            }
+                          >
+                            <SelectTrigger className="h-9">
+                              <SelectValue placeholder="Select" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="pass">Pass</SelectItem>
+                              <SelectItem value="fail">Fail</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        )}
+
+                        {item.field_type === 'text' && (
+                          <Textarea
+                            value={resp.value || ''}
+                            onChange={(e) =>
+                              setResponseValue(
+                                section.id,
+                                item.id,
+                                e.target.value
+                              )
+                            }
+                            placeholder="Enter response..."
+                            rows={2}
+                          />
+                        )}
+
+                        {item.field_type === 'numeric' && (
+                          <Input
+                            type="number"
+                            value={resp.value || ''}
+                            onChange={(e) =>
+                              setResponseValue(
+                                section.id,
+                                item.id,
+                                e.target.value
+                              )
+                            }
+                            placeholder="Enter a number..."
+                            className="h-9"
+                          />
+                        )}
+
+                        {item.field_type === 'dropdown' && item.options && (
+                          <Select
+                            value={resp.value || ''}
+                            onValueChange={(v) =>
+                              setResponseValue(section.id, item.id, v)
+                            }
+                          >
+                            <SelectTrigger className="h-9">
+                              <SelectValue placeholder="Select an option" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {item.options.map((option) => (
+                                <SelectItem key={option} value={option}>
+                                  {option}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        )}
+
+                        {item.field_type === 'photo' && (
+                          <PhotoUpload
+                            photos={resp.photo_urls}
+                            onPhotosChange={(photos) =>
+                              setResponsePhotos(section.id, item.id, photos)
+                            }
+                            bucket="inspection-photos"
+                          />
+                        )}
+                      </div>
                     </div>
 
                     <button
@@ -503,39 +580,53 @@ export function InspectionForm({
                       onClick={() => toggleExpanded(section.id, item.id)}
                       className="self-start text-xs text-muted-foreground hover:text-foreground"
                     >
-                      {isExpanded ? 'Hide detail' : 'Add comment / observation / action'}
+                      {isExpanded
+                        ? 'Hide detail'
+                        : 'Add comment / observation / action'}
                     </button>
 
                     {isExpanded && (
                       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                         <div className="space-y-1">
-                          <Label className="text-xs text-muted-foreground">Comment</Label>
+                          <Label className="text-xs text-muted-foreground">
+                            Comment
+                          </Label>
                           <Textarea
                             value={resp.comment ?? ''}
                             onChange={(e) =>
-                              patchResponse(section.id, item.id, { comment: e.target.value || null })
+                              patchResponse(section.id, item.id, {
+                                comment: e.target.value || null,
+                              })
                             }
                             placeholder="Comment"
                             rows={2}
                           />
                         </div>
                         <div className="space-y-1">
-                          <Label className="text-xs text-muted-foreground">Observation</Label>
+                          <Label className="text-xs text-muted-foreground">
+                            Observation
+                          </Label>
                           <Textarea
                             value={resp.observation ?? ''}
                             onChange={(e) =>
-                              patchResponse(section.id, item.id, { observation: e.target.value || null })
+                              patchResponse(section.id, item.id, {
+                                observation: e.target.value || null,
+                              })
                             }
                             placeholder="Observation"
                             rows={2}
                           />
                         </div>
                         <div className="space-y-1">
-                          <Label className="text-xs text-muted-foreground">Action Plan</Label>
+                          <Label className="text-xs text-muted-foreground">
+                            Action Plan
+                          </Label>
                           <Textarea
                             value={resp.action_plan ?? ''}
                             onChange={(e) =>
-                              patchResponse(section.id, item.id, { action_plan: e.target.value || null })
+                              patchResponse(section.id, item.id, {
+                                action_plan: e.target.value || null,
+                              })
                             }
                             placeholder="Action Plan"
                             rows={2}
@@ -574,7 +665,11 @@ export function InspectionForm({
             Cancel
           </Button>
         </Link>
-        <Button type="submit" className="flex-1" disabled={loading || !projectId}>
+        <Button
+          type="submit"
+          className="flex-1"
+          disabled={loading || !projectId}
+        >
           {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
           Submit Inspection
           <ArrowRight className="ml-2 h-4 w-4" />

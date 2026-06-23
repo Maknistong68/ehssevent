@@ -47,13 +47,22 @@ export default async function ProjectsPage({ searchParams }: Props) {
 
   const sorted = sortItems(filtered, params.sort, params.dir, projectAccessors)
   const { page, per } = parsePageParams(params)
-  const { pageItems, total, totalPages, from, to, page: currentPage } = paginate(sorted, page, per)
+  const {
+    pageItems,
+    total,
+    totalPages,
+    from,
+    to,
+    page: currentPage,
+  } = paginate(sorted, page, per)
 
   return (
     <div className="space-y-5 p-4 md:p-6">
       <div className="flex items-end justify-between gap-3">
         <div>
-          <h1 className="font-heading text-2xl font-bold tracking-tight md:text-3xl">Projects</h1>
+          <h1 className="font-heading text-2xl font-bold tracking-tight md:text-3xl">
+            Projects
+          </h1>
           <p className="text-sm text-muted-foreground">
             {allProjects.length} project{allProjects.length !== 1 ? 's' : ''}
           </p>
@@ -110,7 +119,9 @@ export default async function ProjectsPage({ searchParams }: Props) {
                     <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-secondary text-brand-green-soft">
                       <FolderOpen className="h-5 w-5" />
                     </div>
-                    <h3 className="font-heading font-semibold tracking-tight">{project.name}</h3>
+                    <h3 className="font-heading font-semibold tracking-tight">
+                      {project.name}
+                    </h3>
                     {project.description && (
                       <p className="line-clamp-2 text-sm text-muted-foreground">
                         {project.description}

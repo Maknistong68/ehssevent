@@ -110,7 +110,9 @@ export function DashboardOverview({
   return (
     <div className="space-y-5">
       <div>
-        <p className="text-sm text-muted-foreground">{tHeader('welcomeBack')},</p>
+        <p className="text-sm text-muted-foreground">
+          {tHeader('welcomeBack')},
+        </p>
         <h1 className="font-heading text-2xl font-bold tracking-tight md:text-3xl">
           {name}
         </h1>

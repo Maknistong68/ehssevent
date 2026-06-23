@@ -86,7 +86,10 @@ export function AdminOrganizations({ organizations }: AdminOrganizationsProps) {
               </div>
               <div className="space-y-2">
                 <Label>Type</Label>
-                <Select value={orgType} onValueChange={(v) => v && setOrgType(v as OrgType)}>
+                <Select
+                  value={orgType}
+                  onValueChange={(v) => v && setOrgType(v as OrgType)}
+                >
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
@@ -105,7 +108,11 @@ export function AdminOrganizations({ organizations }: AdminOrganizationsProps) {
                   type="email"
                 />
               </div>
-              <Button onClick={handleCreate} disabled={loading} className="w-full">
+              <Button
+                onClick={handleCreate}
+                disabled={loading}
+                className="w-full"
+              >
                 {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Create
               </Button>
@@ -137,7 +144,9 @@ export function AdminOrganizations({ organizations }: AdminOrganizationsProps) {
                 </div>
               </div>
               <div className="flex shrink-0 items-center gap-2">
-                <Badge variant={org.org_type === 'client' ? 'default' : 'secondary'}>
+                <Badge
+                  variant={org.org_type === 'client' ? 'default' : 'secondary'}
+                >
                   {org.org_type}
                 </Badge>
                 {!org.is_active && (

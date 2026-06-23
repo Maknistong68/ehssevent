@@ -74,5 +74,7 @@ export async function getEventCorrectiveActions(
 export async function getInspectionCorrectiveActions(
   inspectionId: string
 ): Promise<CorrectiveAction[]> {
-  return MOCK_CORRECTIVE_ACTIONS.filter((ca) => ca.inspection_id === inspectionId)
+  return MOCK_CORRECTIVE_ACTIONS.filter(
+    (ca) => ca.inspection_id === inspectionId
+  )
 }

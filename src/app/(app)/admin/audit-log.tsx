@@ -98,7 +98,10 @@ export function AuditLog({ entries }: AuditLogProps) {
           </div>
           <div className="space-y-1.5">
             <Label className="text-xs">Table</Label>
-            <Select value={table} onValueChange={(v) => setTable(v ?? ALL_TABLES)}>
+            <Select
+              value={table}
+              onValueChange={(v) => setTable(v ?? ALL_TABLES)}
+            >
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
@@ -154,7 +157,8 @@ export function AuditLog({ entries }: AuditLogProps) {
                     <Badge
                       variant="secondary"
                       className={
-                        ACTION_COLORS[entry.action] || 'bg-slate-100 text-slate-700'
+                        ACTION_COLORS[entry.action] ||
+                        'bg-slate-100 text-slate-700'
                       }
                     >
                       {entry.action}
@@ -170,11 +174,12 @@ export function AuditLog({ entries }: AuditLogProps) {
                     {entry.target_table && (
                       <span className="font-mono">{entry.target_table}</span>
                     )}
-                    {entry.metadata && Object.keys(entry.metadata).length > 0 && (
-                      <span className="font-mono truncate max-w-[200px]">
-                        {JSON.stringify(entry.metadata)}
-                      </span>
-                    )}
+                    {entry.metadata &&
+                      Object.keys(entry.metadata).length > 0 && (
+                        <span className="font-mono truncate max-w-[200px]">
+                          {JSON.stringify(entry.metadata)}
+                        </span>
+                      )}
                   </div>
                 </div>
                 <span className="shrink-0 text-xs text-muted-foreground">

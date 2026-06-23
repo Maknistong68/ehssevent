@@ -1,6 +1,12 @@
 'use client'
 
-import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  type ReactNode,
+} from 'react'
 import { MOCK_CURRENT_USER } from '@/lib/mock-data'
 import type { Profile } from '@/types/database'
 
@@ -46,16 +52,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     fetch('/api/effective-profile')
       .then((res) => (res.ok ? res.json() : null))
-      .then((data: { profile: Profile | null; isImpersonating: boolean } | null) => {
-        if (!active) return
-        setState({
-          user: mockUser,
-          profile: MOCK_CURRENT_USER,
-          effectiveProfile: data?.profile ?? MOCK_CURRENT_USER,
-          isImpersonating: Boolean(data?.isImpersonating),
-          loading: false,
-        })
-      })
+      .then(
+        (
+          data: { profile: Profile | null; isImpersonating: boolean } | null
+        ) => {
+          if (!active) return
+          setState({
+            user: mockUser,
+            profile: MOCK_CURRENT_USER,
+            effectiveProfile: data?.profile ?? MOCK_CURRENT_USER,
+            isImpersonating: Boolean(data?.isImpersonating),
+            loading: false,
+          })
+        }
+      )
       .catch(() => {
         if (!active) return
         setState((prev) => ({ ...prev, loading: false }))

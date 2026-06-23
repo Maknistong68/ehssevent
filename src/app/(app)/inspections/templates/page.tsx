@@ -31,7 +31,9 @@ export default async function TemplatesPage() {
             <ArrowLeft className="h-5 w-5" />
           </Link>
           <div className="min-w-0">
-            <h1 className="font-heading text-2xl font-bold tracking-tight md:text-3xl">Templates</h1>
+            <h1 className="font-heading text-2xl font-bold tracking-tight md:text-3xl">
+              Templates
+            </h1>
             <p className="text-sm text-muted-foreground">
               {templates.length} template{templates.length !== 1 ? 's' : ''}
             </p>

@@ -143,7 +143,10 @@ export async function logout() {
  * Policy. Called by the re-consent gate when the stored consent version is
  * older than the currently published version.
  */
-export async function recordConsent(): Promise<{ success?: boolean; error?: string }> {
+export async function recordConsent(): Promise<{
+  success?: boolean
+  error?: string
+}> {
   // TODO(prod): UPDATE the authenticated user's profile, stamping
   // terms_accepted_at = now(), privacy_accepted_at = now(),
   // terms_version = CURRENT_TERMS_VERSION, privacy_version = CURRENT_PRIVACY_VERSION.

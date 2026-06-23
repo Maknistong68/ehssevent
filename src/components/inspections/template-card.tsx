@@ -9,9 +9,12 @@ interface TemplateCardProps {
 }
 
 export function TemplateCard({ template }: TemplateCardProps) {
-  const creator = template.creator as { id: string; full_name?: string; email: string } | undefined
+  const creator = template.creator as
+    | { id: string; full_name?: string; email: string }
+    | undefined
   const sectionCount = template.sections?.length || 0
-  const itemCount = template.sections?.reduce((sum, s) => sum + (s.items?.length || 0), 0) || 0
+  const itemCount =
+    template.sections?.reduce((sum, s) => sum + (s.items?.length || 0), 0) || 0
 
   return (
     <Link href={`/inspections/templates/${template.id}`}>
@@ -22,7 +25,9 @@ export function TemplateCard({ template }: TemplateCardProps) {
         <CardContent className="space-y-3">
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0 flex-1">
-              <h3 className="line-clamp-1 font-heading text-sm font-semibold tracking-tight">{template.name}</h3>
+              <h3 className="line-clamp-1 font-heading text-sm font-semibold tracking-tight">
+                {template.name}
+              </h3>
               {template.description && (
                 <p className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">
                   {template.description}
@@ -31,9 +36,19 @@ export function TemplateCard({ template }: TemplateCardProps) {
             </div>
             <div className="shrink-0">
               {template.is_active ? (
-                <Badge variant="secondary" className="bg-green-100 text-green-800">Active</Badge>
+                <Badge
+                  variant="secondary"
+                  className="bg-green-100 text-green-800"
+                >
+                  Active
+                </Badge>
               ) : (
-                <Badge variant="secondary" className="bg-slate-100 text-slate-600">Inactive</Badge>
+                <Badge
+                  variant="secondary"
+                  className="bg-slate-100 text-slate-600"
+                >
+                  Inactive
+                </Badge>
               )}
             </div>
           </div>

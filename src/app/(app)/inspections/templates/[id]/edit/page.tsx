@@ -30,7 +30,9 @@ export default async function EditTemplatePage({ params }: Props) {
 
   return (
     <div className="mx-auto max-w-2xl p-4 md:p-6">
-      <h1 className="mb-6 font-heading text-2xl font-bold tracking-tight md:text-3xl">Edit Template</h1>
+      <h1 className="mb-6 font-heading text-2xl font-bold tracking-tight md:text-3xl">
+        Edit Template
+      </h1>
       <TemplateBuilder template={template} />
     </div>
   )

@@ -10,9 +10,15 @@ interface InspectionCardProps {
 }
 
 export function InspectionCard({ inspection }: InspectionCardProps) {
-  const project = inspection.project as { id: string; name: string; location?: string } | undefined
-  const conductor = inspection.conductor as { id: string; full_name?: string; email: string } | undefined
-  const template = inspection.template as { id: string; name: string } | undefined
+  const project = inspection.project as
+    | { id: string; name: string; location?: string }
+    | undefined
+  const conductor = inspection.conductor as
+    | { id: string; full_name?: string; email: string }
+    | undefined
+  const template = inspection.template as
+    | { id: string; name: string }
+    | undefined
 
   return (
     <Link href={`/inspections/${inspection.id}`}>

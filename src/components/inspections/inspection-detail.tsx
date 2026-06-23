@@ -28,10 +28,17 @@ interface InspectionDetailProps {
   canRaiseCa?: boolean
 }
 
-const FAILING_COMPLIANCE: ComplianceValue[] = ['non_compliant', 'partially_compliant']
+const FAILING_COMPLIANCE: ComplianceValue[] = [
+  'non_compliant',
+  'partially_compliant',
+]
 
-function getValueDisplay(response: InspectionResponse | undefined, fieldType: InspectionFieldType) {
-  if (!response) return <span className="text-muted-foreground text-sm">No response</span>
+function getValueDisplay(
+  response: InspectionResponse | undefined,
+  fieldType: InspectionFieldType
+) {
+  if (!response)
+    return <span className="text-muted-foreground text-sm">No response</span>
 
   if (fieldType === 'photo') {
     if (!response.photo_urls || response.photo_urls.length === 0) {
@@ -40,8 +47,16 @@ function getValueDisplay(response: InspectionResponse | undefined, fieldType: In
     return (
       <div className="flex flex-wrap gap-2">
         {response.photo_urls.map((url, i) => (
-          <div key={i} className="relative h-20 w-20 rounded-md overflow-hidden border">
-            <Image src={toSecurePhotoUrl(url)} alt={`Photo ${i + 1}`} fill className="object-cover" />
+          <div
+            key={i}
+            className="relative h-20 w-20 rounded-md overflow-hidden border"
+          >
+            <Image
+              src={toSecurePhotoUrl(url)}
+              alt={`Photo ${i + 1}`}
+              fill
+              className="object-cover"
+            />
           </div>
         ))}
       </div>
@@ -56,7 +71,11 @@ function getValueDisplay(response: InspectionResponse | undefined, fieldType: In
     return (
       <Badge
         variant="secondary"
-        className={response.value === 'yes' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}
+        className={
+          response.value === 'yes'
+            ? 'bg-green-100 text-green-800'
+            : 'bg-red-100 text-red-800'
+        }
       >
         {response.value === 'yes' ? 'Yes' : 'No'}
       </Badge>
@@ -67,7 +86,11 @@ function getValueDisplay(response: InspectionResponse | undefined, fieldType: In
     return (
       <Badge
         variant="secondary"
-        className={response.value === 'pass' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}
+        className={
+          response.value === 'pass'
+            ? 'bg-green-100 text-green-800'
+            : 'bg-red-100 text-red-800'
+        }
       >
         {response.value === 'pass' ? 'Pass' : 'Fail'}
       </Badge>
@@ -102,11 +125,18 @@ export function InspectionDetail({
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Compliance Score</p>
-                <p className="text-3xl font-bold">{inspection.score?.toFixed(1)}%</p>
+                <p className="text-sm text-muted-foreground">
+                  Compliance Score
+                </p>
+                <p className="text-3xl font-bold">
+                  {inspection.score?.toFixed(1)}%
+                </p>
               </div>
               <div className="text-right text-sm text-muted-foreground">
-                <p>{inspection.compliant_items} / {inspection.scorable_items} compliant</p>
+                <p>
+                  {inspection.compliant_items} / {inspection.scorable_items}{' '}
+                  compliant
+                </p>
                 <p>{inspection.total_items} total items</p>
               </div>
             </div>
@@ -156,31 +186,52 @@ export function InspectionDetail({
                     <div className="flex items-center gap-2 min-w-0">
                       <span className="text-sm font-medium">{item.label}</span>
                       <Badge variant="outline" className="text-[10px] shrink-0">
-                        {INSPECTION_FIELD_TYPE_LABELS[item.field_type as InspectionFieldType]}
+                        {
+                          INSPECTION_FIELD_TYPE_LABELS[
+                            item.field_type as InspectionFieldType
+                          ]
+                        }
                       </Badge>
                     </div>
                     <div className="shrink-0">
-                      {getValueDisplay(response, item.field_type as InspectionFieldType)}
+                      {getValueDisplay(
+                        response,
+                        item.field_type as InspectionFieldType
+                      )}
                     </div>
                   </div>
-                  {(response?.comment || response?.observation || response?.action_plan) && (
+                  {(response?.comment ||
+                    response?.observation ||
+                    response?.action_plan) && (
                     <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                       {response.comment && (
                         <div>
-                          <p className="text-[11px] font-medium text-muted-foreground">Comment</p>
-                          <p className="text-sm whitespace-pre-wrap">{response.comment}</p>
+                          <p className="text-[11px] font-medium text-muted-foreground">
+                            Comment
+                          </p>
+                          <p className="text-sm whitespace-pre-wrap">
+                            {response.comment}
+                          </p>
                         </div>
                       )}
                       {response.observation && (
                         <div>
-                          <p className="text-[11px] font-medium text-muted-foreground">Observation</p>
-                          <p className="text-sm whitespace-pre-wrap">{response.observation}</p>
+                          <p className="text-[11px] font-medium text-muted-foreground">
+                            Observation
+                          </p>
+                          <p className="text-sm whitespace-pre-wrap">
+                            {response.observation}
+                          </p>
                         </div>
                       )}
                       {response.action_plan && (
                         <div>
-                          <p className="text-[11px] font-medium text-muted-foreground">Action Plan</p>
-                          <p className="text-sm whitespace-pre-wrap">{response.action_plan}</p>
+                          <p className="text-[11px] font-medium text-muted-foreground">
+                            Action Plan
+                          </p>
+                          <p className="text-sm whitespace-pre-wrap">
+                            {response.action_plan}
+                          </p>
                         </div>
                       )}
                     </div>
@@ -192,7 +243,8 @@ export function InspectionDetail({
                           variant="secondary"
                           className={`${CA_STATUS_COLORS[linkedCa.status]} cursor-pointer inline-flex items-center gap-1`}
                         >
-                          {linkedCa.reference_number} &middot; {CA_STATUS_LABELS[linkedCa.status]}
+                          {linkedCa.reference_number} &middot;{' '}
+                          {CA_STATUS_LABELS[linkedCa.status]}
                           <ExternalLink className="h-3 w-3" />
                         </Badge>
                       </Link>
@@ -201,7 +253,11 @@ export function InspectionDetail({
                   {isFailing && !linkedCa && canRaiseCa && (
                     <div>
                       <Link href={caHref}>
-                        <Button variant="outline" size="sm" className="h-7 text-xs">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-7 text-xs"
+                        >
                           <AlertTriangle className="mr-1 h-3 w-3" />
                           Raise Corrective Action
                         </Button>

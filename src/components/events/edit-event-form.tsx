@@ -19,12 +19,7 @@ import {
 } from '@/components/ui/select'
 import { Card, CardContent } from '@/components/ui/card'
 import { PhotoUpload } from '@/components/shared/photo-upload'
-import {
-  AlertCircle,
-  ArrowLeft,
-  Loader2,
-  MapPin,
-} from 'lucide-react'
+import { AlertCircle, ArrowLeft, Loader2, MapPin } from 'lucide-react'
 import { updateEvent } from '@/lib/actions/events'
 import {
   EVENT_TYPE_LABELS,
@@ -48,18 +43,23 @@ interface EditEventFormProps {
   users: AssignableUser[]
 }
 
-const CLASSIFICATION_OPTIONS: Array<keyof typeof EVENT_CLASSIFICATION_LABELS> = [
-  'safety',
-  'fire',
-  'environment',
-  'welfare',
-  'unsafe_act',
-  'unsafe_condition',
-  'non_conformance',
-  'to_be_determined',
-]
+const CLASSIFICATION_OPTIONS: Array<keyof typeof EVENT_CLASSIFICATION_LABELS> =
+  [
+    'safety',
+    'fire',
+    'environment',
+    'welfare',
+    'unsafe_act',
+    'unsafe_condition',
+    'non_conformance',
+    'to_be_determined',
+  ]
 
-const WITH_RESPONSE: EventType[] = ['near_miss', 'incident', 'hazard_identification']
+const WITH_RESPONSE: EventType[] = [
+  'near_miss',
+  'incident',
+  'hazard_identification',
+]
 
 function CheckboxRow({
   id,
@@ -77,7 +77,11 @@ function CheckboxRow({
       htmlFor={id}
       className="flex cursor-pointer items-center gap-3 rounded-xl border border-input bg-secondary/30 px-4 py-3 text-sm font-medium transition-colors hover:bg-secondary/60"
     >
-      <Checkbox id={id} checked={checked} onCheckedChange={(v) => onChange(v)} />
+      <Checkbox
+        id={id}
+        checked={checked}
+        onCheckedChange={(v) => onChange(v)}
+      />
       {label}
     </label>
   )
@@ -184,7 +188,9 @@ export function EditEventForm({ event, projects, users }: EditEventFormProps) {
       work_related: showWorkRepeat ? workRelated : true,
       repeat_incident: showWorkRepeat ? repeatIncident : false,
       stop_work: showResponse ? stopWork : false,
-      stop_work_details: showResponse ? stopWorkDetails || undefined : undefined,
+      stop_work_details: showResponse
+        ? stopWorkDetails || undefined
+        : undefined,
       immediate_corrective_actions: showResponse
         ? immediateCorrectiveActions || undefined
         : undefined,
@@ -296,7 +302,10 @@ export function EditEventForm({ event, projects, users }: EditEventFormProps) {
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <Label>Site</Label>
-              <Select value={site || null} onValueChange={(v) => setSite(v ?? '')}>
+              <Select
+                value={site || null}
+                onValueChange={(v) => setSite(v ?? '')}
+              >
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Select site" />
                 </SelectTrigger>
@@ -522,7 +531,9 @@ export function EditEventForm({ event, projects, users }: EditEventFormProps) {
                         checked={attendeeIds.includes(u.id)}
                         onCheckedChange={(v) =>
                           setAttendeeIds((prev) =>
-                            v ? [...prev, u.id] : prev.filter((id) => id !== u.id)
+                            v
+                              ? [...prev, u.id]
+                              : prev.filter((id) => id !== u.id)
                           )
                         }
                       />

@@ -21,7 +21,15 @@ import {
 } from '@/components/ui/dialog'
 import { Label } from '@/components/ui/label'
 import { Separator } from '@/components/ui/separator'
-import { Pencil, Loader2, Eye, ShieldCheck, Power, UserPlus, Check } from 'lucide-react'
+import {
+  Pencil,
+  Loader2,
+  Eye,
+  ShieldCheck,
+  Power,
+  UserPlus,
+  Check,
+} from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { updateUserProfile, inviteUser, approveUser } from '@/lib/actions/admin'
 import { startImpersonation } from '@/lib/actions/impersonation'
@@ -57,7 +65,11 @@ interface AdminUsersProps {
   currentUserId: string
 }
 
-export function AdminUsers({ profiles, organizations, currentUserId }: AdminUsersProps) {
+export function AdminUsers({
+  profiles,
+  organizations,
+  currentUserId,
+}: AdminUsersProps) {
   const [editUser, setEditUser] = useState<Profile | null>(null)
   const [role, setRole] = useState<UserRole>('client_user')
   const [orgId, setOrgId] = useState('')
@@ -165,7 +177,9 @@ export function AdminUsers({ profiles, organizations, currentUserId }: AdminUser
   }
 
   const isSelf = editUser?.id === currentUserId
-  const effectivePermissions = editUser ? ROLE_PERMISSIONS[editUser.role] ?? [] : []
+  const effectivePermissions = editUser
+    ? (ROLE_PERMISSIONS[editUser.role] ?? [])
+    : []
   const editOrg = editUser?.organization as
     | { id: string; name: string; org_type: string }
     | undefined
@@ -197,7 +211,10 @@ export function AdminUsers({ profiles, organizations, currentUserId }: AdminUser
             </div>
             <div className="space-y-2">
               <Label>Role</Label>
-              <Select value={inviteRole} onValueChange={(v) => v && setInviteRole(v as UserRole)}>
+              <Select
+                value={inviteRole}
+                onValueChange={(v) => v && setInviteRole(v as UserRole)}
+              >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -212,7 +229,12 @@ export function AdminUsers({ profiles, organizations, currentUserId }: AdminUser
             </div>
             <div className="space-y-2">
               <Label>Organization</Label>
-              <Select value={inviteOrg || 'none'} onValueChange={(v) => setInviteOrg(v === 'none' ? '' : (v ?? ''))}>
+              <Select
+                value={inviteOrg || 'none'}
+                onValueChange={(v) =>
+                  setInviteOrg(v === 'none' ? '' : (v ?? ''))
+                }
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="No organization" />
                 </SelectTrigger>
@@ -238,7 +260,10 @@ export function AdminUsers({ profiles, organizations, currentUserId }: AdminUser
         </DialogContent>
       </Dialog>
 
-      <Dialog open={!!editUser} onOpenChange={(open) => !open && setEditUser(null)}>
+      <Dialog
+        open={!!editUser}
+        onOpenChange={(open) => !open && setEditUser(null)}
+      >
         <DialogContent className="max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>User Troubleshooting</DialogTitle>
@@ -247,9 +272,13 @@ export function AdminUsers({ profiles, organizations, currentUserId }: AdminUser
             <div className="space-y-5">
               <div className="space-y-1">
                 <p className="font-medium">{editUser.full_name || 'No name'}</p>
-                <p className="text-sm text-muted-foreground">{editUser.email}</p>
+                <p className="text-sm text-muted-foreground">
+                  {editUser.email}
+                </p>
                 <div className="flex flex-wrap items-center gap-2 pt-1">
-                  <Badge variant="secondary">{t(`roles.${editUser.role}`)}</Badge>
+                  <Badge variant="secondary">
+                    {t(`roles.${editUser.role}`)}
+                  </Badge>
                   <Badge variant={STATUS_VARIANT[editUser.status]}>
                     {USER_STATUS_LABELS[editUser.status]}
                   </Badge>
@@ -261,7 +290,10 @@ export function AdminUsers({ profiles, organizations, currentUserId }: AdminUser
 
               <div className="space-y-2">
                 <Label>Role</Label>
-                <Select value={role} onValueChange={(v) => v && setRole(v as UserRole)}>
+                <Select
+                  value={role}
+                  onValueChange={(v) => v && setRole(v as UserRole)}
+                >
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
@@ -292,7 +324,11 @@ export function AdminUsers({ profiles, organizations, currentUserId }: AdminUser
                 </Select>
               </div>
 
-              <Button onClick={handleSave} disabled={loading} className="w-full">
+              <Button
+                onClick={handleSave}
+                disabled={loading}
+                className="w-full"
+              >
                 {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Save Changes
               </Button>
@@ -315,11 +351,17 @@ export function AdminUsers({ profiles, organizations, currentUserId }: AdminUser
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
                   <ShieldCheck className="h-4 w-4 text-muted-foreground" />
-                  <Label className="text-sm">{t('admin.effectivePermissions')}</Label>
+                  <Label className="text-sm">
+                    {t('admin.effectivePermissions')}
+                  </Label>
                 </div>
                 <div className="flex flex-wrap gap-1.5">
                   {effectivePermissions.map((p) => (
-                    <Badge key={p} variant="outline" className="font-mono text-[11px]">
+                    <Badge
+                      key={p}
+                      variant="outline"
+                      className="font-mono text-[11px]"
+                    >
                       {p}
                     </Badge>
                   ))}
@@ -391,7 +433,9 @@ export function AdminUsers({ profiles, organizations, currentUserId }: AdminUser
                     {profile.email}
                   </p>
                   {org && (
-                    <p className="truncate text-xs text-muted-foreground">{org.name}</p>
+                    <p className="truncate text-xs text-muted-foreground">
+                      {org.name}
+                    </p>
                   )}
                 </div>
               </div>

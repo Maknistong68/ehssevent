@@ -1,4 +1,8 @@
-export default function AuthLayout({ children }: { children: React.ReactNode }) {
+export default function AuthLayout({
+  children,
+}: {
+  children: React.ReactNode
+}) {
   return (
     <div className="relative flex min-h-svh items-center justify-center overflow-hidden bg-background p-4">
       {/* soft ambient blobs */}

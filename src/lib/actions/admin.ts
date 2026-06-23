@@ -101,7 +101,10 @@ export async function inviteUser(input: {
     target_table: 'profiles',
     target_id: newProfile.id,
     target_label: newProfile.email,
-    metadata: { role: input.role, organization_id: input.organization_id ?? null },
+    metadata: {
+      role: input.role,
+      organization_id: input.organization_id ?? null,
+    },
   })
 
   revalidatePath('/admin')
@@ -133,7 +136,10 @@ export async function approveUser(input: {
     target_table: 'profiles',
     target_id: profile.id,
     target_label: profile.email,
-    metadata: { role: input.role, organization_id: input.organization_id ?? null },
+    metadata: {
+      role: input.role,
+      organization_id: input.organization_id ?? null,
+    },
   })
 
   revalidatePath('/admin')

@@ -104,12 +104,21 @@ export const ALL_PERMISSIONS: Permission[] = [
 ]
 
 export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
-  system_admin: [...BASE_PERMISSIONS, ...MANAGER_PERMISSIONS, ...ADMIN_PERMISSIONS],
+  system_admin: [
+    ...BASE_PERMISSIONS,
+    ...MANAGER_PERMISSIONS,
+    ...ADMIN_PERMISSIONS,
+  ],
   support: [...BASE_PERMISSIONS, ...MANAGER_PERMISSIONS, ...ADMIN_PERMISSIONS],
   // client_admin may also manage users within its own org (org-scoped, enforced
   // by updateUserProfile + migration 019); the platform admin panel stays
   // admin-only, so 'admin:access' is intentionally not granted here.
-  client_admin: [...BASE_PERMISSIONS, ...MANAGER_PERMISSIONS, 'user:manage', 'team:view'],
+  client_admin: [
+    ...BASE_PERMISSIONS,
+    ...MANAGER_PERMISSIONS,
+    'user:manage',
+    'team:view',
+  ],
   client_manager: [...BASE_PERMISSIONS, ...MANAGER_PERMISSIONS],
   client_user: [...BASE_PERMISSIONS],
   // Contractors own the contractor_review / contractor_investigation stages,
@@ -143,7 +152,7 @@ export function isViewPermission(p: Permission): boolean {
  * (`closed`) or unknown. Derived purely from `EVENT_APPROVAL_SEQUENCE`.
  */
 export function nextEventStage(
-  level: EventApprovalLevel,
+  level: EventApprovalLevel
 ): EventApprovalLevel | null {
   const i = EVENT_APPROVAL_SEQUENCE.indexOf(level)
   if (i < 0 || i >= EVENT_APPROVAL_SEQUENCE.length - 1) return null
@@ -159,7 +168,7 @@ export function nextEventStage(
  * `closed` is terminal/immutable and has no leave permission.
  */
 export function requiredPermissionToLeaveStage(
-  level: EventApprovalLevel,
+  level: EventApprovalLevel
 ): Permission | null {
   if (level === 'closed') return null
   const owner = EVENT_STAGE_OWNER[level]
@@ -184,7 +193,7 @@ export function requiredPermissionToLeaveStage(
  */
 export function allowedEventTransitions(
   role: UserRole | undefined,
-  level: EventApprovalLevel,
+  level: EventApprovalLevel
 ): EventApprovalLevel[] {
   if (!role || level === 'closed') return []
 
@@ -206,7 +215,7 @@ export function allowedEventTransitions(
 export function canTransitionEvent(
   role: UserRole | undefined,
   level: EventApprovalLevel,
-  target: EventApprovalLevel,
+  target: EventApprovalLevel
 ): boolean {
   return allowedEventTransitions(role, level).includes(target)
 }

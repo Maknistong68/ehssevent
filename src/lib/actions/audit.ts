@@ -23,9 +23,7 @@ export interface AuditEntry {
  */
 export async function logAudit(entry: AuditEntry): Promise<void> {
   const profile = await getSessionProfile()
-  const actor = profile
-    ? MOCK_PROFILES.find((p) => p.id === profile.id)
-    : null
+  const actor = profile ? MOCK_PROFILES.find((p) => p.id === profile.id) : null
 
   const log: AuditLogEntry = {
     id: crypto.randomUUID(),

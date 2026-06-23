@@ -44,15 +44,16 @@ export type InspectionFieldType =
 
 export type InspectionStatus = 'draft' | 'completed'
 
-export const INSPECTION_FIELD_TYPE_LABELS: Record<InspectionFieldType, string> = {
-  text: 'Text',
-  yes_no: 'Yes / No',
-  pass_fail: 'Pass / Fail',
-  numeric: 'Numeric',
-  photo: 'Photo',
-  dropdown: 'Dropdown',
-  compliance: 'Compliance Level',
-}
+export const INSPECTION_FIELD_TYPE_LABELS: Record<InspectionFieldType, string> =
+  {
+    text: 'Text',
+    yes_no: 'Yes / No',
+    pass_fail: 'Pass / Fail',
+    numeric: 'Numeric',
+    photo: 'Photo',
+    dropdown: 'Dropdown',
+    compliance: 'Compliance Level',
+  }
 
 // ============================================================
 // Compliance scoring (4 fixed levels, auto equal-weighted)
@@ -212,21 +213,22 @@ export const EVENT_TYPE_LABELS: Record<EventType, string> = {
   leadership_event: 'Leadership Event',
 }
 
-export const EVENT_CLASSIFICATION_LABELS: Record<EventClassification, string> = {
-  safety: 'Safety',
-  fire: 'Fire',
-  environment: 'Environment',
-  welfare: 'Welfare',
-  unsafe_act: 'Unsafe Act',
-  unsafe_condition: 'Unsafe Condition',
-  non_conformance: 'Non-Conformance',
-  positive_observation: 'Positive Observation',
-  leadership_site_visit: 'Leadership Site Visit',
-  emergency_drill: 'Emergency Drill',
-  safety_meeting: 'Safety Meeting (led by Exec Leader)',
-  contractor_performance_review: 'Contractor Performance Review',
-  to_be_determined: 'To Be Determined',
-}
+export const EVENT_CLASSIFICATION_LABELS: Record<EventClassification, string> =
+  {
+    safety: 'Safety',
+    fire: 'Fire',
+    environment: 'Environment',
+    welfare: 'Welfare',
+    unsafe_act: 'Unsafe Act',
+    unsafe_condition: 'Unsafe Condition',
+    non_conformance: 'Non-Conformance',
+    positive_observation: 'Positive Observation',
+    leadership_site_visit: 'Leadership Site Visit',
+    emergency_drill: 'Emergency Drill',
+    safety_meeting: 'Safety Meeting (led by Exec Leader)',
+    contractor_performance_review: 'Contractor Performance Review',
+    to_be_determined: 'To Be Determined',
+  }
 
 export const EVENT_HAZARD_LABELS: Record<EventSignificantHazard, string> = {
   mobile_plant_equipment: 'Mobile Plant & Equipment',

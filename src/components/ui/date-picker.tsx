@@ -54,7 +54,10 @@ export function DatePicker({
             type="button"
             id={id}
             variant="outline"
-            className={className ?? 'w-full justify-start font-normal data-[empty=true]:text-muted-foreground'}
+            className={
+              className ??
+              'w-full justify-start font-normal data-[empty=true]:text-muted-foreground'
+            }
             data-empty={!selected}
             data-icon="inline-start"
           />

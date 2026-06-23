@@ -3,7 +3,10 @@
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { requirePermission } from '@/lib/auth/guards'
-import { createProjectSchema, updateProjectSchema } from '@/lib/validators/projects'
+import {
+  createProjectSchema,
+  updateProjectSchema,
+} from '@/lib/validators/projects'
 import {
   MOCK_PROJECTS,
   MOCK_PROJECT_CONTRACTORS,
@@ -96,7 +99,8 @@ export async function addContractorToProject(
   if (!org) return { error: 'Contractor not found' }
 
   const exists = MOCK_PROJECT_CONTRACTORS.some(
-    (pc) => pc.project_id === projectId && pc.contractor_org_id === contractorOrgId
+    (pc) =>
+      pc.project_id === projectId && pc.contractor_org_id === contractorOrgId
   )
   if (!exists) {
     MOCK_PROJECT_CONTRACTORS.push({
@@ -128,7 +132,8 @@ export async function removeContractorFromProject(
   if (!auth.ok) return { error: auth.error }
 
   const idx = MOCK_PROJECT_CONTRACTORS.findIndex(
-    (pc) => pc.project_id === projectId && pc.contractor_org_id === contractorOrgId
+    (pc) =>
+      pc.project_id === projectId && pc.contractor_org_id === contractorOrgId
   )
   if (idx >= 0) {
     const [removed] = MOCK_PROJECT_CONTRACTORS.splice(idx, 1)
@@ -138,7 +143,9 @@ export async function removeContractorFromProject(
       target_table: 'projects',
       target_id: projectId,
       target_label: project?.name ?? null,
-      metadata: { contractor: removed.contractor_organization?.name ?? contractorOrgId },
+      metadata: {
+        contractor: removed.contractor_organization?.name ?? contractorOrgId,
+      },
     })
   }
 

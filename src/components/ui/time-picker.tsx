@@ -25,9 +25,8 @@ export function TimePicker({
   const [hour = '', minute = ''] = value.split(':')
 
   const hours = Array.from({ length: 24 }, (_, i) => pad(i))
-  const minutes = Array.from(
-    { length: Math.ceil(60 / minuteStep) },
-    (_, i) => pad(i * minuteStep)
+  const minutes = Array.from({ length: Math.ceil(60 / minuteStep) }, (_, i) =>
+    pad(i * minuteStep)
   )
 
   const update = (nextHour: string, nextMinute: string) => {
@@ -40,7 +39,10 @@ export function TimePicker({
 
   return (
     <div className="flex items-center gap-2">
-      <Select value={hour || null} onValueChange={(v) => update(v ?? '', minute)}>
+      <Select
+        value={hour || null}
+        onValueChange={(v) => update(v ?? '', minute)}
+      >
         <SelectTrigger className="w-full" aria-label="Hour">
           <SelectValue placeholder="HH" />
         </SelectTrigger>
@@ -53,7 +55,10 @@ export function TimePicker({
         </SelectContent>
       </Select>
       <span className="text-muted-foreground">:</span>
-      <Select value={minute || null} onValueChange={(v) => update(hour, v ?? '')}>
+      <Select
+        value={minute || null}
+        onValueChange={(v) => update(hour, v ?? '')}
+      >
         <SelectTrigger className="w-full" aria-label="Minute">
           <SelectValue placeholder="MM" />
         </SelectTrigger>

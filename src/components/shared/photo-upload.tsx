@@ -79,8 +79,16 @@ export function PhotoUpload({
     <div className="space-y-3">
       <div className="flex flex-wrap gap-3">
         {photos.map((url, i) => (
-          <div key={i} className="relative h-20 w-20 rounded-md overflow-hidden border">
-            <Image src={toSecurePhotoUrl(url)} alt={`Photo ${i + 1}`} fill className="object-cover" />
+          <div
+            key={i}
+            className="relative h-20 w-20 rounded-md overflow-hidden border"
+          >
+            <Image
+              src={toSecurePhotoUrl(url)}
+              alt={`Photo ${i + 1}`}
+              fill
+              className="object-cover"
+            />
             <button
               type="button"
               onClick={() => removePhoto(i)}
@@ -92,9 +100,7 @@ export function PhotoUpload({
         ))}
       </div>
 
-      {error && (
-        <p className="text-xs text-destructive">{error}</p>
-      )}
+      {error && <p className="text-xs text-destructive">{error}</p>}
 
       {photos.length < maxPhotos && (
         <div>

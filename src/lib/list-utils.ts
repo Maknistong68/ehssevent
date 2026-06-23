@@ -64,7 +64,11 @@ export interface PaginationResult<T> {
 /**
  * Slices `items` for the requested page, clamping `page` into the valid range.
  */
-export function paginate<T>(items: T[], page: number, per: number): PaginationResult<T> {
+export function paginate<T>(
+  items: T[],
+  page: number,
+  per: number
+): PaginationResult<T> {
   const total = items.length
   const totalPages = Math.max(1, Math.ceil(total / per))
   const currentPage = Math.min(Math.max(1, page), totalPages)

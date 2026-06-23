@@ -152,7 +152,10 @@ export async function updateCorrectiveActionStatus(input: unknown) {
       user_id: ca.assigned_to,
       type: data.status === 'approved' ? 'ca_approved' : 'ca_rejected',
       title: `Corrective action ${data.status}: ${ca.reference_number}`,
-      body: data.status === 'rejected' ? ca.rejection_reason ?? ca.title : ca.title,
+      body:
+        data.status === 'rejected'
+          ? (ca.rejection_reason ?? ca.title)
+          : ca.title,
       link,
     })
   }
@@ -187,7 +190,8 @@ export async function updateCorrectiveAction(input: unknown) {
   const nextDescription = data.description?.trim() ? data.description : null
   const nextDueDate = data.due_date?.trim() ? data.due_date : null
 
-  if (ca.title !== data.title) changes.title = { from: ca.title, to: data.title }
+  if (ca.title !== data.title)
+    changes.title = { from: ca.title, to: data.title }
   if (ca.description !== nextDescription)
     changes.description = { from: ca.description, to: nextDescription }
   if (ca.assigned_to !== data.assigned_to)

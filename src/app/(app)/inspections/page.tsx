@@ -57,15 +57,29 @@ export default async function InspectionsPage({ searchParams }: Props) {
     getProjects(),
   ])
 
-  const sorted = sortItems(inspections, params.sort, params.dir, inspectionAccessors)
+  const sorted = sortItems(
+    inspections,
+    params.sort,
+    params.dir,
+    inspectionAccessors
+  )
   const { page, per } = parsePageParams(params)
-  const { pageItems, total, totalPages, from, to, page: currentPage } = paginate(sorted, page, per)
+  const {
+    pageItems,
+    total,
+    totalPages,
+    from,
+    to,
+    page: currentPage,
+  } = paginate(sorted, page, per)
 
   return (
     <div className="space-y-5 p-4 md:p-6">
       <div className="flex items-end justify-between gap-3">
         <div>
-          <h1 className="font-heading text-2xl font-bold tracking-tight md:text-3xl">Inspections</h1>
+          <h1 className="font-heading text-2xl font-bold tracking-tight md:text-3xl">
+            Inspections
+          </h1>
           <p className="text-sm text-muted-foreground">
             {inspections.length} inspection{inspections.length !== 1 ? 's' : ''}
           </p>

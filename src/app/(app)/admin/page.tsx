@@ -30,7 +30,9 @@ export default async function AdminPage() {
   return (
     <div className="space-y-5 p-4 md:p-6">
       <div>
-        <h1 className="font-heading text-2xl font-bold tracking-tight md:text-3xl">Admin Panel</h1>
+        <h1 className="font-heading text-2xl font-bold tracking-tight md:text-3xl">
+          Admin Panel
+        </h1>
         <p className="text-sm text-muted-foreground">
           Manage organizations and users
         </p>

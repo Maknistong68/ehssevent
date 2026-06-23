@@ -5,7 +5,13 @@ import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { Loader2 } from 'lucide-react'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -229,9 +235,7 @@ function SecurityPanel() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">
-            Two-factor authentication
-          </CardTitle>
+          <CardTitle className="text-base">Two-factor authentication</CardTitle>
           <CardDescription>
             Add an extra layer of security with a one-time code at sign-in.
           </CardDescription>

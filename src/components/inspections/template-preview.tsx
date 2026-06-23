@@ -30,7 +30,11 @@ export function TemplatePreview({ sections }: TemplatePreviewProps) {
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
                   <Badge variant="outline" className="text-xs">
-                    {INSPECTION_FIELD_TYPE_LABELS[item.field_type as InspectionFieldType]}
+                    {
+                      INSPECTION_FIELD_TYPE_LABELS[
+                        item.field_type as InspectionFieldType
+                      ]
+                    }
                   </Badge>
                   {item.field_type === 'dropdown' && item.options && (
                     <span className="text-xs text-muted-foreground">

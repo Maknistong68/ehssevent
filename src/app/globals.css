@@ -1,6 +1,6 @@
-@import "tailwindcss";
-@import "tw-animate-css";
-@import "shadcn/tailwind.css";
+@import 'tailwindcss';
+@import 'tw-animate-css';
+@import 'shadcn/tailwind.css';
 
 @custom-variant dark (&:is(.dark *));
 
@@ -226,13 +226,13 @@
   h4 {
     font-family: var(--font-heading), var(--font-geist-sans), sans-serif;
   }
-  html[dir="rtl"] {
+  html[dir='rtl'] {
     font-family: var(--font-cairo), var(--font-geist-sans), sans-serif;
   }
-  html[dir="rtl"] h1,
-  html[dir="rtl"] h2,
-  html[dir="rtl"] h3,
-  html[dir="rtl"] h4 {
+  html[dir='rtl'] h1,
+  html[dir='rtl'] h2,
+  html[dir='rtl'] h3,
+  html[dir='rtl'] h4 {
     font-family: var(--font-cairo), var(--font-heading), sans-serif;
   }
 }

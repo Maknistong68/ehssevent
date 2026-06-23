@@ -12,7 +12,10 @@ interface LanguageSwitcherProps {
   collapsed?: boolean
 }
 
-export function LanguageSwitcher({ variant = 'default', collapsed = false }: LanguageSwitcherProps) {
+export function LanguageSwitcher({
+  variant = 'default',
+  collapsed = false,
+}: LanguageSwitcherProps) {
   const locale = useLocale()
   const router = useRouter()
   const [isPending, startTransition] = useTransition()

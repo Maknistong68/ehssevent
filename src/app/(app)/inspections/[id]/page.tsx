@@ -3,7 +3,10 @@ export const dynamic = 'force-dynamic'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { MOCK_USER_ID } from '@/lib/mock-data'
-import { getInspectionById, getInspectionResponses } from '@/lib/queries/inspections'
+import {
+  getInspectionById,
+  getInspectionResponses,
+} from '@/lib/queries/inspections'
 import { getInspectionCorrectiveActions } from '@/lib/queries/corrective-actions'
 import { InspectionStatusBadge } from '@/components/inspections/inspection-status-badge'
 import { InspectionScoreBadge } from '@/components/inspections/inspection-score-badge'
@@ -29,12 +32,11 @@ export async function generateMetadata({ params }: Props) {
 
 export default async function InspectionDetailPage({ params }: Props) {
   const { id } = await params
-  const [inspection, responses, correctiveActions] =
-    await Promise.all([
-      getInspectionById(id),
-      getInspectionResponses(id),
-      getInspectionCorrectiveActions(id),
-    ])
+  const [inspection, responses, correctiveActions] = await Promise.all([
+    getInspectionById(id),
+    getInspectionResponses(id),
+    getInspectionCorrectiveActions(id),
+  ])
 
   if (!inspection) notFound()
 
@@ -86,7 +88,9 @@ export default async function InspectionDetailPage({ params }: Props) {
                   <p className="font-medium">Project</p>
                   <p className="text-muted-foreground">{project.name}</p>
                   {project.location && (
-                    <p className="text-xs text-muted-foreground">{project.location}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {project.location}
+                    </p>
                   )}
                 </div>
               </div>

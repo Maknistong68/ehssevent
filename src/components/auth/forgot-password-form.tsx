@@ -4,7 +4,13 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { AuthShell, AuthField, AuthAlert } from '@/components/auth/auth-shell'
-import { AlertCircle, ArrowLeft, CheckCircle2, Loader2, Mail } from 'lucide-react'
+import {
+  AlertCircle,
+  ArrowLeft,
+  CheckCircle2,
+  Loader2,
+  Mail,
+} from 'lucide-react'
 import { useTranslations } from 'next-intl'
 
 export function ForgotPasswordForm() {
@@ -41,7 +47,9 @@ export function ForgotPasswordForm() {
     >
       <form onSubmit={handleSubmit} className="space-y-4">
         {error && (
-          <AuthAlert icon={<AlertCircle className="h-4 w-4" />}>{error}</AuthAlert>
+          <AuthAlert icon={<AlertCircle className="h-4 w-4" />}>
+            {error}
+          </AuthAlert>
         )}
         {success && (
           <AuthAlert tone="success" icon={<CheckCircle2 className="h-4 w-4" />}>

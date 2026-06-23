@@ -36,9 +36,7 @@ export type ListFilterField =
   | { type: 'daterange'; fromKey: string; toKey: string; label: string }
 
 function fieldKeys(field: ListFilterField): string[] {
-  return field.type === 'daterange'
-    ? [field.fromKey, field.toKey]
-    : [field.key]
+  return field.type === 'daterange' ? [field.fromKey, field.toKey] : [field.key]
 }
 
 export interface ListFilterSortOption {
@@ -150,9 +148,7 @@ export function ListFilters({
   return (
     <Sheet open={open} onOpenChange={handleOpenChange}>
       <SheetTrigger
-        render={
-          <Button variant="outline" data-icon="inline-start" />
-        }
+        render={<Button variant="outline" data-icon="inline-start" />}
       >
         <SlidersHorizontal className="h-4 w-4" />
         {title}
@@ -163,10 +159,7 @@ export function ListFilters({
         )}
       </SheetTrigger>
 
-      <SheetContent
-        side="bottom"
-        className="max-h-[85vh] rounded-t-2xl"
-      >
+      <SheetContent side="bottom" className="max-h-[85vh] rounded-t-2xl">
         <SheetHeader className="border-b">
           <SheetTitle>{title}</SheetTitle>
         </SheetHeader>
@@ -215,7 +208,9 @@ export function ListFilters({
                   onValueChange={(v) => setField(field.key, v ?? 'all')}
                 >
                   <SelectTrigger className="w-full">
-                    <SelectValue placeholder={field.placeholder ?? field.label} />
+                    <SelectValue
+                      placeholder={field.placeholder ?? field.label}
+                    />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">
@@ -265,9 +260,7 @@ export function ListFilters({
             Reset
           </Button>
           <SheetClose
-            render={
-              <Button className="flex-1" onClick={apply} type="button" />
-            }
+            render={<Button className="flex-1" onClick={apply} type="button" />}
           >
             Apply
           </SheetClose>

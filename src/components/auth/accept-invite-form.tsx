@@ -46,7 +46,10 @@ export function AcceptInviteForm() {
       subtitle="Set a password to activate your invited account"
       footer={
         <p className="text-center text-sm text-white/60">
-          <Link href="/login" className="font-semibold text-brand-yellow hover:underline">
+          <Link
+            href="/login"
+            className="font-semibold text-brand-yellow hover:underline"
+          >
             Back to sign in
           </Link>
         </p>
@@ -54,7 +57,9 @@ export function AcceptInviteForm() {
     >
       <form onSubmit={handleSubmit} className="space-y-4">
         {error && (
-          <AuthAlert icon={<AlertCircle className="h-4 w-4" />}>{error}</AuthAlert>
+          <AuthAlert icon={<AlertCircle className="h-4 w-4" />}>
+            {error}
+          </AuthAlert>
         )}
         {success && (
           <AuthAlert tone="success" icon={<CheckCircle2 className="h-4 w-4" />}>

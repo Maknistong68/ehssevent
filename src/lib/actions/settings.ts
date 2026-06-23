@@ -2,10 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { requireUser, requirePermission } from '@/lib/auth/guards'
-import {
-  MOCK_NOTIFICATION_PREFS,
-  MOCK_ORGANIZATIONS,
-} from '@/lib/mock-data'
+import { MOCK_NOTIFICATION_PREFS, MOCK_ORGANIZATIONS } from '@/lib/mock-data'
 import { defaultNotificationPreferences } from '@/lib/queries/settings'
 import { logAudit } from '@/lib/actions/audit'
 import {

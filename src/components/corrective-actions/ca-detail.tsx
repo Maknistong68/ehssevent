@@ -60,7 +60,13 @@ interface CaDetailProps {
   auditLog: AuditLogEntry[]
 }
 
-export function CaDetail({ correctiveAction, currentUserId, isAdmin, users, auditLog }: CaDetailProps) {
+export function CaDetail({
+  correctiveAction,
+  currentUserId,
+  isAdmin,
+  users,
+  auditLog,
+}: CaDetailProps) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [showReject, setShowReject] = useState(false)
@@ -171,12 +177,21 @@ export function CaDetail({ correctiveAction, currentUserId, isAdmin, users, audi
           <ArrowLeft className="h-5 w-5" />
         </Link>
         <div className="min-w-0 flex-1">
-          <p className="font-mono text-xs text-muted-foreground">{ca.reference_number}</p>
-          <h1 className="font-heading text-xl font-bold tracking-tight">{ca.title}</h1>
+          <p className="font-mono text-xs text-muted-foreground">
+            {ca.reference_number}
+          </p>
+          <h1 className="font-heading text-xl font-bold tracking-tight">
+            {ca.title}
+          </h1>
         </div>
         {ca.status !== 'approved' && !editing && (
           <Can permission="ca:create">
-            <Button variant="outline" size="sm" onClick={startEdit} data-icon="inline-start">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={startEdit}
+              data-icon="inline-start"
+            >
               <Pencil className="h-4 w-4" />
               Edit
             </Button>
@@ -207,13 +222,18 @@ export function CaDetail({ correctiveAction, currentUserId, isAdmin, users, audi
 
       {ca.inspection_id && ca.item_label && (
         <div className="rounded-2xl border border-input bg-secondary/40 px-4 py-3 text-sm">
-          <span className="text-muted-foreground">Source: inspection item — </span>
+          <span className="text-muted-foreground">
+            Source: inspection item —{' '}
+          </span>
           <span className="font-medium">{ca.item_label}</span>
         </div>
       )}
 
       {error && (
-        <div role="alert" className="flex items-center gap-2 rounded-2xl bg-destructive/10 px-4 py-3 text-sm font-medium text-destructive">
+        <div
+          role="alert"
+          className="flex items-center gap-2 rounded-2xl bg-destructive/10 px-4 py-3 text-sm font-medium text-destructive"
+        >
           <AlertCircle className="h-4 w-4 shrink-0" />
           {error}
         </div>
@@ -288,7 +308,9 @@ export function CaDetail({ correctiveAction, currentUserId, isAdmin, users, audi
                   </SelectTrigger>
                   <SelectContent>
                     {(
-                      Object.keys(CA_PRIORITY_LABELS) as CorrectiveActionPriority[]
+                      Object.keys(
+                        CA_PRIORITY_LABELS
+                      ) as CorrectiveActionPriority[]
                     ).map((p) => (
                       <SelectItem key={p} value={p}>
                         {CA_PRIORITY_LABELS[p]}
@@ -319,7 +341,9 @@ export function CaDetail({ correctiveAction, currentUserId, isAdmin, users, audi
               </Button>
               <Button
                 onClick={saveEdit}
-                disabled={loading || editTitle.trim().length < 3 || !editAssignedTo}
+                disabled={
+                  loading || editTitle.trim().length < 3 || !editAssignedTo
+                }
               >
                 {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Save Changes
@@ -330,119 +354,123 @@ export function CaDetail({ correctiveAction, currentUserId, isAdmin, users, audi
       )}
 
       {!editing && (
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base">Details</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          {ca.description && (
-            <p className="text-sm whitespace-pre-wrap">{ca.description}</p>
-          )}
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base">Details</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {ca.description && (
+              <p className="text-sm whitespace-pre-wrap">{ca.description}</p>
+            )}
 
-          <Separator />
+            <Separator />
 
-          <div className="grid grid-cols-2 gap-3 text-sm">
-            {creator && (
+            <div className="grid grid-cols-2 gap-3 text-sm">
+              {creator && (
+                <div className="flex items-start gap-2">
+                  <User className="mt-0.5 h-4 w-4 text-muted-foreground" />
+                  <div>
+                    <p className="font-medium">Created By</p>
+                    <p className="text-muted-foreground">
+                      {creator.full_name || creator.email}
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {assignee && (
+                <div className="flex items-start gap-2">
+                  <User className="mt-0.5 h-4 w-4 text-muted-foreground" />
+                  <div>
+                    <p className="font-medium">Responsible Person</p>
+                    <p className="text-muted-foreground">
+                      {assignee.full_name || assignee.email}
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {approver && (
+                <div className="flex items-start gap-2">
+                  <ShieldCheck className="mt-0.5 h-4 w-4 text-muted-foreground" />
+                  <div>
+                    <p className="font-medium">Approver</p>
+                    <p className="text-muted-foreground">
+                      {approver.full_name || approver.email}
+                    </p>
+                  </div>
+                </div>
+              )}
+
               <div className="flex items-start gap-2">
-                <User className="mt-0.5 h-4 w-4 text-muted-foreground" />
+                <CalendarDays className="mt-0.5 h-4 w-4 text-muted-foreground" />
                 <div>
-                  <p className="font-medium">Created By</p>
+                  <p className="font-medium">Created</p>
                   <p className="text-muted-foreground">
-                    {creator.full_name || creator.email}
+                    {format(new Date(ca.created_at), 'dd MMM yyyy HH:mm')}
                   </p>
                 </div>
               </div>
-            )}
 
-            {assignee && (
               <div className="flex items-start gap-2">
-                <User className="mt-0.5 h-4 w-4 text-muted-foreground" />
+                <AlertCircle className="mt-0.5 h-4 w-4 text-muted-foreground" />
                 <div>
-                  <p className="font-medium">Responsible Person</p>
+                  <p className="font-medium">Priority</p>
                   <p className="text-muted-foreground">
-                    {assignee.full_name || assignee.email}
+                    {CA_PRIORITY_LABELS[ca.priority]}
                   </p>
                 </div>
               </div>
-            )}
 
-            {approver && (
-              <div className="flex items-start gap-2">
-                <ShieldCheck className="mt-0.5 h-4 w-4 text-muted-foreground" />
-                <div>
-                  <p className="font-medium">Approver</p>
-                  <p className="text-muted-foreground">
-                    {approver.full_name || approver.email}
-                  </p>
+              {ca.due_date && (
+                <div className="flex items-start gap-2">
+                  <CalendarDays
+                    className={
+                      overdue
+                        ? 'mt-0.5 h-4 w-4 text-red-600'
+                        : 'mt-0.5 h-4 w-4 text-muted-foreground'
+                    }
+                  />
+                  <div>
+                    <p className="font-medium">Due Date</p>
+                    <p
+                      className={
+                        overdue ? 'text-red-600' : 'text-muted-foreground'
+                      }
+                    >
+                      {format(new Date(ca.due_date), 'dd MMM yyyy')}
+                      {overdue && ' · Overdue'}
+                    </p>
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
 
-            <div className="flex items-start gap-2">
-              <CalendarDays className="mt-0.5 h-4 w-4 text-muted-foreground" />
-              <div>
-                <p className="font-medium">Created</p>
-                <p className="text-muted-foreground">
-                  {format(new Date(ca.created_at), 'dd MMM yyyy HH:mm')}
-                </p>
-              </div>
+              {ca.completed_at && (
+                <div className="flex items-start gap-2">
+                  <CheckCircle2 className="mt-0.5 h-4 w-4 text-muted-foreground" />
+                  <div>
+                    <p className="font-medium">Submitted</p>
+                    <p className="text-muted-foreground">
+                      {format(new Date(ca.completed_at), 'dd MMM yyyy HH:mm')}
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {ca.approved_at && (
+                <div className="flex items-start gap-2">
+                  <CheckCircle2 className="mt-0.5 h-4 w-4 text-muted-foreground" />
+                  <div>
+                    <p className="font-medium">Approved</p>
+                    <p className="text-muted-foreground">
+                      {format(new Date(ca.approved_at), 'dd MMM yyyy HH:mm')}
+                    </p>
+                  </div>
+                </div>
+              )}
             </div>
-
-            <div className="flex items-start gap-2">
-              <AlertCircle className="mt-0.5 h-4 w-4 text-muted-foreground" />
-              <div>
-                <p className="font-medium">Priority</p>
-                <p className="text-muted-foreground">
-                  {CA_PRIORITY_LABELS[ca.priority]}
-                </p>
-              </div>
-            </div>
-
-            {ca.due_date && (
-              <div className="flex items-start gap-2">
-                <CalendarDays
-                  className={
-                    overdue
-                      ? 'mt-0.5 h-4 w-4 text-red-600'
-                      : 'mt-0.5 h-4 w-4 text-muted-foreground'
-                  }
-                />
-                <div>
-                  <p className="font-medium">Due Date</p>
-                  <p className={overdue ? 'text-red-600' : 'text-muted-foreground'}>
-                    {format(new Date(ca.due_date), 'dd MMM yyyy')}
-                    {overdue && ' · Overdue'}
-                  </p>
-                </div>
-              </div>
-            )}
-
-            {ca.completed_at && (
-              <div className="flex items-start gap-2">
-                <CheckCircle2 className="mt-0.5 h-4 w-4 text-muted-foreground" />
-                <div>
-                  <p className="font-medium">Submitted</p>
-                  <p className="text-muted-foreground">
-                    {format(new Date(ca.completed_at), 'dd MMM yyyy HH:mm')}
-                  </p>
-                </div>
-              </div>
-            )}
-
-            {ca.approved_at && (
-              <div className="flex items-start gap-2">
-                <CheckCircle2 className="mt-0.5 h-4 w-4 text-muted-foreground" />
-                <div>
-                  <p className="font-medium">Approved</p>
-                  <p className="text-muted-foreground">
-                    {format(new Date(ca.approved_at), 'dd MMM yyyy HH:mm')}
-                  </p>
-                </div>
-              </div>
-            )}
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
       )}
 
       {ca.photo_urls && ca.photo_urls.length > 0 && (
@@ -457,7 +485,12 @@ export function CaDetail({ correctiveAction, currentUserId, isAdmin, users, audi
                   key={i}
                   className="relative h-24 w-24 overflow-hidden rounded-2xl border"
                 >
-                  <Image src={toSecurePhotoUrl(url)} alt={`Photo ${i + 1}`} fill className="object-cover" />
+                  <Image
+                    src={toSecurePhotoUrl(url)}
+                    alt={`Photo ${i + 1}`}
+                    fill
+                    className="object-cover"
+                  />
                 </div>
               ))}
             </div>
@@ -491,8 +524,8 @@ export function CaDetail({ correctiveAction, currentUserId, isAdmin, users, audi
             {showSubmit && (
               <div className="space-y-3">
                 <p className="text-sm text-muted-foreground">
-                  Upload evidence of the completed corrective action, then submit it
-                  for approval.
+                  Upload evidence of the completed corrective action, then
+                  submit it for approval.
                 </p>
                 <PhotoUpload photos={photos} onPhotosChange={setPhotos} />
                 <Button
@@ -560,7 +593,9 @@ export function CaDetail({ correctiveAction, currentUserId, isAdmin, users, audi
                     disabled={loading || rejectionReason.trim().length === 0}
                     className="bg-destructive hover:bg-destructive/90"
                   >
-                    {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    {loading && (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    )}
                     Confirm Rejection
                   </Button>
                 </div>

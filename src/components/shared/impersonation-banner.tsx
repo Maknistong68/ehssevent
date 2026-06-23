@@ -20,7 +20,9 @@ export function ImpersonationBanner() {
   if (!isImpersonating || !effectiveProfile) return null
 
   const name =
-    effectiveProfile.full_name || effectiveProfile.email || effectiveProfile.role
+    effectiveProfile.full_name ||
+    effectiveProfile.email ||
+    effectiveProfile.role
 
   const handleExit = async () => {
     setLoading(true)
@@ -42,7 +44,11 @@ export function ImpersonationBanner() {
         disabled={loading}
         className="flex shrink-0 items-center gap-1 rounded-full bg-amber-950/10 px-3 py-1 font-semibold transition-colors hover:bg-amber-950/20 disabled:opacity-60"
       >
-        {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <X className="h-3.5 w-3.5" />}
+        {loading ? (
+          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+        ) : (
+          <X className="h-3.5 w-3.5" />
+        )}
         {t('admin.exitImpersonation')}
       </button>
     </div>

@@ -12,7 +12,11 @@ import { InspectionStatusBadge } from './inspection-status-badge'
 import { InspectionScoreBadge } from './inspection-score-badge'
 import type { Inspection } from '@/types/database'
 
-export function InspectionsTable({ inspections }: { inspections: Inspection[] }) {
+export function InspectionsTable({
+  inspections,
+}: {
+  inspections: Inspection[]
+}) {
   return (
     <Table>
       <TableHeader>

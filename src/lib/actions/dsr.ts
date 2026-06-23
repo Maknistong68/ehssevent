@@ -6,7 +6,11 @@ import {
   MOCK_DSR_REQUESTS,
   MOCK_PROFILES,
 } from '@/lib/mock-data'
-import { DSR_RESPONSE_DAYS, DSR_REQUEST_TYPES, DPO_EMAIL } from '@/lib/constants/legal'
+import {
+  DSR_RESPONSE_DAYS,
+  DSR_REQUEST_TYPES,
+  DPO_EMAIL,
+} from '@/lib/constants/legal'
 import { requirePermission } from '@/lib/auth/guards'
 import { logAudit } from '@/lib/actions/audit'
 import type { DsrRequest } from '@/types/database'
@@ -31,13 +35,17 @@ export interface SubmitDsrResult {
  * response deadline (created_at + DSR_RESPONSE_DAYS) is computed and surfaced
  * to the user.
  */
-export async function submitDsrRequest(input: SubmitDsrInput): Promise<SubmitDsrResult> {
+export async function submitDsrRequest(
+  input: SubmitDsrInput
+): Promise<SubmitDsrResult> {
   if (!DSR_REQUEST_TYPES.includes(input.type)) {
     return { error: 'Invalid request type.' }
   }
 
   const now = new Date()
-  const dueAt = new Date(now.getTime() + DSR_RESPONSE_DAYS * 24 * 60 * 60 * 1000)
+  const dueAt = new Date(
+    now.getTime() + DSR_RESPONSE_DAYS * 24 * 60 * 60 * 1000
+  )
 
   // The actor is server-resolved, never taken from the client, so the requester
   // identity cannot be forged.

@@ -29,7 +29,9 @@ function formatValue(value: unknown): string {
 }
 
 /** Extracts a `{ field: {from, to} }` change map from an entry's metadata. */
-function extractChanges(metadata: Record<string, unknown>): Record<string, Change> {
+function extractChanges(
+  metadata: Record<string, unknown>
+): Record<string, Change> {
   const out: Record<string, Change> = {}
   const changes = metadata.changes
   if (changes && typeof changes === 'object') {
@@ -41,7 +43,12 @@ function extractChanges(metadata: Record<string, unknown>): Record<string, Chang
   }
   // Status-only transitions are stored directly as `status: {from, to}`.
   const status = metadata.status
-  if (status && typeof status === 'object' && 'from' in status && 'to' in status) {
+  if (
+    status &&
+    typeof status === 'object' &&
+    'from' in status &&
+    'to' in status
+  ) {
     out.status = status as Change
   }
   return out

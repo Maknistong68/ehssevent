@@ -15,7 +15,10 @@ interface EventResponseFormProps {
   canClose?: boolean
 }
 
-export function EventResponseForm({ eventId, canClose = false }: EventResponseFormProps) {
+export function EventResponseForm({
+  eventId,
+  canClose = false,
+}: EventResponseFormProps) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [responseText, setResponseText] = useState('')
@@ -57,7 +60,10 @@ export function EventResponseForm({ eventId, canClose = false }: EventResponseFo
       </CardHeader>
       <CardContent className="space-y-4">
         {error && (
-          <div role="alert" className="flex items-center gap-2 rounded-2xl bg-destructive/10 px-4 py-3 text-sm font-medium text-destructive">
+          <div
+            role="alert"
+            className="flex items-center gap-2 rounded-2xl bg-destructive/10 px-4 py-3 text-sm font-medium text-destructive"
+          >
             <AlertCircle className="h-4 w-4 shrink-0" />
             {error}
           </div>
@@ -73,12 +79,16 @@ export function EventResponseForm({ eventId, canClose = false }: EventResponseFo
             onChange={(e) => setResponseText(e.target.value)}
           />
           <p className="text-xs text-muted-foreground">
-            Avoid names, ID numbers, or health details — reference people by their
-            account or role.
+            Avoid names, ID numbers, or health details — reference people by
+            their account or role.
           </p>
         </div>
 
-        <PhotoUpload photos={photos} onPhotosChange={setPhotos} bucket="event-photos" />
+        <PhotoUpload
+          photos={photos}
+          onPhotosChange={setPhotos}
+          bucket="event-photos"
+        />
 
         <div className="flex gap-2">
           <Button

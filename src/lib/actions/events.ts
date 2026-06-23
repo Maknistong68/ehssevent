@@ -1,7 +1,11 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { requirePermission, requireUser, getSessionProfile } from '@/lib/auth/guards'
+import {
+  requirePermission,
+  requireUser,
+  getSessionProfile,
+} from '@/lib/auth/guards'
 import { allowedEventTransitions } from '@/lib/auth/permissions'
 import {
   MOCK_EVENTS,
@@ -56,9 +60,13 @@ export async function createEvent(input: unknown) {
     specific_area: data.specific_area ?? null,
     // GPS is precision-reduced to ~100 m to avoid pinpointing individuals.
     latitude:
-      typeof data.latitude === 'number' ? reduceGeoPrecision(data.latitude) : null,
+      typeof data.latitude === 'number'
+        ? reduceGeoPrecision(data.latitude)
+        : null,
     longitude:
-      typeof data.longitude === 'number' ? reduceGeoPrecision(data.longitude) : null,
+      typeof data.longitude === 'number'
+        ? reduceGeoPrecision(data.longitude)
+        : null,
     event_date: data.event_date ?? null,
     reported_date: now,
     work_related: data.work_related,
@@ -249,7 +257,7 @@ export async function updateEventApprovalLevel(input: unknown) {
   // well as hidden in the UI.
   const allowed = allowedEventTransitions(
     auth.profile.role,
-    event.approval_level,
+    event.approval_level
   )
   if (!allowed.includes(parsed.data.approval_level)) {
     return { error: 'You are not authorized to set this approval level' }

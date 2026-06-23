@@ -17,7 +17,11 @@ function currentIndex(status: CorrectiveActionStatus): number {
   }
 }
 
-export function CaStatusStepper({ status }: { status: CorrectiveActionStatus }) {
+export function CaStatusStepper({
+  status,
+}: {
+  status: CorrectiveActionStatus
+}) {
   const active = currentIndex(status)
   const rejected = status === 'rejected'
 

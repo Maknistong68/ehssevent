@@ -9,7 +9,8 @@ import { MOCK_PROFILES } from '@/lib/mock-data'
 export async function startImpersonation(userId: string) {
   // Only actors granted `impersonate:use` may view-as another user.
   const auth = await requirePermission('impersonate:use')
-  if (!auth.ok) return { error: auth.error } as { success?: boolean; error?: string }
+  if (!auth.ok)
+    return { error: auth.error } as { success?: boolean; error?: string }
 
   // An admin cannot impersonate their own account (no-op + confusing audit).
   if (userId === auth.profile.id) {

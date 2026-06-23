@@ -77,11 +77,17 @@ export function DsrQueue({ requests }: DsrQueueProps) {
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div className="flex flex-wrap items-center gap-2">
                   <Badge variant="secondary">{TYPE_LABELS[req.type]}</Badge>
-                  <Badge variant="secondary" className={STATUS_COLORS[req.status]}>
+                  <Badge
+                    variant="secondary"
+                    className={STATUS_COLORS[req.status]}
+                  >
                     {req.status.replace('_', ' ')}
                   </Badge>
                   {overdue && (
-                    <Badge variant="secondary" className="bg-red-100 text-red-800">
+                    <Badge
+                      variant="secondary"
+                      className="bg-red-100 text-red-800"
+                    >
                       Overdue
                     </Badge>
                   )}
@@ -99,7 +105,8 @@ export function DsrQueue({ requests }: DsrQueueProps) {
                   </p>
                 )}
                 <p className="text-xs text-muted-foreground">
-                  Submitted {format(new Date(req.created_at), 'dd MMM yyyy, h:mm a')}
+                  Submitted{' '}
+                  {format(new Date(req.created_at), 'dd MMM yyyy, h:mm a')}
                   {req.resolved_at &&
                     ` · Resolved ${format(
                       new Date(req.resolved_at),
@@ -121,7 +128,9 @@ export function DsrQueue({ requests }: DsrQueueProps) {
                         )
                       }
                     >
-                      {busy && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                      {busy && (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      )}
                       Start
                     </Button>
                   )}
@@ -132,7 +141,9 @@ export function DsrQueue({ requests }: DsrQueueProps) {
                     className="bg-green-600 hover:bg-green-700"
                   >
                     {busy && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    {req.type === 'destruction' ? 'Fulfil & Erase' : 'Mark Fulfilled'}
+                    {req.type === 'destruction'
+                      ? 'Fulfil & Erase'
+                      : 'Mark Fulfilled'}
                   </Button>
                   <Button
                     variant="outline"

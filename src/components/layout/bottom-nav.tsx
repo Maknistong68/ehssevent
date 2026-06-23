@@ -9,8 +9,16 @@ import { useTranslations } from 'next-intl'
 const navItems = [
   { href: '/dashboard', labelKey: 'nav.home' as const, icon: Home },
   { href: '/events', labelKey: 'nav.events' as const, icon: Calendar },
-  { href: '/corrective-actions', labelKey: 'nav.actions' as const, icon: ListChecks },
-  { href: '/inspections', labelKey: 'nav.inspections' as const, icon: ClipboardCheck },
+  {
+    href: '/corrective-actions',
+    labelKey: 'nav.actions' as const,
+    icon: ListChecks,
+  },
+  {
+    href: '/inspections',
+    labelKey: 'nav.inspections' as const,
+    icon: ClipboardCheck,
+  },
   { href: '/profile', labelKey: 'nav.profile' as const, icon: User },
 ]
 
@@ -22,13 +30,12 @@ export function BottomNav() {
   const strippedPathname = pathname.replace(/^\/(en|ar)/, '') || '/'
 
   return (
-    <div
-      className="fixed inset-x-0 bottom-0 z-50 flex justify-center px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] md:hidden"
-    >
+    <div className="fixed inset-x-0 bottom-0 z-50 flex justify-center px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] md:hidden">
       <nav className="flex w-full max-w-md items-center justify-between gap-1 rounded-full border border-border/60 bg-card/95 p-1.5 shadow-soft-lg backdrop-blur">
         {navItems.map((item) => {
           const isActive =
-            strippedPathname === item.href || strippedPathname.startsWith(item.href + '/')
+            strippedPathname === item.href ||
+            strippedPathname.startsWith(item.href + '/')
           const label = t(item.labelKey)
           return (
             <Link

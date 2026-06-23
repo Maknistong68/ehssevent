@@ -9,7 +9,10 @@ interface InspectionFiltersProps {
   templates: InspectionTemplate[]
 }
 
-export function InspectionFilters({ projects, templates }: InspectionFiltersProps) {
+export function InspectionFilters({
+  projects,
+  templates,
+}: InspectionFiltersProps) {
   return (
     <ListFilters
       fields={[

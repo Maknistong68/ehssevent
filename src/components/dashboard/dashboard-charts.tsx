@@ -56,7 +56,11 @@ function EventsOverTime({ events }: { events: Event[] }) {
     const now = new Date()
     const buckets = Array.from({ length: 6 }, (_, i) => {
       const month = startOfMonth(subMonths(now, 5 - i))
-      return { key: format(month, 'yyyy-MM'), label: format(month, 'MMM'), count: 0 }
+      return {
+        key: format(month, 'yyyy-MM'),
+        label: format(month, 'MMM'),
+        count: 0,
+      }
     })
     const index = new Map(buckets.map((b, i) => [b.key, i]))
     for (const e of events) {
@@ -79,7 +83,10 @@ function EventsOverTime({ events }: { events: Event[] }) {
           <div className="flex w-full flex-1 items-end">
             <div
               className="w-full rounded-t-md bg-primary transition-all"
-              style={{ height: `${(d.count / max) * 100}%`, minHeight: d.count > 0 ? '4px' : '0' }}
+              style={{
+                height: `${(d.count / max) * 100}%`,
+                minHeight: d.count > 0 ? '4px' : '0',
+              }}
             />
           </div>
           <span className="text-xs text-muted-foreground">{d.label}</span>

@@ -38,7 +38,10 @@ export function DeadlineBadge({ event }: DeadlineBadgeProps) {
   // 3-day deadline overdue
   if (!event.deadline_3day_met && deadline3day && deadline3day < now) {
     return (
-      <Badge variant="secondary" className="bg-orange-100 text-orange-800 gap-1">
+      <Badge
+        variant="secondary"
+        className="bg-orange-100 text-orange-800 gap-1"
+      >
         <AlertTriangle className="h-3 w-3" />
         3-day overdue
       </Badge>
@@ -47,10 +50,16 @@ export function DeadlineBadge({ event }: DeadlineBadgeProps) {
 
   // Approaching 24h deadline (within 4 hours)
   if (!event.deadline_24h_met) {
-    const hoursLeft = Math.max(0, Math.floor((deadline24h.getTime() - now.getTime()) / (1000 * 60 * 60)))
+    const hoursLeft = Math.max(
+      0,
+      Math.floor((deadline24h.getTime() - now.getTime()) / (1000 * 60 * 60))
+    )
     if (hoursLeft <= 4) {
       return (
-        <Badge variant="secondary" className="bg-amber-100 text-amber-800 gap-1">
+        <Badge
+          variant="secondary"
+          className="bg-amber-100 text-amber-800 gap-1"
+        >
           <Clock className="h-3 w-3" />
           {hoursLeft}h left
         </Badge>

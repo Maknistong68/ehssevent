@@ -4,7 +4,12 @@ import {
   MOCK_ORGANIZATIONS,
   MOCK_PROFILES,
 } from '@/lib/mock-data'
-import type { Project, Organization, Profile, ProjectContractor } from '@/types/database'
+import type {
+  Project,
+  Organization,
+  Profile,
+  ProjectContractor,
+} from '@/types/database'
 
 export async function getProjects(): Promise<Project[]> {
   return MOCK_PROJECTS.filter((p) => p.is_active)
@@ -14,7 +19,9 @@ export async function getProjectById(id: string): Promise<Project | null> {
   return MOCK_PROJECTS.find((p) => p.id === id) ?? null
 }
 
-export async function getProjectContractors(projectId: string): Promise<ProjectContractor[]> {
+export async function getProjectContractors(
+  projectId: string
+): Promise<ProjectContractor[]> {
   return MOCK_PROJECT_CONTRACTORS.filter((pc) => pc.project_id === projectId)
 }
 

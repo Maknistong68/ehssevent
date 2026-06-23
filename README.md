@@ -1,36 +1,96 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Event Report — HSE Management System
 
-## Getting Started
+A health, safety, and environment (HSE) incident-reporting platform for
+construction projects: event reporting, corrective-action tracking, safety
+inspections, and regulatory-compliance documentation.
 
-First, run the development server:
+> **Status: pre-production / demo.** The app currently runs on an in-memory
+> **mock layer** (no real database, auth, storage, or email). See
+> [`PRE_PRODUCTION_AUDIT.md`](./PRE_PRODUCTION_AUDIT.md) for the readiness audit
+> and the integration gates that must be cleared before connecting live data.
+
+## Tech stack
+
+- **Next.js 16** (App Router, Turbopack) + **React 19**
+- **TypeScript** (strict)
+- **Tailwind CSS 4** + **shadcn/ui** (`@base-ui/react`)
+- **next-intl** for i18n (routing via `proxy.ts`)
+- **Zod** + **React Hook Form** for validation
+- **Vitest** for unit tests
+
+## Requirements
+
+- **Node.js >= 20.9.0** (see [`.nvmrc`](./.nvmrc) — run `nvm use`)
+- npm (lockfile committed; use `npm ci` for reproducible installs)
+
+## Getting started
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+nvm use            # selects Node 20 from .nvmrc
+npm install
+npm run dev        # http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+No environment variables are required in mock mode. To configure real services
+later, copy [`.env.example`](./.env.example) to `.env.local` and fill in values.
+Env vars are validated in [`src/lib/env.ts`](./src/lib/env.ts).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Scripts
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Script                 | Description                         |
+| ---------------------- | ----------------------------------- |
+| `npm run dev`          | Start the dev server (Turbopack)    |
+| `npm run build`        | Production build                    |
+| `npm start`            | Serve the production build          |
+| `npm run lint`         | ESLint (Next + jsx-a11y + security) |
+| `npm run typecheck`    | `tsc --noEmit`                      |
+| `npm test`             | Run the Vitest suite once           |
+| `npm run test:watch`   | Run Vitest in watch mode            |
+| `npm run format`       | Format the repo with Prettier       |
+| `npm run format:check` | Verify formatting (CI gate)         |
 
-## Learn More
+## Project structure
 
-To learn more about Next.js, take a look at the following resources:
+```
+src/
+  app/            App Router routes
+    (app)/        Authenticated application shell
+    (auth)/       Login, signup, legal pages
+    api/          Route handlers (export, photos, effective-profile)
+  components/     UI and feature components (shadcn/ui in components/ui)
+  lib/
+    auth/         Session guards + the permission matrix (single source of truth)
+    supabase/     Mock client/server stubs (swap point for real Supabase)
+    queries/      Read layer (currently backed by mock-data)
+    actions/      Server actions (currently mutate in-memory mock-data)
+    mock-data.ts  In-memory fixtures
+    env.ts        Zod-validated environment access
+  types/          Shared enums and types
+proxy.ts          next-intl routing (renamed from middleware in Next 16)
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Architecture notes
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+The codebase is structured so the mock layer can be swapped for real services
+without touching feature code: queries, actions, auth guards, storage, and email
+are centralized. The seams to replace are documented in
+[`PRE_PRODUCTION_AUDIT.md`](./PRE_PRODUCTION_AUDIT.md) (Integration Readiness
+Gates).
 
-## Deploy on Vercel
+> **Next.js 16 note:** this version has breaking changes from earlier releases.
+> Consult `node_modules/next/dist/docs/` before changing framework-level code
+> (see [`AGENTS.md`](./AGENTS.md)).
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Continuous integration
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+[`.github/workflows/ci.yml`](./.github/workflows/ci.yml) runs lint, typecheck,
+format check, tests, and build on every push and pull request to `main`.
+
+## Testing
+
+Unit tests live next to the code they cover (`*.test.ts`). Current coverage
+focuses on the authorization core — the permission matrix and session guards:
+
+```bash
+npm test
+```

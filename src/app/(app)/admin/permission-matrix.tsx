@@ -97,8 +97,8 @@ export function PermissionMatrix() {
   return (
     <div className="space-y-4">
       <div className="rounded-2xl bg-secondary/40 p-3 text-xs text-muted-foreground ring-1 ring-foreground/[0.04]">
-        Read-only. Roles and their permissions are defined in code
-        (<span className="font-mono">src/lib/auth/permissions.ts</span>) and are
+        Read-only. Roles and their permissions are defined in code (
+        <span className="font-mono">src/lib/auth/permissions.ts</span>) and are
         the single source of truth enforced by server guards, database RLS, and
         the UI. Assign a role to a user in the{' '}
         <span className="font-medium">Users</span> tab.

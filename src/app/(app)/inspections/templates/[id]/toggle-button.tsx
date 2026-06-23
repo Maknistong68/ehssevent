@@ -11,7 +11,10 @@ interface ToggleTemplateButtonProps {
   isActive: boolean
 }
 
-export function ToggleTemplateButton({ templateId, isActive }: ToggleTemplateButtonProps) {
+export function ToggleTemplateButton({
+  templateId,
+  isActive,
+}: ToggleTemplateButtonProps) {
   const [loading, setLoading] = useState(false)
   const router = useRouter()
 

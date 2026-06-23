@@ -169,7 +169,9 @@ export function EventDetail({
         <Card>
           <CardContent className="p-4 space-y-3">
             <div className="flex items-center justify-between gap-3">
-              <Label className="text-sm font-semibold">Approval Process Level</Label>
+              <Label className="text-sm font-semibold">
+                Approval Process Level
+              </Label>
               {savingLevel && (
                 <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
               )}
@@ -222,7 +224,10 @@ export function EventDetail({
           />
           <Field label="Security involved?" value={yesNo(event.was_security)} />
           <Field label="Work-related?" value={yesNo(event.work_related)} />
-          <Field label="Repeat incident?" value={yesNo(event.repeat_incident)} />
+          <Field
+            label="Repeat incident?"
+            value={yesNo(event.repeat_incident)}
+          />
         </CardContent>
       </Card>
 
@@ -385,7 +390,10 @@ export function EventDetail({
                   <p className="text-sm">{fmt(event.reporting_deadline_24h)}</p>
                   {event.deadline_24h_met ? (
                     <p className="text-xs text-green-600">
-                      Met {event.deadline_24h_met_at ? fmt(event.deadline_24h_met_at) : ''}
+                      Met{' '}
+                      {event.deadline_24h_met_at
+                        ? fmt(event.deadline_24h_met_at)
+                        : ''}
                     </p>
                   ) : (
                     <DeadlineBadge event={event} />
@@ -397,10 +405,15 @@ export function EventDetail({
                   <p className="text-xs font-medium text-muted-foreground">
                     3-Day Deadline (GOSI)
                   </p>
-                  <p className="text-sm">{fmt(event.reporting_deadline_3day)}</p>
+                  <p className="text-sm">
+                    {fmt(event.reporting_deadline_3day)}
+                  </p>
                   {event.deadline_3day_met ? (
                     <p className="text-xs text-green-600">
-                      Met {event.deadline_3day_met_at ? fmt(event.deadline_3day_met_at) : ''}
+                      Met{' '}
+                      {event.deadline_3day_met_at
+                        ? fmt(event.deadline_3day_met_at)
+                        : ''}
                     </p>
                   ) : (
                     <p className="text-xs text-muted-foreground">Pending</p>
@@ -502,8 +515,8 @@ export function EventDetail({
               <Can permission="event:manage">
                 <div className="space-y-2">
                   <p className="text-sm text-muted-foreground">
-                    Confirm the corrective evidence is acceptable to sign off this
-                    closeout.
+                    Confirm the corrective evidence is acceptable to sign off
+                    this closeout.
                   </p>
                   <Button
                     variant="outline"

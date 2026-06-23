@@ -9,7 +9,7 @@ export function createClient() {
         data: {
           user: {
             id: '00000000-0000-0000-0000-000000000001',
-            email: 'john.admin@neomport.sa',
+            email: 'admin@example.test',
           },
         },
         error: null,

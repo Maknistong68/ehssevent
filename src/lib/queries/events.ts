@@ -50,7 +50,8 @@ export async function getEvents(filters: EventFilters = {}): Promise<Event[]> {
     events = events.filter(
       (e) =>
         e.reference_number.toLowerCase().includes(q) ||
-        (e.event_description && e.event_description.toLowerCase().includes(q)) ||
+        (e.event_description &&
+          e.event_description.toLowerCase().includes(q)) ||
         (e.specific_area && e.specific_area.toLowerCase().includes(q))
     )
   }
@@ -62,6 +63,8 @@ export async function getEventById(id: string): Promise<Event | null> {
   return MOCK_EVENTS.find((e) => e.id === id) ?? null
 }
 
-export async function getEventResponses(eventId: string): Promise<EventResponse[]> {
+export async function getEventResponses(
+  eventId: string
+): Promise<EventResponse[]> {
   return MOCK_EVENT_RESPONSES.filter((r) => r.event_id === eventId)
 }

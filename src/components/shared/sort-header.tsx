@@ -17,7 +17,12 @@ interface SortHeaderProps {
  * A sortable <TableHead>. Clicking cycles the URL `sort`/`dir` params
  * asc → desc → none and resets pagination to page 1.
  */
-export function SortHeader({ sortKey, children, className, align = 'start' }: SortHeaderProps) {
+export function SortHeader({
+  sortKey,
+  children,
+  className,
+  align = 'start',
+}: SortHeaderProps) {
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
@@ -42,7 +47,11 @@ export function SortHeader({ sortKey, children, className, align = 'start' }: So
     router.push(`${pathname}?${params.toString()}`)
   }
 
-  const Icon = active ? (currentDir === 'asc' ? ChevronUp : ChevronDown) : ChevronsUpDown
+  const Icon = active
+    ? currentDir === 'asc'
+      ? ChevronUp
+      : ChevronDown
+    : ChevronsUpDown
 
   return (
     <TableHead className={className}>

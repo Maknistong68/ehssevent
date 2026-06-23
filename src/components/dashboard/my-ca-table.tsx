@@ -10,7 +10,11 @@ import {
 import { CaStatusStepper } from '@/components/corrective-actions/ca-status-stepper'
 import type { CorrectiveAction } from '@/types/database'
 
-export function MyCaTable({ correctiveActions }: { correctiveActions: CorrectiveAction[] }) {
+export function MyCaTable({
+  correctiveActions,
+}: {
+  correctiveActions: CorrectiveAction[]
+}) {
   return (
     <Table>
       <TableHeader>

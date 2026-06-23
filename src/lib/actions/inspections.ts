@@ -75,7 +75,9 @@ export async function updateTemplate(input: unknown) {
     return { error: parsed.error.issues[0].message }
   }
 
-  const template = MOCK_INSPECTION_TEMPLATES.find((t) => t.id === parsed.data.id)
+  const template = MOCK_INSPECTION_TEMPLATES.find(
+    (t) => t.id === parsed.data.id
+  )
   if (!template) return { error: 'Template not found' }
 
   template.name = parsed.data.name
@@ -132,7 +134,8 @@ export async function submitInspection(input: unknown) {
     return { error: parsed.error.issues[0].message }
   }
 
-  const { template_id, project_id, notes, responses, corrective_actions } = parsed.data
+  const { template_id, project_id, notes, responses, corrective_actions } =
+    parsed.data
 
   const inspectionId = randomUUID()
   const now = new Date().toISOString()
@@ -150,7 +153,8 @@ export async function submitInspection(input: unknown) {
       }
     }
   }
-  const score = scorableItems > 0 ? (compliantScore / scorableItems) * 100 : null
+  const score =
+    scorableItems > 0 ? (compliantScore / scorableItems) * 100 : null
   const compliantItems = responses.filter(
     (r) => r.field_type === 'compliance' && r.value === 'fully_compliant'
   ).length
@@ -175,7 +179,7 @@ export async function submitInspection(input: unknown) {
     completed_at: now,
     created_at: now,
     updated_at: now,
-    template: template ? { id: template.id, name: template.name } as any : undefined,
+    template: template || undefined,
     project: project || undefined,
     conductor: {
       id: MOCK_USER_ID,

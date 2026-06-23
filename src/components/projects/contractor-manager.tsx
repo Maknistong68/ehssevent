@@ -35,7 +35,9 @@ export function ContractorManager({
   const [removeLoading, setRemoveLoading] = useState<string | null>(null)
   const router = useRouter()
 
-  const assignedIds = new Set(currentContractors.map((c) => c.contractor_org_id))
+  const assignedIds = new Set(
+    currentContractors.map((c) => c.contractor_org_id)
+  )
   const available = allContractors.filter((c) => !assignedIds.has(c.id))
 
   const handleAdd = async () => {
@@ -93,7 +95,9 @@ export function ContractorManager({
                   className="flex items-center justify-between rounded-md border p-3"
                 >
                   <div>
-                    <p className="text-sm font-medium">{org?.name || 'Unknown'}</p>
+                    <p className="text-sm font-medium">
+                      {org?.name || 'Unknown'}
+                    </p>
                     {org?.contact_email && (
                       <p className="text-xs text-muted-foreground">
                         {org.contact_email}
@@ -120,7 +124,10 @@ export function ContractorManager({
 
         {available.length > 0 && (
           <div className="flex gap-2">
-            <Select value={selectedId} onValueChange={(v) => setSelectedId(v ?? '')}>
+            <Select
+              value={selectedId}
+              onValueChange={(v) => setSelectedId(v ?? '')}
+            >
               <SelectTrigger className="flex-1">
                 <SelectValue placeholder="Select a contractor" />
               </SelectTrigger>

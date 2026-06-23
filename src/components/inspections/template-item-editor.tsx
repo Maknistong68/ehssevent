@@ -21,7 +21,11 @@ interface TemplateItemEditorProps {
   onRemove: () => void
 }
 
-export function TemplateItemEditor({ item, onUpdate, onRemove }: TemplateItemEditorProps) {
+export function TemplateItemEditor({
+  item,
+  onUpdate,
+  onRemove,
+}: TemplateItemEditorProps) {
   const updateField = (field: string, value: unknown) => {
     const updated = { ...item, [field]: value }
     // Clear options when changing away from dropdown
@@ -72,11 +76,13 @@ export function TemplateItemEditor({ item, onUpdate, onRemove }: TemplateItemEdi
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {Object.entries(INSPECTION_FIELD_TYPE_LABELS).map(([value, label]) => (
-                  <SelectItem key={value} value={value}>
-                    {label}
-                  </SelectItem>
-                ))}
+                {Object.entries(INSPECTION_FIELD_TYPE_LABELS).map(
+                  ([value, label]) => (
+                    <SelectItem key={value} value={value}>
+                      {label}
+                    </SelectItem>
+                  )
+                )}
               </SelectContent>
             </Select>
           </div>
@@ -95,7 +101,9 @@ export function TemplateItemEditor({ item, onUpdate, onRemove }: TemplateItemEdi
 
           {item.field_type === 'dropdown' && (
             <div className="space-y-2">
-              <Label className="text-xs text-muted-foreground">Dropdown Options</Label>
+              <Label className="text-xs text-muted-foreground">
+                Dropdown Options
+              </Label>
               {(item.options || ['']).map((option, i) => (
                 <div key={i} className="flex gap-2">
                   <Input
@@ -130,8 +138,9 @@ export function TemplateItemEditor({ item, onUpdate, onRemove }: TemplateItemEdi
 
           {item.field_type === 'compliance' && (
             <p className="text-xs text-muted-foreground">
-              Scored item · auto-weighted · 4 levels (Fully / Partially / Non-Compliant /
-              N/A). N/A is excluded and the checklist re-normalises to 100%.
+              Scored item · auto-weighted · 4 levels (Fully / Partially /
+              Non-Compliant / N/A). N/A is excluded and the checklist
+              re-normalises to 100%.
             </p>
           )}
         </div>

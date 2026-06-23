@@ -1,4 +1,8 @@
-const ALLOWED_BUCKETS = ['event-photos', 'observation-photos', 'inspection-photos']
+const ALLOWED_BUCKETS = [
+  'event-photos',
+  'observation-photos',
+  'inspection-photos',
+]
 
 /**
  * Converts a Supabase public URL to a secure proxy URL.

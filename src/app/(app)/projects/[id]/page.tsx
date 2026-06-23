@@ -25,7 +25,9 @@ export async function generateMetadata({ params }: Props) {
   const { id } = await params
   const project = await getProjectById(id)
   return {
-    title: project ? `${project.name} - Event Report` : 'Project - Event Report',
+    title: project
+      ? `${project.name} - Event Report`
+      : 'Project - Event Report',
   }
 }
 
@@ -51,7 +53,9 @@ export default async function ProjectDetailPage({ params }: Props) {
           <ArrowLeft className="h-5 w-5" />
         </Link>
         <div className="min-w-0 flex-1">
-          <h1 className="font-heading text-xl font-bold tracking-tight">{project.name}</h1>
+          <h1 className="font-heading text-xl font-bold tracking-tight">
+            {project.name}
+          </h1>
           {project.location && (
             <p className="flex items-center gap-1 text-sm text-muted-foreground">
               <MapPin className="h-3 w-3" />

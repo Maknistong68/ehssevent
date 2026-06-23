@@ -67,7 +67,10 @@ export async function inviteTeamMember(input: {
     target_table: 'profiles',
     target_id: newProfile.id,
     target_label: newProfile.email,
-    metadata: { role: input.role, organization_id: auth.profile.organization_id },
+    metadata: {
+      role: input.role,
+      organization_id: auth.profile.organization_id,
+    },
   })
 
   revalidatePath('/team')
@@ -100,7 +103,10 @@ export async function approveTeamMember(input: {
     target_table: 'profiles',
     target_id: profile.id,
     target_label: profile.email,
-    metadata: { role: input.role, organization_id: auth.profile.organization_id },
+    metadata: {
+      role: input.role,
+      organization_id: auth.profile.organization_id,
+    },
   })
 
   revalidatePath('/team')

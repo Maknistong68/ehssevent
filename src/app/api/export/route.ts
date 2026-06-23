@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import { requirePermission } from '@/lib/auth/guards'
+import { enforceRateLimit } from '@/lib/rate-limit'
 import { getEvents } from '@/lib/queries/events'
 import { getCorrectiveActions } from '@/lib/queries/corrective-actions'
 import {
@@ -42,13 +43,22 @@ function xlsxResponse(buffer: Buffer, filename: string): NextResponse {
 }
 
 export async function GET(request: NextRequest) {
+  // Export builds an XLSX workbook on each call — throttle to deter abuse.
+  const limited = enforceRateLimit(request, {
+    name: 'export',
+    limit: 10,
+    windowMs: 60_000,
+  })
+  if (limited) return limited
+
   const { searchParams } = request.nextUrl
   const type = searchParams.get('type')
   const stamp = new Date().toISOString().slice(0, 10)
 
   if (type === 'events') {
     const auth = await requirePermission('event:view')
-    if (!auth.ok) return NextResponse.json({ error: auth.error }, { status: 403 })
+    if (!auth.ok)
+      return NextResponse.json({ error: auth.error }, { status: 403 })
 
     const events = await getEvents({
       approval_level: param(searchParams.get('approval_level')) as
@@ -70,7 +80,8 @@ export async function GET(request: NextRequest) {
 
   if (type === 'corrective-actions') {
     const auth = await requirePermission('ca:view')
-    if (!auth.ok) return NextResponse.json({ error: auth.error }, { status: 403 })
+    if (!auth.ok)
+      return NextResponse.json({ error: auth.error }, { status: 403 })
 
     const actions = await getCorrectiveActions({
       status: param(searchParams.get('status')) as
@@ -96,14 +107,18 @@ export async function GET(request: NextRequest) {
 
   if (type === 'inspection') {
     const auth = await requirePermission('inspection:view')
-    if (!auth.ok) return NextResponse.json({ error: auth.error }, { status: 403 })
+    if (!auth.ok)
+      return NextResponse.json({ error: auth.error }, { status: 403 })
 
     const id = param(searchParams.get('id'))
     if (!id) return NextResponse.json({ error: 'Missing id' }, { status: 400 })
 
     const inspection = await getInspectionById(id)
     if (!inspection)
-      return NextResponse.json({ error: 'Inspection not found' }, { status: 404 })
+      return NextResponse.json(
+        { error: 'Inspection not found' },
+        { status: 404 }
+      )
 
     const [responses, template] = await Promise.all([
       getInspectionResponses(id),

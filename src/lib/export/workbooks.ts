@@ -46,7 +46,9 @@ function finalizeSheet(sheet: ExcelJS.Worksheet) {
  * Workbook of events with two sheets: a full register and a statutory
  * reporting-deadline compliance view (24h / 3-day).
  */
-export async function eventsToWorkbook(events: Event[]): Promise<ExcelJS.Workbook> {
+export async function eventsToWorkbook(
+  events: Event[]
+): Promise<ExcelJS.Workbook> {
   const wb = new ExcelJS.Workbook()
   wb.creator = 'Event Report'
   wb.created = new Date()

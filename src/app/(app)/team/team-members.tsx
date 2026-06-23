@@ -104,7 +104,9 @@ export function TeamMembers({ members, currentUserId }: TeamMembersProps) {
     if (result.error) {
       toast.error(result.error)
     } else {
-      toast.success(status === 'active' ? 'Member activated' : 'Member deactivated')
+      toast.success(
+        status === 'active' ? 'Member activated' : 'Member deactivated'
+      )
       setEditUser(null)
       router.refresh()
     }
@@ -143,7 +145,9 @@ export function TeamMembers({ members, currentUserId }: TeamMembersProps) {
   }
 
   const isSelf = editUser?.id === currentUserId
-  const effectivePermissions = editUser ? ROLE_PERMISSIONS[editUser.role] ?? [] : []
+  const effectivePermissions = editUser
+    ? (ROLE_PERMISSIONS[editUser.role] ?? [])
+    : []
 
   return (
     <div className="space-y-3">
@@ -172,7 +176,10 @@ export function TeamMembers({ members, currentUserId }: TeamMembersProps) {
             </div>
             <div className="space-y-2">
               <Label>{t('team.role')}</Label>
-              <Select value={inviteRole} onValueChange={(v) => v && setInviteRole(v as UserRole)}>
+              <Select
+                value={inviteRole}
+                onValueChange={(v) => v && setInviteRole(v as UserRole)}
+              >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -197,7 +204,10 @@ export function TeamMembers({ members, currentUserId }: TeamMembersProps) {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={!!editUser} onOpenChange={(open) => !open && setEditUser(null)}>
+      <Dialog
+        open={!!editUser}
+        onOpenChange={(open) => !open && setEditUser(null)}
+      >
         <DialogContent className="max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{t('team.editMember')}</DialogTitle>
@@ -206,9 +216,13 @@ export function TeamMembers({ members, currentUserId }: TeamMembersProps) {
             <div className="space-y-5">
               <div className="space-y-1">
                 <p className="font-medium">{editUser.full_name || 'No name'}</p>
-                <p className="text-sm text-muted-foreground">{editUser.email}</p>
+                <p className="text-sm text-muted-foreground">
+                  {editUser.email}
+                </p>
                 <div className="flex flex-wrap items-center gap-2 pt-1">
-                  <Badge variant="secondary">{t(`roles.${editUser.role}`)}</Badge>
+                  <Badge variant="secondary">
+                    {t(`roles.${editUser.role}`)}
+                  </Badge>
                   <Badge variant={STATUS_VARIANT[editUser.status]}>
                     {USER_STATUS_LABELS[editUser.status]}
                   </Badge>
@@ -219,7 +233,10 @@ export function TeamMembers({ members, currentUserId }: TeamMembersProps) {
 
               <div className="space-y-2">
                 <Label>{t('team.role')}</Label>
-                <Select value={role} onValueChange={(v) => v && setRole(v as UserRole)}>
+                <Select
+                  value={role}
+                  onValueChange={(v) => v && setRole(v as UserRole)}
+                >
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
@@ -233,7 +250,11 @@ export function TeamMembers({ members, currentUserId }: TeamMembersProps) {
                 </Select>
               </div>
 
-              <Button onClick={handleSave} disabled={loading || isSelf} className="w-full">
+              <Button
+                onClick={handleSave}
+                disabled={loading || isSelf}
+                className="w-full"
+              >
                 {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 {t('team.saveChanges')}
               </Button>
@@ -257,7 +278,11 @@ export function TeamMembers({ members, currentUserId }: TeamMembersProps) {
                 <Label className="text-sm">{t('team.permissions')}</Label>
                 <div className="flex flex-wrap gap-1.5">
                   {effectivePermissions.map((p) => (
-                    <Badge key={p} variant="outline" className="font-mono text-[11px]">
+                    <Badge
+                      key={p}
+                      variant="outline"
+                      className="font-mono text-[11px]"
+                    >
                       {p}
                     </Badge>
                   ))}
@@ -278,7 +303,9 @@ export function TeamMembers({ members, currentUserId }: TeamMembersProps) {
                 data-icon="inline-start"
               >
                 <Power className="h-4 w-4" />
-                {editUser.status === 'active' ? t('team.deactivate') : t('team.activate')}
+                {editUser.status === 'active'
+                  ? t('team.deactivate')
+                  : t('team.activate')}
               </Button>
               {isSelf && (
                 <p className="text-xs text-muted-foreground">

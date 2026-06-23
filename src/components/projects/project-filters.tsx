@@ -67,7 +67,10 @@ export function ProjectFilters() {
       </div>
 
       <div className="flex flex-wrap gap-2">
-        <Select value={sortValue} onValueChange={(v) => updateSort(v ?? 'default')}>
+        <Select
+          value={sortValue}
+          onValueChange={(v) => updateSort(v ?? 'default')}
+        >
           <SelectTrigger className="min-w-[140px] flex-1 sm:w-[170px] sm:flex-none">
             <SelectValue placeholder="Sort by" />
           </SelectTrigger>

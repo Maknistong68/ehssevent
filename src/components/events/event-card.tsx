@@ -3,10 +3,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { ApprovalBadge } from './approval-badge'
 import { MapPin, Building2, CalendarDays } from 'lucide-react'
 import { format } from 'date-fns'
-import {
-  EVENT_TYPE_LABELS,
-  EVENT_CLASSIFICATION_LABELS,
-} from '@/types/enums'
+import { EVENT_TYPE_LABELS, EVENT_CLASSIFICATION_LABELS } from '@/types/enums'
 import type { Event } from '@/types/database'
 import { DeadlineBadge } from './deadline-badge'
 

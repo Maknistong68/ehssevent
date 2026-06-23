@@ -26,7 +26,10 @@ export default async function DashboardPage() {
 
   return (
     <div className="space-y-7 p-4 md:p-6">
-      <DashboardOverview events={events} correctiveActions={correctiveActions} />
+      <DashboardOverview
+        events={events}
+        correctiveActions={correctiveActions}
+      />
 
       <DashboardCharts events={events} correctiveActions={correctiveActions} />
 
@@ -36,7 +39,9 @@ export default async function DashboardPage() {
         </h2>
 
         {myActions.length === 0 ? (
-          <p className="text-sm text-muted-foreground px-1">{t('noMyActions')}</p>
+          <p className="text-sm text-muted-foreground px-1">
+            {t('noMyActions')}
+          </p>
         ) : (
           <>
             {/* Desktop table */}

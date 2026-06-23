@@ -58,9 +58,21 @@ export default async function CorrectiveActionsPage({ searchParams }: Props) {
     search: params.search,
   })
 
-  const sorted = sortItems(correctiveActions, params.sort, params.dir, caAccessors)
+  const sorted = sortItems(
+    correctiveActions,
+    params.sort,
+    params.dir,
+    caAccessors
+  )
   const { page, per } = parsePageParams(params)
-  const { pageItems, total, totalPages, from, to, page: currentPage } = paginate(sorted, page, per)
+  const {
+    pageItems,
+    total,
+    totalPages,
+    from,
+    to,
+    page: currentPage,
+  } = paginate(sorted, page, per)
 
   return (
     <div className="space-y-5 p-4 md:p-6">
@@ -70,7 +82,8 @@ export default async function CorrectiveActionsPage({ searchParams }: Props) {
             Corrective Actions
           </h1>
           <p className="text-sm text-muted-foreground">
-            {correctiveActions.length} corrective action{correctiveActions.length !== 1 ? 's' : ''}
+            {correctiveActions.length} corrective action
+            {correctiveActions.length !== 1 ? 's' : ''}
           </p>
         </div>
         <ExportButton

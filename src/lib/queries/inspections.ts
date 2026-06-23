@@ -3,7 +3,11 @@ import {
   MOCK_INSPECTIONS,
   MOCK_INSPECTION_RESPONSES,
 } from '@/lib/mock-data'
-import type { InspectionTemplate, Inspection, InspectionResponse } from '@/types/database'
+import type {
+  InspectionTemplate,
+  Inspection,
+  InspectionResponse,
+} from '@/types/database'
 import type { InspectionStatus } from '@/types/enums'
 
 interface InspectionFilters {
@@ -21,11 +25,15 @@ export async function getAllTemplates(): Promise<InspectionTemplate[]> {
   return [...MOCK_INSPECTION_TEMPLATES]
 }
 
-export async function getTemplateById(id: string): Promise<InspectionTemplate | null> {
+export async function getTemplateById(
+  id: string
+): Promise<InspectionTemplate | null> {
   return MOCK_INSPECTION_TEMPLATES.find((t) => t.id === id) ?? null
 }
 
-export async function getInspections(filters: InspectionFilters = {}): Promise<Inspection[]> {
+export async function getInspections(
+  filters: InspectionFilters = {}
+): Promise<Inspection[]> {
   let inspections = [...MOCK_INSPECTIONS]
 
   if (filters.status) {
@@ -35,7 +43,9 @@ export async function getInspections(filters: InspectionFilters = {}): Promise<I
     inspections = inspections.filter((i) => i.project_id === filters.project_id)
   }
   if (filters.template_id) {
-    inspections = inspections.filter((i) => i.template_id === filters.template_id)
+    inspections = inspections.filter(
+      (i) => i.template_id === filters.template_id
+    )
   }
   if (filters.search) {
     const q = filters.search.toLowerCase()
@@ -49,10 +59,16 @@ export async function getInspections(filters: InspectionFilters = {}): Promise<I
   return inspections
 }
 
-export async function getInspectionById(id: string): Promise<Inspection | null> {
+export async function getInspectionById(
+  id: string
+): Promise<Inspection | null> {
   return MOCK_INSPECTIONS.find((i) => i.id === id) ?? null
 }
 
-export async function getInspectionResponses(inspectionId: string): Promise<InspectionResponse[]> {
-  return MOCK_INSPECTION_RESPONSES.filter((r) => r.inspection_id === inspectionId)
+export async function getInspectionResponses(
+  inspectionId: string
+): Promise<InspectionResponse[]> {
+  return MOCK_INSPECTION_RESPONSES.filter(
+    (r) => r.inspection_id === inspectionId
+  )
 }

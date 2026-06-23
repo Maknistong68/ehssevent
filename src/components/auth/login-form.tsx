@@ -91,7 +91,10 @@ export function LoginForm() {
       footer={
         <p className="text-center text-sm text-white/60">
           {t('noAccount')}{' '}
-          <Link href="/signup" className="font-semibold text-brand-yellow hover:underline">
+          <Link
+            href="/signup"
+            className="font-semibold text-brand-yellow hover:underline"
+          >
             {t('signUp')}
           </Link>
         </p>
@@ -99,7 +102,9 @@ export function LoginForm() {
     >
       <form onSubmit={handleSubmit} className="space-y-4">
         {error && (
-          <AuthAlert icon={<AlertCircle className="h-4 w-4" />}>{error}</AuthAlert>
+          <AuthAlert icon={<AlertCircle className="h-4 w-4" />}>
+            {error}
+          </AuthAlert>
         )}
 
         <div className="grid grid-cols-2 gap-2">
@@ -156,7 +161,11 @@ export function LoginForm() {
               className="text-white/55 transition-colors hover:text-white"
               aria-label={showPassword ? 'Hide password' : 'Show password'}
             >
-              {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+              {showPassword ? (
+                <EyeOff className="h-5 w-5" />
+              ) : (
+                <Eye className="h-5 w-5" />
+              )}
             </button>
           }
         />

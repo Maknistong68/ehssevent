@@ -6,10 +6,16 @@ interface InspectionScoreBadgeProps {
   className?: string
 }
 
-export function InspectionScoreBadge({ score, className }: InspectionScoreBadgeProps) {
+export function InspectionScoreBadge({
+  score,
+  className,
+}: InspectionScoreBadgeProps) {
   if (score === null) {
     return (
-      <Badge variant="secondary" className={cn('bg-slate-100 text-slate-600', className)}>
+      <Badge
+        variant="secondary"
+        className={cn('bg-slate-100 text-slate-600', className)}
+      >
         N/A
       </Badge>
     )

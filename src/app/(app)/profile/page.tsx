@@ -4,11 +4,26 @@ import { useState } from 'react'
 import { useAuth } from '@/components/auth/auth-provider'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import { Skeleton } from '@/components/ui/skeleton'
-import { LogOut, Mail, Building2, Shield, FileText, Lock, Pencil, Loader2 } from 'lucide-react'
+import {
+  LogOut,
+  Mail,
+  Building2,
+  Shield,
+  FileText,
+  Lock,
+  Pencil,
+  Loader2,
+} from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { format } from 'date-fns'
 import { DsrRequestDialog } from '@/components/profile/dsr-request-dialog'
@@ -77,7 +92,9 @@ export default function ProfilePage() {
 
   return (
     <div className="max-w-2xl p-4 md:p-6 space-y-6">
-      <h1 className="mb-6 font-heading text-2xl font-bold tracking-tight md:text-3xl">Profile</h1>
+      <h1 className="mb-6 font-heading text-2xl font-bold tracking-tight md:text-3xl">
+        Profile
+      </h1>
 
       <Card className="animate-fade-up">
         <CardHeader>
@@ -96,18 +113,31 @@ export default function ProfilePage() {
                       className="h-9"
                     />
                     <div className="flex gap-2">
-                      <Button size="sm" onClick={handleSave} disabled={saving || !editName.trim()}>
-                        {saving && <Loader2 className="mr-1 h-3 w-3 animate-spin" />}
+                      <Button
+                        size="sm"
+                        onClick={handleSave}
+                        disabled={saving || !editName.trim()}
+                      >
+                        {saving && (
+                          <Loader2 className="mr-1 h-3 w-3 animate-spin" />
+                        )}
                         Save
                       </Button>
-                      <Button size="sm" variant="outline" onClick={handleCancelEdit} disabled={saving}>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={handleCancelEdit}
+                        disabled={saving}
+                      >
                         Cancel
                       </Button>
                     </div>
                   </div>
                 ) : (
                   <>
-                    <CardTitle className="text-lg">{profile?.full_name || 'No name set'}</CardTitle>
+                    <CardTitle className="text-lg">
+                      {profile?.full_name || 'No name set'}
+                    </CardTitle>
                     <CardDescription>{profile?.email}</CardDescription>
                   </>
                 )}
@@ -129,7 +159,9 @@ export default function ProfilePage() {
               <Mail className="h-4 w-4 text-muted-foreground" />
               <div>
                 <p className="text-sm font-medium">Email</p>
-                <p className="text-sm text-muted-foreground">{profile?.email}</p>
+                <p className="text-sm text-muted-foreground">
+                  {profile?.email}
+                </p>
               </div>
             </div>
 
@@ -158,7 +190,11 @@ export default function ProfilePage() {
 
           <Separator />
 
-          <Button variant="destructive" onClick={handleLogout} className="w-full">
+          <Button
+            variant="destructive"
+            onClick={handleLogout}
+            className="w-full"
+          >
             <LogOut className="mr-2 h-4 w-4" />
             Sign Out
           </Button>
@@ -205,7 +241,9 @@ export default function ProfilePage() {
           <Separator />
 
           <div className="rounded-2xl bg-muted/50 p-4">
-            <h4 className="text-sm font-semibold mb-2">Your PDPL Data Rights (Article 4)</h4>
+            <h4 className="text-sm font-semibold mb-2">
+              Your PDPL Data Rights (Article 4)
+            </h4>
             <ul className="text-xs text-muted-foreground space-y-1">
               <li>- Right to be informed about how your data is used</li>
               <li>- Right to access your personal data</li>

@@ -45,7 +45,11 @@ function setCollapsed(value: boolean) {
 }
 
 export function AppShell({ children }: { children: React.ReactNode }) {
-  const collapsed = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot)
+  const collapsed = useSyncExternalStore(
+    subscribe,
+    getSnapshot,
+    getServerSnapshot
+  )
   const toggle = useCallback(() => setCollapsed(!getSnapshot()), [])
 
   return (

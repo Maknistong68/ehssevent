@@ -23,7 +23,9 @@ export const metadata = {
   title: 'Events - Event Report',
 }
 
-const APPROVAL_ORDER = Object.keys(EVENT_APPROVAL_LABELS) as EventApprovalLevel[]
+const APPROVAL_ORDER = Object.keys(
+  EVENT_APPROVAL_LABELS
+) as EventApprovalLevel[]
 
 const eventAccessors = {
   reference: (e: Event) => e.reference_number,
@@ -64,7 +66,14 @@ export default async function EventsPage({ searchParams }: Props) {
 
   const sorted = sortItems(events, params.sort, params.dir, eventAccessors)
   const { page, per } = parsePageParams(params)
-  const { pageItems, total, totalPages, from, to, page: currentPage } = paginate(sorted, page, per)
+  const {
+    pageItems,
+    total,
+    totalPages,
+    from,
+    to,
+    page: currentPage,
+  } = paginate(sorted, page, per)
 
   return (
     <div className="space-y-5 p-4 md:p-6">

@@ -4,9 +4,11 @@ import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 
-type ActionResult =
-  | { success?: boolean; error?: string; [key: string]: unknown }
-  | void
+type ActionResult = {
+  success?: boolean
+  error?: string
+  [key: string]: unknown
+} | void
 
 interface UseFormActionOptions {
   /** Toast shown on success. Pass null to suppress. */

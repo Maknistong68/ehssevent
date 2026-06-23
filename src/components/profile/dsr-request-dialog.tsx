@@ -54,49 +54,60 @@ export function DsrRequestDialog() {
 
   return (
     <>
-      <Button variant="outline" className="w-full" onClick={() => setOpen(true)}>
+      <Button
+        variant="outline"
+        className="w-full"
+        onClick={() => setOpen(true)}
+      >
         <User className="mr-2 h-4 w-4" />
         {t('trigger')}
       </Button>
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent>
-        <DialogHeader>
-          <DialogTitle>{t('title')}</DialogTitle>
-          <DialogDescription>{t('description')}</DialogDescription>
-        </DialogHeader>
+          <DialogHeader>
+            <DialogTitle>{t('title')}</DialogTitle>
+            <DialogDescription>{t('description')}</DialogDescription>
+          </DialogHeader>
 
-        <div className="space-y-4">
-          <div className="space-y-2">
-            <Label>{t('typeLabel')}</Label>
-            <Select value={type} onValueChange={(v) => v && setType(v as DsrRequestType)}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {DSR_REQUEST_TYPES.map((rt) => (
-                  <SelectItem key={rt} value={rt}>
-                    {t(`types.${rt}`)}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>{t('typeLabel')}</Label>
+              <Select
+                value={type}
+                onValueChange={(v) => v && setType(v as DsrRequestType)}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {DSR_REQUEST_TYPES.map((rt) => (
+                    <SelectItem key={rt} value={rt}>
+                      {t(`types.${rt}`)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label>{t('noteLabel')}</Label>
+              <Textarea
+                value={note}
+                onChange={(e) => setNote(e.target.value)}
+                placeholder={t('notePlaceholder')}
+                rows={3}
+              />
+            </div>
+
+            <Button
+              onClick={handleSubmit}
+              disabled={loading}
+              className="w-full"
+            >
+              {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {t('submit')}
+            </Button>
           </div>
-
-          <div className="space-y-2">
-            <Label>{t('noteLabel')}</Label>
-            <Textarea
-              value={note}
-              onChange={(e) => setNote(e.target.value)}
-              placeholder={t('notePlaceholder')}
-              rows={3}
-            />
-          </div>
-
-          <Button onClick={handleSubmit} disabled={loading} className="w-full">
-            {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            {t('submit')}
-          </Button>
-        </div>
         </DialogContent>
       </Dialog>
     </>
