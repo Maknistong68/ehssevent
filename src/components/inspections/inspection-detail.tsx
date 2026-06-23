@@ -142,9 +142,15 @@ export function InspectionDetail({
       {sections.map((section) => (
         <Card key={section.id}>
           <CardHeader className="pb-3">
-            <CardTitle className="text-base">{section.title}</CardTitle>
+            <div className="flex items-center justify-between gap-2">
+              <CardTitle className="text-base">{section.title}</CardTitle>
+              <Badge variant="secondary" className="shrink-0 text-[11px]">
+                {section.items.length}{' '}
+                {section.items.length === 1 ? 'item' : 'items'}
+              </Badge>
+            </div>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-3">
             {section.items.map((item) => {
               const response = responses.find(
                 (r) => r.section_id === section.id && r.item_id === item.id
@@ -160,15 +166,28 @@ export function InspectionDetail({
                 `&section_id=${encodeURIComponent(section.id)}` +
                 `&item_id=${encodeURIComponent(item.id)}` +
                 `&item_label=${encodeURIComponent(item.label)}`
+              const hasExtra =
+                response?.comment ||
+                response?.observation ||
+                response?.action_plan
               return (
                 <div
                   key={item.id}
-                  className="flex flex-col gap-2 py-2 border-b last:border-0"
+                  className={`flex flex-col gap-3 rounded-xl border p-3 transition-colors ${
+                    isFailing
+                      ? 'border-red-200 bg-red-50/60 dark:border-red-900/50 dark:bg-red-950/20'
+                      : 'border-border/60 bg-card'
+                  }`}
                 >
-                  <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2">
-                    <div className="flex items-center gap-2 min-w-0">
-                      <span className="text-sm font-medium">{item.label}</span>
-                      <Badge variant="outline" className="text-[10px] shrink-0">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0 flex-1 space-y-1.5">
+                      <p className="text-sm font-medium leading-snug break-words">
+                        {item.label}
+                      </p>
+                      <Badge
+                        variant="outline"
+                        className="text-[10px] font-normal text-muted-foreground"
+                      >
                         {
                           INSPECTION_FIELD_TYPE_LABELS[
                             item.field_type as InspectionFieldType
@@ -176,43 +195,41 @@ export function InspectionDetail({
                         }
                       </Badge>
                     </div>
-                    <div className="shrink-0">
+                    <div className="flex shrink-0 justify-end text-right">
                       {getValueDisplay(
                         response,
                         item.field_type as InspectionFieldType
                       )}
                     </div>
                   </div>
-                  {(response?.comment ||
-                    response?.observation ||
-                    response?.action_plan) && (
-                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-                      {response.comment && (
-                        <div>
-                          <p className="text-[11px] font-medium text-muted-foreground">
+                  {hasExtra && (
+                    <div className="grid grid-cols-1 gap-3 border-t border-border/60 pt-3 sm:grid-cols-3">
+                      {response?.comment && (
+                        <div className="space-y-0.5">
+                          <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
                             Comment
                           </p>
-                          <p className="text-sm whitespace-pre-wrap">
+                          <p className="text-sm whitespace-pre-wrap break-words">
                             {response.comment}
                           </p>
                         </div>
                       )}
-                      {response.observation && (
-                        <div>
-                          <p className="text-[11px] font-medium text-muted-foreground">
+                      {response?.observation && (
+                        <div className="space-y-0.5">
+                          <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
                             Observation
                           </p>
-                          <p className="text-sm whitespace-pre-wrap">
+                          <p className="text-sm whitespace-pre-wrap break-words">
                             {response.observation}
                           </p>
                         </div>
                       )}
-                      {response.action_plan && (
-                        <div>
-                          <p className="text-[11px] font-medium text-muted-foreground">
+                      {response?.action_plan && (
+                        <div className="space-y-0.5">
+                          <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
                             Action Plan
                           </p>
-                          <p className="text-sm whitespace-pre-wrap">
+                          <p className="text-sm whitespace-pre-wrap break-words">
                             {response.action_plan}
                           </p>
                         </div>
@@ -220,32 +237,31 @@ export function InspectionDetail({
                     </div>
                   )}
                   {isFailing && linkedCa && (
-                    <div>
-                      <Link href={`/corrective-actions/${linkedCa.id}`}>
-                        <Badge
-                          variant="secondary"
-                          className={`${CA_STATUS_COLORS[linkedCa.status]} cursor-pointer inline-flex items-center gap-1`}
-                        >
-                          {linkedCa.reference_number} &middot;{' '}
-                          {CA_STATUS_LABELS[linkedCa.status]}
-                          <ExternalLink className="h-3 w-3" />
-                        </Badge>
-                      </Link>
-                    </div>
+                    <Link
+                      href={`/corrective-actions/${linkedCa.id}`}
+                      className="inline-flex w-fit"
+                    >
+                      <Badge
+                        variant="secondary"
+                        className={`${CA_STATUS_COLORS[linkedCa.status]} cursor-pointer inline-flex items-center gap-1`}
+                      >
+                        {linkedCa.reference_number} &middot;{' '}
+                        {CA_STATUS_LABELS[linkedCa.status]}
+                        <ExternalLink className="h-3 w-3" />
+                      </Badge>
+                    </Link>
                   )}
                   {isFailing && !linkedCa && canRaiseCa && (
-                    <div>
-                      <Link href={caHref}>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="h-7 text-xs"
-                        >
-                          <AlertTriangle className="mr-1 h-3 w-3" />
-                          Raise Corrective Action
-                        </Button>
-                      </Link>
-                    </div>
+                    <Link href={caHref} className="inline-flex w-fit">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-8 text-xs"
+                      >
+                        <AlertTriangle className="mr-1 h-3 w-3" />
+                        Raise Corrective Action
+                      </Button>
+                    </Link>
                   )}
                 </div>
               )

@@ -543,29 +543,87 @@ const inspectionRefById = (iid: string): string =>
 // Inspection Responses
 // ============================================================
 
-export const MOCK_INSPECTION_RESPONSES: InspectionResponse[] = [
-  // Inspection 1 (score 83.3 — 4 of 6 fully compliant)
-  { id: id('80000000', 1), inspection_id: id('60000000', 1), section_id: 'sec-1', item_id: 'item-1-1', field_type: 'compliance', value: 'fully_compliant', photo_urls: [], created_at: '2025-05-05T10:05:00Z' },
-  { id: id('80000000', 2), inspection_id: id('60000000', 1), section_id: 'sec-1', item_id: 'item-1-2', field_type: 'compliance', value: 'fully_compliant', photo_urls: [], created_at: '2025-05-05T10:06:00Z' },
-  { id: id('80000000', 3), inspection_id: id('60000000', 1), section_id: 'sec-1', item_id: 'item-1-3', field_type: 'compliance', value: 'fully_compliant', photo_urls: [], created_at: '2025-05-05T10:07:00Z' },
-  { id: id('80000000', 4), inspection_id: id('60000000', 1), section_id: 'sec-2', item_id: 'item-2-1', field_type: 'compliance', value: 'partially_compliant', photo_urls: [], created_at: '2025-05-05T10:10:00Z' },
-  { id: id('80000000', 5), inspection_id: id('60000000', 1), section_id: 'sec-2', item_id: 'item-2-2', field_type: 'compliance', value: 'fully_compliant', photo_urls: [], created_at: '2025-05-05T10:11:00Z' },
-  { id: id('80000000', 6), inspection_id: id('60000000', 1), section_id: 'sec-3', item_id: 'item-3-1', field_type: 'compliance', value: 'partially_compliant', photo_urls: [], created_at: '2025-05-05T10:15:00Z' },
-  // Inspection 2 (score 100 — all fully compliant)
-  { id: id('80000000', 7), inspection_id: id('60000000', 2), section_id: 'sec-1', item_id: 'item-1-1', field_type: 'compliance', value: 'fully_compliant', photo_urls: [], created_at: '2025-05-10T13:05:00Z' },
-  { id: id('80000000', 8), inspection_id: id('60000000', 2), section_id: 'sec-1', item_id: 'item-1-2', field_type: 'compliance', value: 'fully_compliant', photo_urls: [], created_at: '2025-05-10T13:06:00Z' },
-  { id: id('80000000', 9), inspection_id: id('60000000', 2), section_id: 'sec-1', item_id: 'item-1-3', field_type: 'compliance', value: 'fully_compliant', photo_urls: [], created_at: '2025-05-10T13:07:00Z' },
-  { id: id('80000000', 10), inspection_id: id('60000000', 2), section_id: 'sec-2', item_id: 'item-2-1', field_type: 'compliance', value: 'fully_compliant', photo_urls: [], created_at: '2025-05-10T13:10:00Z' },
-  { id: id('80000000', 11), inspection_id: id('60000000', 2), section_id: 'sec-2', item_id: 'item-2-2', field_type: 'compliance', value: 'fully_compliant', photo_urls: [], created_at: '2025-05-10T13:11:00Z' },
-  { id: id('80000000', 12), inspection_id: id('60000000', 2), section_id: 'sec-3', item_id: 'item-3-1', field_type: 'compliance', value: 'fully_compliant', photo_urls: [], created_at: '2025-05-10T13:15:00Z' },
-  // Inspection 3 (score 66.7 — 3 of 6 fully compliant)
-  { id: id('80000000', 13), inspection_id: id('60000000', 3), section_id: 'sec-1', item_id: 'item-1-1', field_type: 'compliance', value: 'fully_compliant', photo_urls: [], created_at: '2025-05-18T12:05:00Z' },
-  { id: id('80000000', 14), inspection_id: id('60000000', 3), section_id: 'sec-1', item_id: 'item-1-2', field_type: 'compliance', value: 'partially_compliant', photo_urls: [], created_at: '2025-05-18T12:06:00Z' },
-  { id: id('80000000', 15), inspection_id: id('60000000', 3), section_id: 'sec-1', item_id: 'item-1-3', field_type: 'compliance', value: 'non_compliant', photo_urls: [], created_at: '2025-05-18T12:07:00Z' },
-  { id: id('80000000', 16), inspection_id: id('60000000', 3), section_id: 'sec-2', item_id: 'item-2-1', field_type: 'compliance', value: 'fully_compliant', photo_urls: [], created_at: '2025-05-18T12:10:00Z' },
-  { id: id('80000000', 17), inspection_id: id('60000000', 3), section_id: 'sec-2', item_id: 'item-2-2', field_type: 'compliance', value: 'partially_compliant', photo_urls: [], created_at: '2025-05-18T12:11:00Z' },
-  { id: id('80000000', 18), inspection_id: id('60000000', 3), section_id: 'sec-3', item_id: 'item-3-1', field_type: 'compliance', value: 'fully_compliant', photo_urls: [], created_at: '2025-05-18T12:15:00Z' },
-]
+// Completed inspections must be fully answered (mirrors the form's
+// completion rule): every item of the template gets a response. Compliance
+// items are distributed to match each seed's score and compliant counts;
+// other field types receive a sensible default answer. Drafts are left
+// unanswered so they remain genuinely incomplete.
+function buildInspectionResponses(): InspectionResponse[] {
+  const out: InspectionResponse[] = []
+  let counter = 0
+
+  for (const s of INSPECTION_SEEDS) {
+    if (s.st !== 'completed') continue
+    const template = MOCK_INSPECTION_TEMPLATES.find((t) => t.id === s.tpl)
+    if (!template) continue
+
+    const inspectionId = id('60000000', s.n)
+    const createdAt = s.completed ?? s.created
+
+    // Build the compliance value sequence so the rendered responses are
+    // consistent with the stored score / compliant counts.
+    const complianceCount = template.sections
+      .flatMap((sec) => sec.items)
+      .filter((it) => it.field_type === 'compliance').length
+    const fully = Math.min(s.compliant, complianceCount)
+    const neededPoints = Math.round(((s.score ?? 0) / 100) * complianceCount)
+    let partial = Math.max(0, Math.round((neededPoints - fully) * 2))
+    partial = Math.min(partial, complianceCount - fully)
+    const nonCompliant = complianceCount - fully - partial
+    const complianceValues: string[] = [
+      ...Array<string>(fully).fill('fully_compliant'),
+      ...Array<string>(partial).fill('partially_compliant'),
+      ...Array<string>(nonCompliant).fill('non_compliant'),
+    ]
+    let complianceIndex = 0
+
+    for (const section of template.sections) {
+      for (const item of section.items) {
+        counter += 1
+        let value: string | null
+        switch (item.field_type) {
+          case 'compliance':
+            value = complianceValues[complianceIndex] ?? 'fully_compliant'
+            complianceIndex += 1
+            break
+          case 'yes_no':
+            value = 'yes'
+            break
+          case 'pass_fail':
+            value = 'pass'
+            break
+          case 'numeric':
+            value = '5'
+            break
+          case 'dropdown':
+            value = item.options?.[0] ?? 'N/A'
+            break
+          case 'text':
+            value = 'Checked and satisfactory.'
+            break
+          default:
+            // photo (and any non-answerable types) stay empty/optional
+            value = null
+        }
+        out.push({
+          id: id('80000000', counter),
+          inspection_id: inspectionId,
+          section_id: section.id,
+          item_id: item.id,
+          field_type: item.field_type,
+          value,
+          photo_urls: [],
+          created_at: createdAt,
+        })
+      }
+    }
+  }
+
+  return out
+}
+
+export const MOCK_INSPECTION_RESPONSES: InspectionResponse[] =
+  buildInspectionResponses()
 
 // ============================================================
 // Corrective Actions

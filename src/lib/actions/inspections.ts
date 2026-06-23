@@ -137,6 +137,30 @@ export async function submitInspection(input: unknown) {
   const { template_id, project_id, notes, responses, corrective_actions } =
     parsed.data
 
+  // Enforce that the inspection is complete: every required item must be
+  // answered before the record can be saved.
+  const submitTemplate = MOCK_INSPECTION_TEMPLATES.find(
+    (t) => t.id === template_id
+  )
+  if (submitTemplate) {
+    const isAnswered = (sectionId: string, itemId: string) => {
+      const resp = responses.find(
+        (r) => r.section_id === sectionId && r.item_id === itemId
+      )
+      if (!resp) return false
+      if (resp.field_type === 'photo') return resp.photo_urls.length > 0
+      return !!(resp.value && resp.value.trim() !== '')
+    }
+    const missing = submitTemplate.sections
+      .flatMap((s) => s.items.map((i) => ({ section: s, item: i })))
+      .filter(({ section, item }) => item.required && !isAnswered(section.id, item.id))
+    if (missing.length > 0) {
+      return {
+        error: `Inspection is incomplete: ${missing.length} required item(s) need a response.`,
+      }
+    }
+  }
+
   const inspectionId = randomUUID()
   const now = new Date().toISOString()
   const refNum = `INS-${new Date().getFullYear()}-${String(MOCK_INSPECTIONS.length + 1).padStart(3, '0')}`

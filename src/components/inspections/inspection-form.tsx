@@ -89,6 +89,7 @@ export function InspectionForm({
   >([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [missingItemKeys, setMissingItemKeys] = useState<Set<string>>(new Set())
 
   const getResponseKey = (sectionId: string, itemId: string) =>
     `${sectionId}:${itemId}`
@@ -107,6 +108,15 @@ export function InspectionForm({
       ...prev,
       [key]: { ...EMPTY_RESPONSE, ...prev[key], ...patch },
     }))
+    // Clear the "missing required" flag once the user answers the item
+    if ('value' in patch || 'photo_urls' in patch) {
+      setMissingItemKeys((prev) => {
+        if (!prev.has(key)) return prev
+        const next = new Set(prev)
+        next.delete(key)
+        return next
+      })
+    }
   }
 
   const setResponseValue = (
@@ -158,9 +168,51 @@ export function InspectionForm({
       })
     )
 
+  const isItemAnswered = (sectionId: string, itemId: string) => {
+    const resp = getResponse(sectionId, itemId)
+    const item = template.sections
+      .find((s) => s.id === sectionId)
+      ?.items.find((i) => i.id === itemId)
+    if (item?.field_type === 'photo') return resp.photo_urls.length > 0
+    return !!(resp.value && resp.value.trim() !== '')
+  }
+
   const handleChecklistSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
+
+    // The form must be completed before it can be saved.
+    if (!projectId) {
+      setError('Please select a project before saving the inspection.')
+      return
+    }
+
+    // Enforce that every required checklist item has an answer.
+    const missing = new Set<string>()
+    for (const section of template.sections) {
+      for (const item of section.items) {
+        if (item.required && !isItemAnswered(section.id, item.id)) {
+          missing.add(getResponseKey(section.id, item.id))
+        }
+      }
+    }
+
+    if (missing.size > 0) {
+      setMissingItemKeys(missing)
+      setExpandedItems((prev) => new Set([...prev, ...missing]))
+      setError(
+        `Please complete all required items before saving (${missing.size} remaining).`
+      )
+      if (typeof document !== 'undefined') {
+        const firstKey = [...missing][0]
+        document
+          .getElementById(`item-${firstKey}`)
+          ?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      }
+      return
+    }
+
+    setMissingItemKeys(new Set())
 
     // Scan for non-compliant items
     const failingItems: NonCompliantItem[] = []
@@ -440,8 +492,17 @@ export function InspectionForm({
                 const resp = getResponse(section.id, item.id)
                 const itemKey = getResponseKey(section.id, item.id)
                 const isExpanded = expandedItems.has(itemKey)
+                const isMissing = missingItemKeys.has(itemKey)
                 return (
-                  <div key={item.id} className="flex flex-col gap-2 px-6 py-3">
+                  <div
+                    key={item.id}
+                    id={`item-${itemKey}`}
+                    className={`flex flex-col gap-2 px-6 py-3 ${
+                      isMissing
+                        ? 'bg-red-50/70 ring-1 ring-inset ring-red-300 dark:bg-red-950/20 dark:ring-red-900/50'
+                        : ''
+                    }`}
+                  >
                     <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                       <Label className="flex-1 font-normal sm:font-medium">
                         {item.label}
