@@ -29,6 +29,7 @@ import { format } from 'date-fns'
 import { DsrRequestDialog } from '@/components/profile/dsr-request-dialog'
 import { DPO_EMAIL } from '@/lib/constants/legal'
 import { updateProfile } from '@/lib/actions/profile'
+import { usePermissions } from '@/components/shared/role-gate'
 import { toast } from 'sonner'
 
 const ROLE_LABELS: Record<string, string> = {
@@ -42,6 +43,8 @@ const ROLE_LABELS: Record<string, string> = {
 
 export default function ProfilePage() {
   const { profile, loading } = useAuth()
+  const { can } = usePermissions()
+  const canEdit = can('user:manage')
   const router = useRouter()
   const [editing, setEditing] = useState(false)
   const [editName, setEditName] = useState('')
@@ -143,7 +146,7 @@ export default function ProfilePage() {
                 )}
               </div>
             </div>
-            {!editing && (
+            {canEdit && !editing && (
               <Button variant="outline" size="sm" onClick={handleStartEdit}>
                 <Pencil className="mr-1 h-3 w-3" />
                 Edit Profile

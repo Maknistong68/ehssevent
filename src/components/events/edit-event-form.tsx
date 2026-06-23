@@ -19,7 +19,7 @@ import {
 } from '@/components/ui/select'
 import { Card, CardContent } from '@/components/ui/card'
 import { PhotoUpload } from '@/components/shared/photo-upload'
-import { AlertCircle, ArrowLeft, Loader2, MapPin } from 'lucide-react'
+import { AlertCircle, ArrowLeft, Loader2 } from 'lucide-react'
 import { updateEvent } from '@/lib/actions/events'
 import {
   EVENT_TYPE_LABELS,
@@ -28,8 +28,8 @@ import {
   EVENT_IMPACTED_PARTY_LABELS,
   type EventType,
 } from '@/types/enums'
-import { SITE_OPTIONS, contractorForSite } from '@/lib/constants/events'
-import type { Event, Project } from '@/types/database'
+import { SITE_OPTIONS } from '@/lib/constants/events'
+import type { Event } from '@/types/database'
 import type { AssignableUser } from '@/lib/queries/users'
 import { displayName } from '@/lib/utils/people'
 import Link from 'next/link'
@@ -39,7 +39,6 @@ const PII_HINT =
 
 interface EditEventFormProps {
   event: Event
-  projects: Project[]
   users: AssignableUser[]
 }
 
@@ -96,7 +95,7 @@ function splitDate(value: string | null): { date: string; time: string } {
   }
 }
 
-export function EditEventForm({ event, projects, users }: EditEventFormProps) {
+export function EditEventForm({ event, users }: EditEventFormProps) {
   const router = useRouter()
   const initialDate = splitDate(event.event_date)
 
@@ -105,9 +104,6 @@ export function EditEventForm({ event, projects, users }: EditEventFormProps) {
   const [photos, setPhotos] = useState<string[]>(event.photo_urls ?? [])
   const [eventDate, setEventDate] = useState(initialDate.date)
   const [eventTime, setEventTime] = useState(initialDate.time)
-  const [showGps, setShowGps] = useState(
-    event.latitude != null || event.longitude != null
-  )
   const [reason, setReason] = useState('')
 
   const type = event.type
@@ -119,17 +115,8 @@ export function EditEventForm({ event, projects, users }: EditEventFormProps) {
   )
   const [impactedParty, setImpactedParty] = useState(event.impacted_party ?? '')
   const [site, setSite] = useState(event.site ?? '')
-  const [projectId, setProjectId] = useState(event.project_id ?? '')
-
-  const contractor = contractorForSite(site)
 
   const [specificArea, setSpecificArea] = useState(event.specific_area ?? '')
-  const [latitude, setLatitude] = useState(
-    event.latitude != null ? String(event.latitude) : ''
-  )
-  const [longitude, setLongitude] = useState(
-    event.longitude != null ? String(event.longitude) : ''
-  )
   const [eventDescription, setEventDescription] = useState(
     event.event_description ?? ''
   )
@@ -198,12 +185,8 @@ export function EditEventForm({ event, projects, users }: EditEventFormProps) {
         ? leadershipMemberId || undefined
         : undefined,
       attendee_ids: isLeadership ? attendeeIds : [],
-      project_id: projectId || undefined,
       site: site || undefined,
-      contractor: contractor || undefined,
       specific_area: specificArea || undefined,
-      latitude: showGps ? latitude || undefined : undefined,
-      longitude: showGps ? longitude || undefined : undefined,
       event_date: eventDate
         ? eventDate + (eventTime ? 'T' + eventTime : '')
         : undefined,
@@ -299,31 +282,20 @@ export function EditEventForm({ event, projects, users }: EditEventFormProps) {
           <h3 className="font-heading text-sm font-semibold tracking-tight">
             Location
           </h3>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <div className="space-y-2">
-              <Label>Site</Label>
-              <Select
-                value={site || null}
-                onValueChange={(v) => setSite(v ?? '')}
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select site" />
-                </SelectTrigger>
-                <SelectContent>
-                  {SITE_OPTIONS.map((s) => (
-                    <SelectItem key={s} value={s}>
-                      {s}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label>Contractor</Label>
-              <div className="flex h-11 w-full items-center rounded-xl border border-input bg-secondary/30 px-4 text-sm text-muted-foreground">
-                {contractor ?? 'Set automatically from site'}
-              </div>
-            </div>
+          <div className="space-y-2">
+            <Label>Site</Label>
+            <Select value={site || null} onValueChange={(v) => setSite(v ?? '')}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select site" />
+              </SelectTrigger>
+              <SelectContent>
+                {SITE_OPTIONS.map((s) => (
+                  <SelectItem key={s} value={s}>
+                    {s}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="space-y-2">
@@ -336,65 +308,6 @@ export function EditEventForm({ event, projects, users }: EditEventFormProps) {
             />
           </div>
 
-          {projects.length > 0 && (
-            <div className="space-y-2">
-              <Label>Linked Project (optional)</Label>
-              <Select
-                value={projectId || null}
-                onValueChange={(v) => setProjectId(v ?? '')}
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Link to a project" />
-                </SelectTrigger>
-                <SelectContent>
-                  {projects.map((p) => (
-                    <SelectItem key={p.id} value={p.id}>
-                      {p.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          )}
-
-          {!showGps ? (
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => setShowGps(true)}
-              data-icon="inline-start"
-            >
-              <MapPin className="h-4 w-4" />
-              Add GPS coordinates
-            </Button>
-          ) : (
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="latitude">Latitude</Label>
-                <Input
-                  id="latitude"
-                  type="number"
-                  step="any"
-                  value={latitude}
-                  onChange={(e) => setLatitude(e.target.value)}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="longitude">Longitude</Label>
-                <Input
-                  id="longitude"
-                  type="number"
-                  step="any"
-                  value={longitude}
-                  onChange={(e) => setLongitude(e.target.value)}
-                />
-              </div>
-              <p className="text-xs text-muted-foreground sm:col-span-2">
-                Coordinates are reduced to ~100 m precision to protect privacy.
-              </p>
-            </div>
-          )}
         </CardContent>
       </Card>
 

@@ -98,9 +98,8 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
   const strippedPathname = pathname.replace(/^\/(en|ar)/, '') || '/'
 
   const canCreateEvent = can('event:create')
-  const canCreateCa = can('ca:create')
   const canCreateInspection = can('inspection:conduct')
-  const showQuickCreate = canCreateEvent || canCreateCa || canCreateInspection
+  const showQuickCreate = canCreateEvent || canCreateInspection
 
   const displayName =
     effectiveProfile?.full_name ||
@@ -181,14 +180,6 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
                 <DropdownMenuItem render={<Link href="/events/new" />}>
                   <Calendar className="h-4 w-4" />
                   {t('nav.newEvent')}
-                </DropdownMenuItem>
-              )}
-              {canCreateCa && (
-                <DropdownMenuItem
-                  render={<Link href="/corrective-actions/new" />}
-                >
-                  <ListChecks className="h-4 w-4" />
-                  {t('nav.newCorrectiveAction')}
                 </DropdownMenuItem>
               )}
               {canCreateInspection && (

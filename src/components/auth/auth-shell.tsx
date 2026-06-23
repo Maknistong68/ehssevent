@@ -6,42 +6,6 @@ import { Input } from '@/components/ui/input'
 import { cn } from '@/lib/utils'
 import { useTranslations } from 'next-intl'
 
-/** Decorative overlapping plant leaves, echoing the mockup's hero art. */
-function LeafDecoration() {
-  return (
-    <svg
-      aria-hidden
-      viewBox="0 0 220 260"
-      className="pointer-events-none absolute -end-6 -top-10 h-64 w-56 opacity-90"
-    >
-      <g className="animate-float" style={{ transformOrigin: '60% 40%' }}>
-        <path
-          d="M120 240C120 160 150 70 215 25C205 110 195 200 145 245C137 252 126 250 120 240Z"
-          fill="oklch(0.55 0.09 158)"
-          opacity="0.7"
-        />
-        <path
-          d="M118 244C95 170 60 110 5 95C45 165 70 215 105 248C110 253 117 251 118 244Z"
-          fill="oklch(0.45 0.07 162)"
-          opacity="0.85"
-        />
-        <path
-          d="M122 246C128 150 165 80 200 60C185 140 170 210 138 250C132 257 122 255 122 246Z"
-          fill="oklch(0.62 0.1 150)"
-          opacity="0.55"
-        />
-        <path
-          d="M120 250C118 175 105 110 70 70C95 150 100 205 112 252C114 258 120 257 120 250Z"
-          fill="oklch(0.5 0.08 160)"
-          opacity="0.6"
-        />
-      </g>
-      <circle cx="196" cy="44" r="7" fill="var(--brand-yellow)" opacity="0.9" />
-      <circle cx="32" cy="120" r="4" fill="var(--brand-yellow)" opacity="0.7" />
-    </svg>
-  )
-}
-
 interface AuthShellProps {
   title: React.ReactNode
   subtitle?: React.ReactNode
@@ -71,8 +35,7 @@ export function AuthShell({
   }
 
   return (
-    <div className="relative w-full max-w-md animate-scale-in overflow-hidden rounded-[2.5rem] bg-hero-green p-7 pt-9 text-white shadow-soft-lg">
-      <LeafDecoration />
+    <div className="w-full max-w-md animate-scale-in p-7 pt-9 text-white">
       <div className="relative z-10">
         <div className="mb-10 flex items-center gap-2.5">
           <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/10 backdrop-blur">

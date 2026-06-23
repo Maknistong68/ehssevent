@@ -3,16 +3,14 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import Image from 'next/image'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { CaCard } from '@/components/corrective-actions/ca-card'
 import { EventResponseTimeline } from './event-response-timeline'
 import { EventResponseForm } from './event-response-form'
-import { Plus, Timer, Pencil } from 'lucide-react'
-import { toSecurePhotoUrl } from '@/lib/utils/photo-url'
-import { DeadlineBadge } from './deadline-badge'
+import { Plus, Pencil } from 'lucide-react'
+import { PhotoGrid } from '@/components/shared/photo-lightbox'
 import {
   Select,
   SelectContent,
@@ -234,11 +232,8 @@ export function EventDetail({
       <Card>
         <CardContent className="grid grid-cols-1 gap-4 p-4 sm:grid-cols-2">
           <Field label="Site" value={event.site} />
-          <Field label="Contractor" value={event.contractor} />
           <Field label="Specific Area" value={event.specific_area} />
           <Field label="Project" value={event.project?.name} />
-          <Field label="Latitude" value={event.latitude?.toString()} />
-          <Field label="Longitude" value={event.longitude?.toString()} />
           <Field label="Event Date" value={fmt(event.event_date)} />
           <Field label="Reported Date" value={fmt(event.reported_date)} />
         </CardContent>
@@ -287,21 +282,7 @@ export function EventDetail({
         <Card>
           <CardContent className="space-y-3 p-4">
             <Label className="text-sm font-semibold">Attachments</Label>
-            <div className="flex flex-wrap gap-3">
-              {event.photo_urls.map((url, i) => (
-                <div
-                  key={i}
-                  className="relative h-24 w-24 overflow-hidden rounded-md border"
-                >
-                  <Image
-                    src={toSecurePhotoUrl(url)}
-                    alt={`Attachment ${i + 1}`}
-                    fill
-                    className="object-cover"
-                  />
-                </div>
-              ))}
-            </div>
+            <PhotoGrid photos={event.photo_urls} />
           </CardContent>
         </Card>
       )}
@@ -371,60 +352,6 @@ export function EventDetail({
         </Card>
       )}
 
-      {/* GOSI Reporting Deadlines */}
-      {(event.reporting_deadline_24h || event.reporting_deadline_3day) && (
-        <Card>
-          <CardContent className="space-y-4 p-4">
-            <div className="flex items-center gap-2">
-              <Timer className="h-4 w-4 text-muted-foreground" />
-              <h3 className="font-heading text-sm font-semibold tracking-tight">
-                GOSI Reporting Deadlines
-              </h3>
-            </div>
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              {event.reporting_deadline_24h && (
-                <div className="space-y-1">
-                  <p className="text-xs font-medium text-muted-foreground">
-                    24-Hour Deadline (Labor Law)
-                  </p>
-                  <p className="text-sm">{fmt(event.reporting_deadline_24h)}</p>
-                  {event.deadline_24h_met ? (
-                    <p className="text-xs text-green-600">
-                      Met{' '}
-                      {event.deadline_24h_met_at
-                        ? fmt(event.deadline_24h_met_at)
-                        : ''}
-                    </p>
-                  ) : (
-                    <DeadlineBadge event={event} />
-                  )}
-                </div>
-              )}
-              {event.reporting_deadline_3day && (
-                <div className="space-y-1">
-                  <p className="text-xs font-medium text-muted-foreground">
-                    3-Day Deadline (GOSI)
-                  </p>
-                  <p className="text-sm">
-                    {fmt(event.reporting_deadline_3day)}
-                  </p>
-                  {event.deadline_3day_met ? (
-                    <p className="text-xs text-green-600">
-                      Met{' '}
-                      {event.deadline_3day_met_at
-                        ? fmt(event.deadline_3day_met_at)
-                        : ''}
-                    </p>
-                  ) : (
-                    <p className="text-xs text-muted-foreground">Pending</p>
-                  )}
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
       {/* Corrective Actions */}
       <Card>
         <CardContent className="space-y-4 p-4">
@@ -479,21 +406,7 @@ export function EventDetail({
             </div>
 
             {event.closeout_photo_urls.length > 0 ? (
-              <div className="flex flex-wrap gap-3">
-                {event.closeout_photo_urls.map((url, i) => (
-                  <div
-                    key={i}
-                    className="relative h-24 w-24 overflow-hidden rounded-md border"
-                  >
-                    <Image
-                      src={toSecurePhotoUrl(url)}
-                      alt={`Closeout photo ${i + 1}`}
-                      fill
-                      className="object-cover"
-                    />
-                  </div>
-                ))}
-              </div>
+              <PhotoGrid photos={event.closeout_photo_urls} />
             ) : (
               <p className="text-sm text-muted-foreground">
                 No closeout photos were attached.

@@ -18,8 +18,7 @@ import type {
   TemplateSection,
   CorrectiveAction,
 } from '@/types/database'
-import Image from 'next/image'
-import { toSecurePhotoUrl } from '@/lib/utils/photo-url'
+import { PhotoGrid } from '@/components/shared/photo-lightbox'
 
 interface InspectionDetailProps {
   inspection: Inspection
@@ -44,23 +43,7 @@ function getValueDisplay(
     if (!response.photo_urls || response.photo_urls.length === 0) {
       return <span className="text-muted-foreground text-sm">No photos</span>
     }
-    return (
-      <div className="flex flex-wrap gap-2">
-        {response.photo_urls.map((url, i) => (
-          <div
-            key={i}
-            className="relative h-20 w-20 rounded-md overflow-hidden border"
-          >
-            <Image
-              src={toSecurePhotoUrl(url)}
-              alt={`Photo ${i + 1}`}
-              fill
-              className="object-cover"
-            />
-          </div>
-        ))}
-      </div>
-    )
+    return <PhotoGrid photos={response.photo_urls} thumbClassName="h-20 w-20" />
   }
 
   if (!response.value) {

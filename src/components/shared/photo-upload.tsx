@@ -6,6 +6,11 @@ import { Camera, X, Loader2 } from 'lucide-react'
 import { toSecurePhotoUrl } from '@/lib/utils/photo-url'
 import { uploadToStorage } from '@/lib/storage'
 import Image from 'next/image'
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+} from '@/components/ui/dialog'
 
 const ALLOWED_TYPES = [
   'image/jpeg',
@@ -31,6 +36,7 @@ export function PhotoUpload({
 }: PhotoUploadProps) {
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState('')
+  const [previewIndex, setPreviewIndex] = useState<number | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -83,12 +89,18 @@ export function PhotoUpload({
             key={i}
             className="relative h-20 w-20 rounded-md overflow-hidden border"
           >
-            <Image
-              src={toSecurePhotoUrl(url)}
-              alt={`Photo ${i + 1}`}
-              fill
-              className="object-cover"
-            />
+            <button
+              type="button"
+              onClick={() => setPreviewIndex(i)}
+              className="absolute inset-0 transition-opacity hover:opacity-90"
+            >
+              <Image
+                src={toSecurePhotoUrl(url)}
+                alt={`Photo ${i + 1}`}
+                fill
+                className="object-cover"
+              />
+            </button>
             <button
               type="button"
               onClick={() => removePhoto(i)}
@@ -99,6 +111,27 @@ export function PhotoUpload({
           </div>
         ))}
       </div>
+
+      <Dialog
+        open={previewIndex !== null}
+        onOpenChange={(open) => !open && setPreviewIndex(null)}
+      >
+        <DialogContent className="max-w-3xl sm:max-w-3xl">
+          <DialogTitle className="sr-only">
+            {previewIndex !== null ? `Photo ${previewIndex + 1}` : 'Photo'}
+          </DialogTitle>
+          {previewIndex !== null && (
+            <div className="relative mx-auto h-[70vh] w-full">
+              <Image
+                src={toSecurePhotoUrl(photos[previewIndex])}
+                alt={`Photo ${previewIndex + 1}`}
+                fill
+                className="object-contain"
+              />
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
 
       {error && <p className="text-xs text-destructive">{error}</p>}
 

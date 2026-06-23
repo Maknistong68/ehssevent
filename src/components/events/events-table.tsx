@@ -10,7 +10,6 @@ import {
 } from '@/components/ui/table'
 import { SortHeader } from '@/components/shared/sort-header'
 import { ApprovalBadge } from './approval-badge'
-import { DeadlineBadge } from './deadline-badge'
 import { EVENT_TYPE_LABELS, EVENT_CLASSIFICATION_LABELS } from '@/types/enums'
 import type { Event } from '@/types/database'
 
@@ -23,11 +22,9 @@ export function EventsTable({ events }: { events: Event[] }) {
           <TableHead>Type</TableHead>
           <TableHead>Description</TableHead>
           <TableHead>Classification</TableHead>
-          <TableHead>Contractor</TableHead>
           <TableHead>Area</TableHead>
           <SortHeader sortKey="date">Date</SortHeader>
           <SortHeader sortKey="approval">Approval</SortHeader>
-          <TableHead>Deadline</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -55,9 +52,6 @@ export function EventsTable({ events }: { events: Event[] }) {
                 {EVENT_CLASSIFICATION_LABELS[event.classification]}
               </TableCell>
               <TableCell className="whitespace-nowrap text-muted-foreground">
-                {event.contractor || '—'}
-              </TableCell>
-              <TableCell className="whitespace-nowrap text-muted-foreground">
                 {event.specific_area || '—'}
               </TableCell>
               <TableCell className="whitespace-nowrap text-muted-foreground">
@@ -67,9 +61,6 @@ export function EventsTable({ events }: { events: Event[] }) {
               </TableCell>
               <TableCell>
                 <ApprovalBadge level={event.approval_level} />
-              </TableCell>
-              <TableCell>
-                <DeadlineBadge event={event} />
               </TableCell>
             </TableRow>
           )

@@ -4,7 +4,6 @@ import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft } from 'lucide-react'
 import { getEventById } from '@/lib/queries/events'
-import { getProjects } from '@/lib/queries/projects'
 import { getAssignableUsers } from '@/lib/queries/users'
 import { EditEventForm } from '@/components/events/edit-event-form'
 import { Button } from '@/components/ui/button'
@@ -31,10 +30,7 @@ export default async function EditEventPage({ params }: Props) {
     redirect(`/events/${id}`)
   }
 
-  const [projects, users] = await Promise.all([
-    getProjects(),
-    getAssignableUsers(),
-  ])
+  const users = await getAssignableUsers()
 
   return (
     <div className="mx-auto max-w-3xl space-y-4 p-4 md:p-6">
@@ -47,7 +43,7 @@ export default async function EditEventPage({ params }: Props) {
       <h1 className="font-heading text-2xl font-bold tracking-tight">
         Edit {event.reference_number}
       </h1>
-      <EditEventForm event={event} projects={projects} users={users} />
+      <EditEventForm event={event} users={users} />
     </div>
   )
 }

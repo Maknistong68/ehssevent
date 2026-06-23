@@ -1,11 +1,10 @@
 import Link from 'next/link'
 import { Card, CardContent } from '@/components/ui/card'
 import { ApprovalBadge } from './approval-badge'
-import { MapPin, Building2, CalendarDays } from 'lucide-react'
+import { MapPin, CalendarDays } from 'lucide-react'
 import { format } from 'date-fns'
 import { EVENT_TYPE_LABELS, EVENT_CLASSIFICATION_LABELS } from '@/types/enums'
 import type { Event } from '@/types/database'
-import { DeadlineBadge } from './deadline-badge'
 
 export function EventCard({ event }: { event: Event }) {
   const title =
@@ -35,12 +34,6 @@ export function EventCard({ event }: { event: Event }) {
             <span className="inline-flex items-center rounded-full bg-muted px-2 py-0.5 font-medium">
               {EVENT_CLASSIFICATION_LABELS[event.classification]}
             </span>
-            {event.contractor && (
-              <span className="flex items-center gap-1.5">
-                <Building2 className="h-3.5 w-3.5" />
-                {event.contractor}
-              </span>
-            )}
             {event.specific_area && (
               <span className="flex items-center gap-1.5">
                 <MapPin className="h-3.5 w-3.5" />
@@ -53,7 +46,6 @@ export function EventCard({ event }: { event: Event }) {
                 {format(new Date(event.event_date), 'dd MMM yyyy')}
               </span>
             )}
-            <DeadlineBadge event={event} />
           </div>
         </CardContent>
       </Card>
