@@ -493,7 +493,9 @@ function makeInspection(s: InspSeed): Inspection {
     completed_at: s.st === 'completed' ? s.completed : null,
     created_at: s.created,
     updated_at: s.st === 'completed' ? s.completed ?? s.created : s.created,
-    template: { id: s.tpl, name: s.tplName } as InspectionTemplate,
+    template:
+      MOCK_INSPECTION_TEMPLATES.find((t) => t.id === s.tpl) ??
+      ({ id: s.tpl, name: s.tplName } as InspectionTemplate),
     project: projectById(PRJ(s.prj)),
     conductor,
   }
