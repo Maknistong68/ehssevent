@@ -41,14 +41,11 @@ interface CreateEventFormProps {
 // Classifications offered in the dropdown for the variable types.
 const CLASSIFICATION_OPTIONS: Array<keyof typeof EVENT_CLASSIFICATION_LABELS> =
   [
-    'safety',
-    'fire',
-    'environment',
-    'welfare',
+    'incident',
     'unsafe_act',
     'unsafe_condition',
     'non_conformance',
-    'to_be_determined',
+    'leadership_event',
   ]
 
 const WITH_RESPONSE: EventType[] = [
@@ -118,6 +115,9 @@ export function CreateEventForm({ users }: CreateEventFormProps) {
   // Field visibility derived from the selected type.
   const isIncident = type === 'incident'
   const isLeadership = type === 'leadership_event'
+  // Impact checkboxes are driven by the Classification selection: choosing
+  // "Incident" reveals the same impact checkboxes as before.
+  const showImpact = classification === 'incident'
   const showClassification = WITH_RESPONSE.includes(type)
   const showSignificantHazard = WITH_RESPONSE.includes(type)
   const showWorkRepeat = WITH_RESPONSE.includes(type)
@@ -136,12 +136,12 @@ export function CreateEventForm({ users }: CreateEventFormProps) {
         showSignificantHazard && significantHazard
           ? significantHazard
           : undefined,
-      impacted_party: isIncident && impactedParty ? impactedParty : undefined,
-      was_fire: isIncident ? wasFire : false,
-      was_injury: isIncident ? wasInjury : false,
-      was_environment_impacted: isIncident ? wasEnvironment : false,
-      was_security: isIncident ? wasSecurity : false,
-      impact_other: isIncident ? impactOther || undefined : undefined,
+      impacted_party: showImpact && impactedParty ? impactedParty : undefined,
+      was_fire: showImpact ? wasFire : false,
+      was_injury: showImpact ? wasInjury : false,
+      was_environment_impacted: showImpact ? wasEnvironment : false,
+      was_security: showImpact ? wasSecurity : false,
+      impact_other: showImpact ? impactOther || undefined : undefined,
       work_related: showWorkRepeat ? workRelated : true,
       repeat_incident: showWorkRepeat ? repeatIncident : false,
       stop_work: showResponse ? stopWork : false,
@@ -364,8 +364,8 @@ export function CreateEventForm({ users }: CreateEventFormProps) {
         </CardContent>
       </Card>
 
-      {/* Impact (incident only) */}
-      {isIncident && (
+      {/* Impact (shown when Classification = Incident) */}
+      {showImpact && (
         <Card>
           <CardContent className="p-4 space-y-4">
             <h3 className="font-heading text-sm font-semibold tracking-tight">

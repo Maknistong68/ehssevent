@@ -34,6 +34,8 @@ export const createEventSchema = z.object({
   ]),
   classification: z
     .enum([
+      'incident',
+      'leadership_event',
       'safety',
       'fire',
       'environment',

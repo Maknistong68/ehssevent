@@ -119,6 +119,8 @@ export type EventType =
   | 'leadership_event'
 
 export type EventClassification =
+  | 'incident'
+  | 'leadership_event'
   | 'safety'
   | 'fire'
   | 'environment'
@@ -215,6 +217,8 @@ export const EVENT_TYPE_LABELS: Record<EventType, string> = {
 
 export const EVENT_CLASSIFICATION_LABELS: Record<EventClassification, string> =
   {
+    incident: 'Incident',
+    leadership_event: 'Leadership Event',
     safety: 'Safety',
     fire: 'Fire',
     environment: 'Environment',
