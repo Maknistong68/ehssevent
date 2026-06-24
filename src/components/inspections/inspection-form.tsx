@@ -15,13 +15,16 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { PhotoUpload } from '@/components/shared/photo-upload'
-import { AlertCircle, ArrowLeft, ArrowRight, Loader2 } from 'lucide-react'
+import { DatePicker } from '@/components/ui/date-picker'
+import { AlertCircle, ArrowLeft, ArrowRight, Loader2, Plus } from 'lucide-react'
 import { submitInspection } from '@/lib/actions/inspections'
 import type { InspectionTemplate, Project } from '@/types/database'
 import {
   COMPLIANCE_LABELS,
   COMPLIANCE_COLORS,
+  CA_PRIORITY_LABELS,
   type ComplianceValue,
+  type CorrectiveActionPriority,
 } from '@/types/enums'
 import type { AssignableUser } from '@/lib/queries/users'
 import Link from 'next/link'
@@ -38,8 +41,6 @@ interface ItemResponse {
   value: string | null
   photo_urls: string[]
   comment: string | null
-  observation: string | null
-  action_plan: string | null
 }
 
 interface ResponseState {
@@ -50,8 +51,6 @@ const EMPTY_RESPONSE: ItemResponse = {
   value: null,
   photo_urls: [],
   comment: null,
-  observation: null,
-  action_plan: null,
 }
 
 interface NonCompliantItem {
@@ -59,9 +58,12 @@ interface NonCompliantItem {
   section_title: string
   item_id: string
   item_label: string
-  compliance_value: ComplianceValue
+  compliance_value: ComplianceValue | null
   ca_title: string
+  ca_description: string
   assigned_to: string
+  ca_priority: CorrectiveActionPriority
+  ca_due_date: string
 }
 
 type FormStep = 'checklist' | 'assign_ca'
@@ -84,6 +86,7 @@ export function InspectionForm({
   const [notes, setNotes] = useState('')
   const [responses, setResponses] = useState<ResponseState>({})
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set())
+  const [caRequested, setCaRequested] = useState<Set<string>>(new Set())
   const [nonCompliantItems, setNonCompliantItems] = useState<
     NonCompliantItem[]
   >([])
@@ -127,10 +130,19 @@ export function InspectionForm({
     patchResponse(sectionId, itemId, { value })
     // Auto-expand detail for non/partially-compliant items
     if (value === 'non_compliant' || value === 'partially_compliant') {
-      setExpandedItems((prev) =>
-        new Set(prev).add(getResponseKey(sectionId, itemId))
-      )
+      const key = getResponseKey(sectionId, itemId)
+      setExpandedItems((prev) => new Set(prev).add(key))
     }
+  }
+
+  const toggleCaRequested = (sectionId: string, itemId: string) => {
+    const key = getResponseKey(sectionId, itemId)
+    setCaRequested((prev) => {
+      const next = new Set(prev)
+      if (next.has(key)) next.delete(key)
+      else next.add(key)
+      return next
+    })
   }
 
   const setResponsePhotos = (
@@ -161,8 +173,6 @@ export function InspectionForm({
           field_type: item.field_type,
           value: resp.value,
           comment: resp.comment,
-          observation: resp.observation,
-          action_plan: resp.action_plan,
           photo_urls: resp.photo_urls,
         }
       })
@@ -214,26 +224,34 @@ export function InspectionForm({
 
     setMissingItemKeys(new Set())
 
-    // Scan for non-compliant items
+    // Scan for items that need a corrective action: any non/partially-compliant
+    // item, plus any item the inspector flagged for a corrective action.
     const failingItems: NonCompliantItem[] = []
     for (const section of template.sections) {
       for (const item of section.items) {
-        if (item.field_type === 'compliance') {
-          const resp = getResponse(section.id, item.id)
-          if (
-            resp.value === 'non_compliant' ||
-            resp.value === 'partially_compliant'
-          ) {
-            failingItems.push({
-              section_id: section.id,
-              section_title: section.title,
-              item_id: item.id,
-              item_label: item.label,
-              compliance_value: resp.value as ComplianceValue,
-              ca_title: `Corrective action: ${item.label}`,
-              assigned_to: '',
-            })
-          }
+        const key = getResponseKey(section.id, item.id)
+        const resp = getResponse(section.id, item.id)
+        const isRequested = caRequested.has(key)
+        const isNonCompliant =
+          item.field_type === 'compliance' &&
+          (resp.value === 'non_compliant' ||
+            resp.value === 'partially_compliant')
+
+        if (isNonCompliant || isRequested) {
+          failingItems.push({
+            section_id: section.id,
+            section_title: section.title,
+            item_id: item.id,
+            item_label: item.label,
+            compliance_value: isNonCompliant
+              ? (resp.value as ComplianceValue)
+              : null,
+            ca_title: `Corrective action: ${item.label}`,
+            ca_description: '',
+            assigned_to: '',
+            ca_priority: 'medium',
+            ca_due_date: '',
+          })
         }
       }
     }
@@ -281,7 +299,10 @@ export function InspectionForm({
             item_id: item.item_id,
             item_label: item.item_label,
             title: item.ca_title,
+            description: item.ca_description || undefined,
             assigned_to: item.assigned_to,
+            priority: item.ca_priority,
+            due_date: item.ca_due_date || undefined,
           }))
         : undefined
 
@@ -348,12 +369,14 @@ export function InspectionForm({
                         {item.section_title}
                       </p>
                     </div>
-                    <Badge
-                      variant="secondary"
-                      className={COMPLIANCE_COLORS[item.compliance_value]}
-                    >
-                      {COMPLIANCE_LABELS[item.compliance_value]}
-                    </Badge>
+                    {item.compliance_value && (
+                      <Badge
+                        variant="secondary"
+                        className={COMPLIANCE_COLORS[item.compliance_value]}
+                      >
+                        {COMPLIANCE_LABELS[item.compliance_value]}
+                      </Badge>
+                    )}
                   </div>
                   <div className="space-y-2">
                     <Label className="text-xs">CA Title</Label>
@@ -364,6 +387,18 @@ export function InspectionForm({
                       }
                       placeholder="Corrective action title"
                       className="h-8 text-sm"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-xs">Description</Label>
+                    <Textarea
+                      value={item.ca_description}
+                      onChange={(e) =>
+                        updateCaItem(index, 'ca_description', e.target.value)
+                      }
+                      placeholder="Describe the corrective action to be taken..."
+                      rows={2}
+                      className="text-sm"
                     />
                   </div>
                   <div className="space-y-2">
@@ -385,6 +420,41 @@ export function InspectionForm({
                         ))}
                       </SelectContent>
                     </Select>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-2">
+                      <Label className="text-xs">Priority</Label>
+                      <Select
+                        value={item.ca_priority}
+                        onValueChange={(v) =>
+                          updateCaItem(index, 'ca_priority', v ?? 'medium')
+                        }
+                      >
+                        <SelectTrigger className="h-8 text-sm">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {(
+                            Object.keys(
+                              CA_PRIORITY_LABELS
+                            ) as CorrectiveActionPriority[]
+                          ).map((p) => (
+                            <SelectItem key={p} value={p}>
+                              {CA_PRIORITY_LABELS[p]}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-xs">Due Date</Label>
+                      <DatePicker
+                        value={item.ca_due_date}
+                        onChange={(v) => updateCaItem(index, 'ca_due_date', v)}
+                        placeholder="Select due date"
+                        disablePast
+                      />
+                    </div>
                   </div>
                 </div>
               ))}
@@ -641,13 +711,11 @@ export function InspectionForm({
                       onClick={() => toggleExpanded(section.id, item.id)}
                       className="self-start text-xs text-muted-foreground hover:text-foreground"
                     >
-                      {isExpanded
-                        ? 'Hide detail'
-                        : 'Add comment / observation / action'}
+                      {isExpanded ? 'Hide detail' : 'Add comment'}
                     </button>
 
                     {isExpanded && (
-                      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                      <div className="space-y-3">
                         <div className="space-y-1">
                           <Label className="text-xs text-muted-foreground">
                             Comment
@@ -663,36 +731,39 @@ export function InspectionForm({
                             rows={2}
                           />
                         </div>
-                        <div className="space-y-1">
-                          <Label className="text-xs text-muted-foreground">
-                            Observation
-                          </Label>
-                          <Textarea
-                            value={resp.observation ?? ''}
-                            onChange={(e) =>
-                              patchResponse(section.id, item.id, {
-                                observation: e.target.value || null,
-                              })
+
+                        {caRequested.has(itemKey) ? (
+                          <div className="flex items-center justify-between gap-2 rounded-md border border-dashed bg-muted/40 px-3 py-2">
+                            <p className="text-xs text-muted-foreground">
+                              Corrective action added — set details on the next
+                              step
+                            </p>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              className="h-7 text-xs"
+                              onClick={() =>
+                                toggleCaRequested(section.id, item.id)
+                              }
+                            >
+                              Remove
+                            </Button>
+                          </div>
+                        ) : (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            className="h-8 text-xs"
+                            onClick={() =>
+                              toggleCaRequested(section.id, item.id)
                             }
-                            placeholder="Observation"
-                            rows={2}
-                          />
-                        </div>
-                        <div className="space-y-1">
-                          <Label className="text-xs text-muted-foreground">
-                            Action Plan
-                          </Label>
-                          <Textarea
-                            value={resp.action_plan ?? ''}
-                            onChange={(e) =>
-                              patchResponse(section.id, item.id, {
-                                action_plan: e.target.value || null,
-                              })
-                            }
-                            placeholder="Action Plan"
-                            rows={2}
-                          />
-                        </div>
+                          >
+                            <Plus className="mr-1 h-3.5 w-3.5" />
+                            Add Corrective Action
+                          </Button>
+                        )}
                       </div>
                     )}
                   </div>

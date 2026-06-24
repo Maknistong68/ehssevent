@@ -119,9 +119,8 @@ export type EventType =
   | 'leadership_event'
 
 export type EventClassification =
-  | 'incident'
-  | 'leadership_event'
   | 'safety'
+  | 'security'
   | 'fire'
   | 'environment'
   | 'welfare'
@@ -133,7 +132,6 @@ export type EventClassification =
   | 'emergency_drill'
   | 'safety_meeting'
   | 'contractor_performance_review'
-  | 'to_be_determined'
 
 export type EventSignificantHazard =
   | 'mobile_plant_equipment'
@@ -217,9 +215,8 @@ export const EVENT_TYPE_LABELS: Record<EventType, string> = {
 
 export const EVENT_CLASSIFICATION_LABELS: Record<EventClassification, string> =
   {
-    incident: 'Incident',
-    leadership_event: 'Leadership Event',
     safety: 'Safety',
+    security: 'Security',
     fire: 'Fire',
     environment: 'Environment',
     welfare: 'Welfare',
@@ -231,7 +228,6 @@ export const EVENT_CLASSIFICATION_LABELS: Record<EventClassification, string> =
     emergency_drill: 'Emergency Drill',
     safety_meeting: 'Safety Meeting (led by Exec Leader)',
     contractor_performance_review: 'Contractor Performance Review',
-    to_be_determined: 'To Be Determined',
   }
 
 export const EVENT_HAZARD_LABELS: Record<EventSignificantHazard, string> = {

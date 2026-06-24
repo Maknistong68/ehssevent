@@ -7,10 +7,8 @@ import { defaultNotificationPreferences } from '@/lib/queries/settings'
 import { logAudit } from '@/lib/actions/audit'
 import {
   notificationPreferencesSchema,
-  changePasswordSchema,
   updateOrganizationSchema,
   type NotificationPreferencesInput,
-  type ChangePasswordInput,
   type UpdateOrganizationInput,
 } from '@/lib/validators/settings'
 
@@ -51,54 +49,6 @@ export async function updateNotificationPreferences(
   })
 
   revalidatePath('/settings')
-  return { success: true }
-}
-
-/**
- * Change-password stub. Validates input shape only; no credential store exists
- * in mock mode.
- * TODO(prod): verify current_password and update the credential via the auth
- * provider (e.g. Supabase auth.updateUser), then audit the change.
- */
-export async function changePassword(
-  input: ChangePasswordInput
-): Promise<ActionResult> {
-  const auth = await requireUser()
-  if (!auth.ok) return { error: auth.error }
-
-  const parsed = changePasswordSchema.safeParse(input)
-  if (!parsed.success) {
-    return { error: parsed.error.issues[0].message }
-  }
-
-  // TODO(prod): real credential verification + update.
-  await logAudit({
-    action: 'update',
-    target_table: 'auth',
-    target_id: auth.profile.id,
-    target_label: 'Password changed',
-  })
-
-  return { success: true }
-}
-
-/**
- * MFA enable/disable stub. Records intent only.
- * TODO(prod): enroll/unenroll a TOTP factor with the auth provider and persist
- * the verified state.
- */
-export async function setMfaEnabled(enabled: boolean): Promise<ActionResult> {
-  const auth = await requireUser()
-  if (!auth.ok) return { error: auth.error }
-
-  // TODO(prod): real MFA enrollment/verification flow.
-  await logAudit({
-    action: 'update',
-    target_table: 'auth',
-    target_id: auth.profile.id,
-    target_label: enabled ? 'MFA enabled' : 'MFA disabled',
-  })
-
   return { success: true }
 }
 

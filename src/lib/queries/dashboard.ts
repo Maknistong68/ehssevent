@@ -57,12 +57,16 @@ export async function getInspectionStats(): Promise<InspectionStats> {
   return MOCK_INSPECTION_STATS
 }
 
-export async function getAllEvents(): Promise<Event[]> {
-  return MOCK_EVENTS
+export async function getMyEvents(): Promise<Event[]> {
+  const profile = await getSessionProfile()
+  if (!profile) return []
+  return MOCK_EVENTS.filter((e) => e.created_by === profile.id)
 }
 
-export async function getAllCorrectiveActions(): Promise<CorrectiveAction[]> {
-  return MOCK_CORRECTIVE_ACTIONS
+export async function getMyCorrectiveActions(): Promise<CorrectiveAction[]> {
+  const profile = await getSessionProfile()
+  if (!profile) return []
+  return MOCK_CORRECTIVE_ACTIONS.filter((ca) => ca.created_by === profile.id)
 }
 
 export async function getMyPendingCorrectiveActions(): Promise<

@@ -1,17 +1,23 @@
 import { z } from 'zod'
 
-export const createCorrectiveActionSchema = z.object({
-  title: z.string().min(3, 'Title must be at least 3 characters'),
-  description: z.string().optional(),
-  event_id: z.string().uuid().optional().or(z.literal('')),
-  inspection_id: z.string().uuid().optional().or(z.literal('')),
-  section_id: z.string().optional(),
-  item_id: z.string().optional(),
-  item_label: z.string().optional(),
-  assigned_to: z.string().uuid('Please select a responsible person'),
-  priority: z.enum(['low', 'medium', 'high', 'critical']).optional(),
-  due_date: z.string().optional(),
-})
+export const createCorrectiveActionSchema = z
+  .object({
+    title: z.string().min(3, 'Title must be at least 3 characters'),
+    description: z.string().optional(),
+    event_id: z.string().uuid().optional().or(z.literal('')),
+    inspection_id: z.string().uuid().optional().or(z.literal('')),
+    section_id: z.string().optional(),
+    item_id: z.string().optional(),
+    item_label: z.string().optional(),
+    assigned_to: z.string().uuid('Please select a responsible person'),
+    priority: z.enum(['low', 'medium', 'high', 'critical']).optional(),
+    due_date: z.string().optional(),
+  })
+  .refine((data) => !(data.event_id && data.inspection_id), {
+    message:
+      'A corrective action can link to either an event or an inspection, not both',
+    path: ['inspection_id'],
+  })
 
 export const updateCorrectiveActionStatusSchema = z.object({
   corrective_action_id: z.string().uuid(),

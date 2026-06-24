@@ -19,7 +19,7 @@ import {
 } from '@/components/ui/select'
 import { Card, CardContent } from '@/components/ui/card'
 import { PhotoUpload } from '@/components/shared/photo-upload'
-import { AlertCircle, ArrowLeft, Loader2 } from 'lucide-react'
+import { AlertCircle, ArrowLeft, Loader2, X } from 'lucide-react'
 import { updateEvent } from '@/lib/actions/events'
 import {
   EVENT_TYPE_LABELS,
@@ -28,7 +28,7 @@ import {
   EVENT_IMPACTED_PARTY_LABELS,
   type EventType,
 } from '@/types/enums'
-import { SITE_OPTIONS } from '@/lib/constants/events'
+import { SITE_OPTIONS, CLASSIFICATION_BY_TYPE } from '@/lib/constants/events'
 import type { Event } from '@/types/database'
 import type { AssignableUser } from '@/lib/queries/users'
 import { displayName } from '@/lib/utils/people'
@@ -41,15 +41,6 @@ interface EditEventFormProps {
   event: Event
   users: AssignableUser[]
 }
-
-const CLASSIFICATION_OPTIONS: Array<keyof typeof EVENT_CLASSIFICATION_LABELS> =
-  [
-    'incident',
-    'unsafe_act',
-    'unsafe_condition',
-    'non_conformance',
-    'leadership_event',
-  ]
 
 const WITH_RESPONSE: EventType[] = [
   'near_miss',
@@ -126,9 +117,8 @@ export function EditEventForm({ event, users }: EditEventFormProps) {
   const [leadershipMemberId, setLeadershipMemberId] = useState(
     event.leadership_member_id ?? ''
   )
-  const [attendeeIds, setAttendeeIds] = useState<string[]>(
-    event.attendee_ids ?? []
-  )
+  const [attendees, setAttendees] = useState<string[]>(event.attendees ?? [])
+  const [attendeeInput, setAttendeeInput] = useState('')
   const [impactOther, setImpactOther] = useState(event.impact_other ?? '')
 
   const [wasFire, setWasFire] = useState(event.was_fire)
@@ -141,14 +131,28 @@ export function EditEventForm({ event, users }: EditEventFormProps) {
   const [repeatIncident, setRepeatIncident] = useState(event.repeat_incident)
   const [stopWork, setStopWork] = useState(event.stop_work)
 
-  // Impact checkboxes are driven by the Classification selection: choosing
-  // "Incident" reveals the same impact checkboxes as before.
-  const showImpact = classification === 'incident'
+  // Classification is a sub-category of Type; an empty list means no field.
+  const classOptions = CLASSIFICATION_BY_TYPE[type]
+  // Impact checkboxes are shown for Incidents.
+  const showImpact = type === 'incident'
   const isLeadership = type === 'leadership_event'
-  const showClassification = WITH_RESPONSE.includes(type)
-  const showSignificantHazard = WITH_RESPONSE.includes(type)
+  const showClassification = classOptions.length > 0
+  // Significant Hazard is also captured for Positive Observations (analytics
+  // only) so positive findings can be tied back to the same hazard taxonomy.
+  const showSignificantHazard =
+    WITH_RESPONSE.includes(type) || type === 'positive_observation'
   const showWorkRepeat = WITH_RESPONSE.includes(type)
   const showResponse = WITH_RESPONSE.includes(type)
+
+  const addAttendee = () => {
+    const name = attendeeInput.trim()
+    if (!name || attendees.includes(name)) {
+      setAttendeeInput('')
+      return
+    }
+    setAttendees((prev) => [...prev, name])
+    setAttendeeInput('')
+  }
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -183,7 +187,7 @@ export function EditEventForm({ event, users }: EditEventFormProps) {
       leadership_member_id: isLeadership
         ? leadershipMemberId || undefined
         : undefined,
-      attendee_ids: isLeadership ? attendeeIds : [],
+      attendees: isLeadership ? attendees : [],
       site: site || undefined,
       specific_area: specificArea || undefined,
       event_date: eventDate
@@ -242,7 +246,7 @@ export function EditEventForm({ event, users }: EditEventFormProps) {
                   <SelectValue placeholder="Select classification" />
                 </SelectTrigger>
                 <SelectContent>
-                  {CLASSIFICATION_OPTIONS.map((v) => (
+                  {classOptions.map((v) => (
                     <SelectItem key={v} value={v}>
                       {EVENT_CLASSIFICATION_LABELS[v]}
                     </SelectItem>
@@ -425,35 +429,48 @@ export function EditEventForm({ event, users }: EditEventFormProps) {
               </Select>
             </div>
             <div className="space-y-2">
-              <Label>Attendees</Label>
-              <div className="space-y-2 rounded-xl border border-input bg-secondary/30 p-3">
-                {users.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">
-                    No active users available.
-                  </p>
-                ) : (
-                  users.map((u) => (
-                    <label
-                      key={u.id}
-                      htmlFor={`attendee-${u.id}`}
-                      className="flex cursor-pointer items-center gap-3 text-sm font-medium"
+              <Label htmlFor="attendee_input">Attendees</Label>
+              <div className="flex gap-2">
+                <Input
+                  id="attendee_input"
+                  value={attendeeInput}
+                  onChange={(e) => setAttendeeInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault()
+                      addAttendee()
+                    }
+                  }}
+                  placeholder="Type a name and press Add"
+                />
+                <Button type="button" variant="outline" onClick={addAttendee}>
+                  Add
+                </Button>
+              </div>
+              {attendees.length > 0 && (
+                <div className="flex flex-wrap gap-2 pt-1">
+                  {attendees.map((name) => (
+                    <span
+                      key={name}
+                      className="inline-flex items-center gap-1.5 rounded-full bg-secondary px-3 py-1 text-sm font-medium"
                     >
-                      <Checkbox
-                        id={`attendee-${u.id}`}
-                        checked={attendeeIds.includes(u.id)}
-                        onCheckedChange={(v) =>
-                          setAttendeeIds((prev) =>
-                            v
-                              ? [...prev, u.id]
-                              : prev.filter((id) => id !== u.id)
+                      {name}
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setAttendees((prev) =>
+                            prev.filter((a) => a !== name)
                           )
                         }
-                      />
-                      {displayName(u)}
-                    </label>
-                  ))
-                )}
-              </div>
+                        className="text-muted-foreground hover:text-foreground"
+                        aria-label={`Remove ${name}`}
+                      >
+                        <X className="h-3.5 w-3.5" />
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              )}
               <p className="text-xs text-muted-foreground">{PII_HINT}</p>
             </div>
           </CardContent>

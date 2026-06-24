@@ -78,11 +78,9 @@ export interface Notification {
 // Per-user notification delivery preferences (Settings → Notifications).
 export interface NotificationPreferences {
   user_id: string
-  email_enabled: boolean
   ca_assigned: boolean
   ca_status: boolean
   event_stage: boolean
-  deadlines: boolean
 }
 
 export interface Project {
@@ -117,7 +115,7 @@ export interface Event {
   was_environment_impacted: boolean
   was_security: boolean
   impact_other: string | null
-  classification: EventClassification
+  classification: EventClassification | null
   site: string | null
   contractor: string | null
   specific_area: string | null
@@ -128,7 +126,7 @@ export interface Event {
   work_related: boolean
   impacted_party: EventImpactedParty | null
   leadership_member_id: string | null
-  attendee_ids: string[]
+  attendees: string[]
   notify_attendees_by_email: boolean
   event_description: string | null
   conditions: string | null
@@ -281,8 +279,6 @@ export interface InspectionResponse {
   field_type: InspectionFieldType
   value: string | null
   comment?: string | null
-  observation?: string | null
-  action_plan?: string | null
   photo_urls: string[]
   created_at: string
 }

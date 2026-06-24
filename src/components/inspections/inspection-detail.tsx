@@ -166,10 +166,7 @@ export function InspectionDetail({
                 `&section_id=${encodeURIComponent(section.id)}` +
                 `&item_id=${encodeURIComponent(item.id)}` +
                 `&item_label=${encodeURIComponent(item.label)}`
-              const hasExtra =
-                response?.comment ||
-                response?.observation ||
-                response?.action_plan
+              const hasExtra = response?.comment
               return (
                 <div
                   key={item.id}
@@ -203,37 +200,15 @@ export function InspectionDetail({
                     </div>
                   </div>
                   {hasExtra && (
-                    <div className="grid grid-cols-1 gap-3 border-t border-border/60 pt-3 sm:grid-cols-3">
-                      {response?.comment && (
-                        <div className="space-y-0.5">
-                          <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-                            Comment
-                          </p>
-                          <p className="text-sm whitespace-pre-wrap break-words">
-                            {response.comment}
-                          </p>
-                        </div>
-                      )}
-                      {response?.observation && (
-                        <div className="space-y-0.5">
-                          <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-                            Observation
-                          </p>
-                          <p className="text-sm whitespace-pre-wrap break-words">
-                            {response.observation}
-                          </p>
-                        </div>
-                      )}
-                      {response?.action_plan && (
-                        <div className="space-y-0.5">
-                          <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-                            Action Plan
-                          </p>
-                          <p className="text-sm whitespace-pre-wrap break-words">
-                            {response.action_plan}
-                          </p>
-                        </div>
-                      )}
+                    <div className="border-t border-border/60 pt-3">
+                      <div className="space-y-0.5">
+                        <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                          Comment
+                        </p>
+                        <p className="text-sm whitespace-pre-wrap break-words">
+                          {response?.comment}
+                        </p>
+                      </div>
                     </div>
                   )}
                   {isFailing && linkedCa && (

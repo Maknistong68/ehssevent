@@ -1,3 +1,5 @@
+import type { EventType, EventClassification } from '@/types/enums'
+
 // Picklists and export configuration for the event reporting module.
 // Site and contractor values are synthetic demo placeholders. (The original
 // production picklists mirrored an upstream import template one-to-one; that
@@ -21,6 +23,21 @@ export const SITE_CONTRACTOR_MAP: Record<string, string> = {
 }
 
 export const SITE_OPTIONS: string[] = Object.keys(SITE_CONTRACTOR_MAP)
+
+// Classification is a sub-category of the selected Type. A Type value never
+// re-appears as a Classification — single source of truth for both event forms.
+export const CLASSIFICATION_BY_TYPE: Record<EventType, EventClassification[]> = {
+  incident: ['fire', 'environment', 'welfare', 'security', 'safety'],
+  near_miss: [],
+  hazard_identification: ['unsafe_act', 'unsafe_condition', 'non_conformance'],
+  positive_observation: ['positive_observation'],
+  leadership_event: [
+    'leadership_site_visit',
+    'emergency_drill',
+    'safety_meeting',
+    'contractor_performance_review',
+  ],
+}
 
 // Resolve the contractor responsible for a given site, or null when the site is
 // empty or unrecognized.

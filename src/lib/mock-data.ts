@@ -264,7 +264,7 @@ function makeEvent(s: EventSeed): Event {
     work_related: true,
     impacted_party: s.party ?? null,
     leadership_member_id: s.lead ? U(s.lead) : null,
-    attendee_ids: s.att ? s.att.map(U) : [],
+    attendees: s.att ? s.att.map((i) => profileById(U(i)).full_name ?? '') : [],
     notify_attendees_by_email: !!s.att,
     event_description: s.desc,
     conditions: s.cond,

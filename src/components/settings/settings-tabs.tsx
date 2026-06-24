@@ -19,11 +19,8 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import { Can } from '@/components/shared/role-gate'
-import { updateProfile } from '@/lib/actions/profile'
 import {
   updateNotificationPreferences,
-  changePassword,
-  setMfaEnabled,
   updateOrganization,
 } from '@/lib/actions/settings'
 import type {
@@ -56,7 +53,6 @@ export function SettingsTabs({
     <Tabs defaultValue="profile">
       <TabsList>
         <TabsTrigger value="profile">Profile</TabsTrigger>
-        <TabsTrigger value="security">Security</TabsTrigger>
         <TabsTrigger value="notifications">Notifications</TabsTrigger>
         <Can permission="org:manage">
           <TabsTrigger value="organization">Organization</TabsTrigger>
@@ -65,10 +61,6 @@ export function SettingsTabs({
 
       <TabsContent value="profile" className="mt-4">
         <ProfilePanel profile={profile} />
-      </TabsContent>
-
-      <TabsContent value="security" className="mt-4">
-        <SecurityPanel />
       </TabsContent>
 
       <TabsContent value="notifications" className="mt-4">
@@ -87,22 +79,6 @@ export function SettingsTabs({
 // ---------------------------------------------------------------------------
 
 function ProfilePanel({ profile }: { profile: Profile }) {
-  const router = useRouter()
-  const [name, setName] = useState(profile.full_name ?? '')
-  const [pending, startTransition] = useTransition()
-
-  const save = () => {
-    startTransition(async () => {
-      const result = await updateProfile({ full_name: name })
-      if (result.error) {
-        toast.error(result.error)
-      } else {
-        toast.success('Profile updated')
-        router.refresh()
-      }
-    })
-  }
-
   return (
     <Card>
       <CardHeader>
@@ -114,9 +90,9 @@ function ProfilePanel({ profile }: { profile: Profile }) {
           <Label htmlFor="full_name">Full name</Label>
           <Input
             id="full_name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="Full name"
+            value={profile.full_name ?? ''}
+            disabled
+            readOnly
           />
         </div>
 
@@ -133,129 +109,8 @@ function ProfilePanel({ profile }: { profile: Profile }) {
             </Badge>
           </div>
         </div>
-
-        <Button onClick={save} disabled={pending || !name.trim()}>
-          {pending && <Loader2 className="mr-1 h-3 w-3 animate-spin" />}
-          Save changes
-        </Button>
       </CardContent>
     </Card>
-  )
-}
-
-// ---------------------------------------------------------------------------
-
-function SecurityPanel() {
-  const [current, setCurrent] = useState('')
-  const [next, setNext] = useState('')
-  const [confirm, setConfirm] = useState('')
-  const [mfaEnabled, setMfa] = useState(false)
-  const [pending, startTransition] = useTransition()
-
-  const submit = () => {
-    startTransition(async () => {
-      const result = await changePassword({
-        current_password: current,
-        new_password: next,
-        confirm_password: confirm,
-      })
-      if (result.error) {
-        toast.error(result.error)
-      } else {
-        toast.success('Password changed')
-        setCurrent('')
-        setNext('')
-        setConfirm('')
-      }
-    })
-  }
-
-  const toggleMfa = (checked: boolean) => {
-    setMfa(checked)
-    startTransition(async () => {
-      const result = await setMfaEnabled(checked)
-      if (result.error) {
-        setMfa(!checked)
-        toast.error(result.error)
-      } else {
-        toast.success(checked ? 'MFA enabled' : 'MFA disabled')
-      }
-    })
-  }
-
-  return (
-    <div className="space-y-4">
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Change password</CardTitle>
-          <CardDescription>
-            Use a strong password you don&apos;t reuse elsewhere.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="current_password">Current password</Label>
-            <Input
-              id="current_password"
-              type="password"
-              value={current}
-              onChange={(e) => setCurrent(e.target.value)}
-              autoComplete="current-password"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="new_password">New password</Label>
-            <Input
-              id="new_password"
-              type="password"
-              value={next}
-              onChange={(e) => setNext(e.target.value)}
-              autoComplete="new-password"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="confirm_password">Confirm new password</Label>
-            <Input
-              id="confirm_password"
-              type="password"
-              value={confirm}
-              onChange={(e) => setConfirm(e.target.value)}
-              autoComplete="new-password"
-            />
-          </div>
-          <Button
-            onClick={submit}
-            disabled={pending || !current || !next || !confirm}
-          >
-            {pending && <Loader2 className="mr-1 h-3 w-3 animate-spin" />}
-            Update password
-          </Button>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Two-factor authentication</CardTitle>
-          <CardDescription>
-            Add an extra layer of security with a one-time code at sign-in.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <label className="flex items-center gap-3">
-            <Checkbox
-              checked={mfaEnabled}
-              onCheckedChange={(c) => toggleMfa(c === true)}
-              disabled={pending}
-            />
-            <span className="text-sm">
-              {mfaEnabled
-                ? 'Two-factor authentication is enabled'
-                : 'Enable two-factor authentication'}
-            </span>
-          </label>
-        </CardContent>
-      </Card>
-    </div>
   )
 }
 
@@ -266,11 +121,6 @@ const PREF_FIELDS: {
   label: string
   description: string
 }[] = [
-  {
-    key: 'email_enabled',
-    label: 'Email notifications',
-    description: 'Receive notifications by email in addition to in-app.',
-  },
   {
     key: 'ca_assigned',
     label: 'Corrective action assigned',
@@ -285,11 +135,6 @@ const PREF_FIELDS: {
     key: 'event_stage',
     label: 'Event stage changes',
     description: 'When an event you are involved in advances a stage.',
-  },
-  {
-    key: 'deadlines',
-    label: 'Approaching deadlines',
-    description: 'Reminders as reporting deadlines approach.',
   },
 ]
 
@@ -308,11 +153,9 @@ function NotificationsPanel({
   const save = () => {
     startTransition(async () => {
       const result = await updateNotificationPreferences({
-        email_enabled: prefs.email_enabled,
         ca_assigned: prefs.ca_assigned,
         ca_status: prefs.ca_status,
         event_stage: prefs.event_stage,
-        deadlines: prefs.deadlines,
       })
       if (result.error) {
         toast.error(result.error)

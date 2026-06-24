@@ -2,12 +2,12 @@
 
 import { revalidatePath } from 'next/cache'
 import { getSessionProfile } from '@/lib/auth/guards'
-import { MOCK_NOTIFICATIONS, MOCK_PROFILES } from '@/lib/mock-data'
+import { MOCK_NOTIFICATIONS } from '@/lib/mock-data'
 import {
   getNotifications,
   getUnreadNotificationCount,
 } from '@/lib/queries/notifications'
-import { sendEmail } from '@/lib/email/send'
+import { notificationPreferencesFor } from '@/lib/queries/settings'
 import type { Notification, NotificationType } from '@/types/database'
 
 export interface CreateNotificationInput {
@@ -16,14 +16,25 @@ export interface CreateNotificationInput {
   title: string
   body?: string | null
   link?: string | null
-  // When true, also dispatch the mock email to the recipient.
-  email?: boolean
+}
+
+// Maps each notification type to the preference that gates it. Types without
+// an entry are always delivered.
+const TYPE_PREF: Partial<
+  Record<NotificationType, 'ca_assigned' | 'ca_status' | 'event_stage'>
+> = {
+  ca_assigned: 'ca_assigned',
+  ca_submitted: 'ca_status',
+  ca_approved: 'ca_status',
+  ca_rejected: 'ca_status',
+  event_stage_changed: 'event_stage',
 }
 
 /**
  * Creates an in-app notification for a recipient. Called by mutating actions
- * (CA assigned/approved/rejected, event stage change, deadlines). Optionally
- * dispatches a mock email.
+ * (CA assigned/approved/rejected, event stage change). Honors the recipient's
+ * notification preferences: skips the notification if they've opted out of the
+ * category.
  *
  * This is an internal helper rather than a user-facing form action; it never
  * trusts a client-supplied recipient beyond what the calling action provides.
@@ -33,6 +44,12 @@ export interface CreateNotificationInput {
 export async function createNotification(
   input: CreateNotificationInput
 ): Promise<void> {
+  const prefs = notificationPreferencesFor(input.user_id)
+
+  // Respect the recipient's opt-out for this notification category.
+  const gate = TYPE_PREF[input.type]
+  if (gate && !prefs[gate]) return
+
   const notification: Notification = {
     id: crypto.randomUUID(),
     user_id: input.user_id,
@@ -44,17 +61,6 @@ export async function createNotification(
     created_at: new Date().toISOString(),
   }
   MOCK_NOTIFICATIONS.unshift(notification)
-
-  if (input.email) {
-    const recipient = MOCK_PROFILES.find((p) => p.id === input.user_id)
-    if (recipient?.email) {
-      await sendEmail({
-        to: recipient.email,
-        subject: input.title,
-        body: input.body ?? input.title,
-      })
-    }
-  }
 
   revalidatePath('/notifications')
 }

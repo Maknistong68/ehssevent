@@ -24,7 +24,7 @@ export default async function SettingsPage() {
           Settings
         </h1>
         <p className="text-sm text-muted-foreground">
-          Manage your profile, security, and notification preferences.
+          Manage your profile and notification preferences.
         </p>
       </div>
 

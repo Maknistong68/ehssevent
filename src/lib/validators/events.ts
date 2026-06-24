@@ -34,9 +34,8 @@ export const createEventSchema = z.object({
   ]),
   classification: z
     .enum([
-      'incident',
-      'leadership_event',
       'safety',
+      'security',
       'fire',
       'environment',
       'welfare',
@@ -48,7 +47,6 @@ export const createEventSchema = z.object({
       'emergency_drill',
       'safety_meeting',
       'contractor_performance_review',
-      'to_be_determined',
     ])
     .optional(),
   significant_hazard: z
@@ -99,7 +97,7 @@ export const createEventSchema = z.object({
 
   // People are referenced by account ID (pseudonymous), not free-text names.
   leadership_member_id: optionalUuid,
-  attendee_ids: z.array(z.string().uuid()).default([]),
+  attendees: z.array(z.string()).default([]),
 
   // Narrative
   event_description: optionalText,

@@ -142,7 +142,9 @@ export function EventDetail({
           </p>
           <h1 className="mt-1 font-heading text-xl font-bold tracking-tight md:text-2xl">
             {event.event_description?.trim() ||
-              EVENT_CLASSIFICATION_LABELS[event.classification]}
+              (event.classification
+                ? EVENT_CLASSIFICATION_LABELS[event.classification]
+                : '')}
           </h1>
           <div className="mt-2 flex items-center gap-2">
             <ApprovalBadge level={event.approval_level} />
@@ -195,7 +197,11 @@ export function EventDetail({
           <Field label="Type" value={EVENT_TYPE_LABELS[event.type]} />
           <Field
             label="Classification"
-            value={EVENT_CLASSIFICATION_LABELS[event.classification]}
+            value={
+              event.classification
+                ? EVENT_CLASSIFICATION_LABELS[event.classification]
+                : undefined
+            }
           />
           <Field
             label="Significant Hazard"
@@ -264,10 +270,8 @@ export function EventDetail({
           <Field
             label="Attendees"
             value={
-              event.attendee_ids && event.attendee_ids.length > 0
-                ? event.attendee_ids
-                    .map((id) => resolvePerson(id, users))
-                    .join(', ')
+              event.attendees && event.attendees.length > 0
+                ? event.attendees.join(', ')
                 : undefined
             }
           />

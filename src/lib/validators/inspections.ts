@@ -58,8 +58,6 @@ const inspectionResponseSchema = z.object({
   ]),
   value: z.string().nullable().default(null),
   comment: z.string().nullable().default(null),
-  observation: z.string().nullable().default(null),
-  action_plan: z.string().nullable().default(null),
   photo_urls: z.array(z.string()).default([]),
 })
 
@@ -75,7 +73,10 @@ export const submitInspectionSchema = z.object({
         item_id: z.string(),
         item_label: z.string(),
         title: z.string().min(3),
+        description: z.string().optional(),
         assigned_to: z.string().uuid(),
+        priority: z.enum(['low', 'medium', 'high', 'critical']).optional(),
+        due_date: z.string().optional(),
       })
     )
     .optional(),

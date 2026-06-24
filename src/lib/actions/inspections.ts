@@ -28,6 +28,7 @@ import type {
   InspectionTemplate,
 } from '@/types/database'
 import { logAudit } from '@/lib/actions/audit'
+import { resolveDefaultApprover } from '@/lib/queries/users'
 import { randomUUID } from 'crypto'
 
 export async function createTemplate(input: unknown) {
@@ -233,8 +234,6 @@ export async function submitInspection(input: unknown) {
       field_type: resp.field_type,
       value: resp.value,
       comment: resp.comment ?? null,
-      observation: resp.observation ?? null,
-      action_plan: resp.action_plan ?? null,
       photo_urls: resp.photo_urls,
       created_at: now,
     }
@@ -243,6 +242,13 @@ export async function submitInspection(input: unknown) {
 
   // Create corrective actions for non-compliant items
   if (corrective_actions && corrective_actions.length > 0) {
+    // Segregation of duties: prefer a separate approver-capable colleague over
+    // the inspector, falling back to the inspector only if none exists.
+    const caApprover =
+      resolveDefaultApprover(
+        MOCK_USER_ID,
+        MOCK_CURRENT_USER.organization_id ?? null
+      ) ?? MOCK_CURRENT_USER
     for (const ca of corrective_actions) {
       const caId = randomUUID()
       const caRefNum = `CA-${new Date().getFullYear()}-${String(MOCK_CORRECTIVE_ACTIONS.length + 1).padStart(3, '0')}`
@@ -260,12 +266,16 @@ export async function submitInspection(input: unknown) {
         created_by: MOCK_USER_ID,
         creator_org_id: MOCK_CURRENT_USER.organization_id || '',
         assigned_to: ca.assigned_to,
-        approver_id: MOCK_USER_ID,
+        approver_id: caApprover.id,
         title: ca.title,
-        description: `Auto-generated corrective action for non-compliant item: ${ca.item_label}`,
-        priority: 'medium',
+        description: ca.description?.trim()
+          ? ca.description
+          : `Corrective action for inspection item: ${ca.item_label}`,
+        priority: ca.priority ?? 'medium',
         status: 'open',
-        due_date: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
+        due_date: ca.due_date?.trim()
+          ? ca.due_date
+          : new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
         photo_urls: [],
         completed_at: null,
         approved_at: null,
@@ -276,7 +286,7 @@ export async function submitInspection(input: unknown) {
         project: project || undefined,
         creator: MOCK_CURRENT_USER,
         assignee: assignee || undefined,
-        approver: MOCK_CURRENT_USER,
+        approver: caApprover,
       }
       MOCK_CORRECTIVE_ACTIONS.push(caRecord)
     }

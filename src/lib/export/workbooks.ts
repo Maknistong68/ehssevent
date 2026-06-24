@@ -73,8 +73,9 @@ export async function eventsToWorkbook(
     sheet.addRow({
       ref: e.reference_number,
       type: EVENT_TYPE_LABELS[e.type] ?? e.type,
-      classification:
-        EVENT_CLASSIFICATION_LABELS[e.classification] ?? e.classification,
+      classification: e.classification
+        ? EVENT_CLASSIFICATION_LABELS[e.classification] ?? e.classification
+        : '',
       stage: EVENT_APPROVAL_LABELS[e.approval_level] ?? e.approval_level,
       site: e.site ?? '',
       area: e.specific_area ?? '',
@@ -202,8 +203,6 @@ export async function inspectionToWorkbook(
     { header: 'Item', key: 'item' },
     { header: 'Type', key: 'type' },
     { header: 'Value', key: 'value' },
-    { header: 'Observation', key: 'observation' },
-    { header: 'Action Plan', key: 'action_plan' },
     { header: 'Comment', key: 'comment' },
   ]
   for (const r of responses) {
@@ -212,8 +211,6 @@ export async function inspectionToWorkbook(
       item: itemLabel.get(r.item_id) ?? r.item_id,
       type: r.field_type,
       value: r.value ?? '',
-      observation: r.observation ?? '',
-      action_plan: r.action_plan ?? '',
       comment: r.comment ?? '',
     })
   }

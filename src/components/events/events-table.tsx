@@ -29,9 +29,10 @@ export function EventsTable({ events }: { events: Event[] }) {
       </TableHeader>
       <TableBody>
         {events.map((event) => {
-          const title =
-            event.event_description?.trim() ||
-            EVENT_CLASSIFICATION_LABELS[event.classification]
+          const classificationLabel = event.classification
+            ? EVENT_CLASSIFICATION_LABELS[event.classification]
+            : ''
+          const title = event.event_description?.trim() || classificationLabel
           return (
             <TableRow key={event.id} className="relative cursor-pointer">
               <TableCell className="font-mono text-xs whitespace-nowrap">
@@ -49,7 +50,7 @@ export function EventsTable({ events }: { events: Event[] }) {
                 <span className="line-clamp-1">{title}</span>
               </TableCell>
               <TableCell className="whitespace-nowrap text-muted-foreground">
-                {EVENT_CLASSIFICATION_LABELS[event.classification]}
+                {classificationLabel || '—'}
               </TableCell>
               <TableCell className="whitespace-nowrap text-muted-foreground">
                 {event.specific_area || '—'}
