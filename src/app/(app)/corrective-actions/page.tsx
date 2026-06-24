@@ -1,6 +1,9 @@
 export const dynamic = 'force-dynamic'
 
-import { getCorrectiveActions } from '@/lib/queries/corrective-actions'
+import {
+  getCorrectiveActions,
+  getCorrectiveActionPeople,
+} from '@/lib/queries/corrective-actions'
 import { CaCard } from '@/components/corrective-actions/ca-card'
 import { CaTable } from '@/components/corrective-actions/ca-table'
 import { CaFilters } from '@/components/corrective-actions/ca-filters'
@@ -30,6 +33,8 @@ const STATUS_RANK: Record<CorrectiveActionStatus, number> = {
 const caAccessors = {
   reference: (c: CorrectiveAction) => c.reference_number,
   status: (c: CorrectiveAction) => STATUS_RANK[c.status],
+  creator: (c: CorrectiveAction) => c.creator?.full_name ?? null,
+  assignee: (c: CorrectiveAction) => c.assignee?.full_name ?? null,
 }
 
 interface Props {
@@ -38,6 +43,8 @@ interface Props {
     priority?: string
     search?: string
     overdue?: string
+    created_by?: string
+    assigned_to?: string
     date_from?: string
     date_to?: string
     sort?: string
@@ -49,14 +56,21 @@ interface Props {
 
 export default async function CorrectiveActionsPage({ searchParams }: Props) {
   const params = await searchParams
-  const correctiveActions = await getCorrectiveActions({
-    status: params.status as CorrectiveActionStatus | undefined,
-    priority: params.priority as CorrectiveActionPriority | undefined,
-    overdue: params.overdue === '1',
-    date_from: params.date_from,
-    date_to: params.date_to,
-    search: params.search,
-  })
+  const [correctiveActions, people] = await Promise.all([
+    getCorrectiveActions({
+      status: params.status as CorrectiveActionStatus | undefined,
+      priority: params.priority as CorrectiveActionPriority | undefined,
+      overdue: params.overdue === '1',
+      created_by: params.created_by ? params.created_by.split(',') : undefined,
+      assigned_to: params.assigned_to
+        ? params.assigned_to.split(',')
+        : undefined,
+      date_from: params.date_from,
+      date_to: params.date_to,
+      search: params.search,
+    }),
+    getCorrectiveActionPeople(),
+  ])
 
   const sorted = sortItems(
     correctiveActions,
@@ -99,7 +113,7 @@ export default async function CorrectiveActionsPage({ searchParams }: Props) {
         />
       </div>
 
-      <CaFilters />
+      <CaFilters creators={people.creators} assignees={people.assignees} />
 
       {correctiveActions.length === 0 ? (
         <EmptyState

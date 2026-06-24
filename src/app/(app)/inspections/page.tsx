@@ -1,8 +1,11 @@
 export const dynamic = 'force-dynamic'
 
 import Link from 'next/link'
-import { getInspections } from '@/lib/queries/inspections'
-import { getTemplates } from '@/lib/queries/inspections'
+import {
+  getInspections,
+  getTemplates,
+  getInspectionConductors,
+} from '@/lib/queries/inspections'
 import { getProjects } from '@/lib/queries/projects'
 import { InspectionCard } from '@/components/inspections/inspection-card'
 import { InspectionsTable } from '@/components/inspections/inspections-table'
@@ -29,6 +32,7 @@ const inspectionAccessors = {
   reference: (i: Inspection) => i.reference_number,
   status: (i: Inspection) => STATUS_RANK[i.status],
   score: (i: Inspection) => i.score,
+  conductor: (i: Inspection) => i.conductor?.full_name ?? null,
 }
 
 interface Props {
@@ -36,6 +40,7 @@ interface Props {
     status?: string
     project_id?: string
     template_id?: string
+    conducted_by?: string
     search?: string
     sort?: string
     dir?: string
@@ -46,15 +51,19 @@ interface Props {
 
 export default async function InspectionsPage({ searchParams }: Props) {
   const params = await searchParams
-  const [inspections, templates, projects] = await Promise.all([
+  const [inspections, templates, projects, conductors] = await Promise.all([
     getInspections({
       status: params.status as InspectionStatus | undefined,
       project_id: params.project_id,
       template_id: params.template_id,
+      conducted_by: params.conducted_by
+        ? params.conducted_by.split(',')
+        : undefined,
       search: params.search,
     }),
     getTemplates(),
     getProjects(),
+    getInspectionConductors(),
   ])
 
   const sorted = sortItems(
@@ -102,7 +111,11 @@ export default async function InspectionsPage({ searchParams }: Props) {
         </div>
       </div>
 
-      <InspectionFilters projects={projects} templates={templates} />
+      <InspectionFilters
+        projects={projects}
+        templates={templates}
+        conductors={conductors}
+      />
 
       {inspections.length === 0 ? (
         <EmptyState

@@ -2,16 +2,18 @@
 
 import { ListFilters } from '@/components/shared/list-filters'
 import { INSPECTION_STATUS_LABELS } from '@/types/enums'
-import type { Project, InspectionTemplate } from '@/types/database'
+import type { Project, InspectionTemplate, Profile } from '@/types/database'
 
 interface InspectionFiltersProps {
   projects: Project[]
   templates: InspectionTemplate[]
+  conductors: Profile[]
 }
 
 export function InspectionFilters({
   projects,
   templates,
+  conductors,
 }: InspectionFiltersProps) {
   return (
     <ListFilters
@@ -40,6 +42,15 @@ export function InspectionFilters({
           placeholder: 'All Templates',
           options: templates.map((t) => ({ value: t.id, label: t.name })),
         },
+        {
+          type: 'multiselect',
+          key: 'conducted_by',
+          label: 'Conducted by',
+          options: conductors.map((c) => ({
+            value: c.id,
+            label: c.full_name ?? c.email ?? c.username,
+          })),
+        },
       ]}
       sortOptions={[
         { value: 'score:desc', label: 'Score (high–low)' },
@@ -47,6 +58,8 @@ export function InspectionFilters({
         { value: 'status:asc', label: 'Status' },
         { value: 'reference:asc', label: 'Reference (A–Z)' },
         { value: 'reference:desc', label: 'Reference (Z–A)' },
+        { value: 'conductor:asc', label: 'Conducted by (A–Z)' },
+        { value: 'conductor:desc', label: 'Conducted by (Z–A)' },
       ]}
     />
   )

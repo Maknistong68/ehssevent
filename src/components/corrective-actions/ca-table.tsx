@@ -26,7 +26,7 @@ export function CaTable({
           <TableHead>Title</TableHead>
           <SortHeader sortKey="status">Status</SortHeader>
           <TableHead>Source</TableHead>
-          <TableHead>Assignee</TableHead>
+          <SortHeader sortKey="assignee">Assignee</SortHeader>
         </TableRow>
       </TableHeader>
       <TableBody>

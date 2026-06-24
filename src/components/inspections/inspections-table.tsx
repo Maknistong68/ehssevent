@@ -26,7 +26,7 @@ export function InspectionsTable({
           <SortHeader sortKey="status">Status</SortHeader>
           <SortHeader sortKey="score">Score</SortHeader>
           <TableHead>Project</TableHead>
-          <TableHead>Conductor</TableHead>
+          <SortHeader sortKey="conductor">Conductor</SortHeader>
           <TableHead>Items</TableHead>
         </TableRow>
       </TableHeader>

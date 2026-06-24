@@ -2,8 +2,20 @@
 
 import { ListFilters } from '@/components/shared/list-filters'
 import { CA_STATUS_LABELS, CA_PRIORITY_LABELS } from '@/types/enums'
+import type { Profile } from '@/types/database'
 
-export function CaFilters() {
+interface CaFiltersProps {
+  creators: Profile[]
+  assignees: Profile[]
+}
+
+const personOptions = (people: Profile[]) =>
+  people.map((p) => ({
+    value: p.id,
+    label: p.full_name ?? p.email ?? p.username,
+  }))
+
+export function CaFilters({ creators, assignees }: CaFiltersProps) {
   return (
     <ListFilters
       fields={[
@@ -33,6 +45,18 @@ export function CaFilters() {
           })),
         },
         {
+          type: 'multiselect',
+          key: 'created_by',
+          label: 'Creator',
+          options: personOptions(creators),
+        },
+        {
+          type: 'multiselect',
+          key: 'assigned_to',
+          label: 'Responsible person',
+          options: personOptions(assignees),
+        },
+        {
           type: 'daterange',
           fromKey: 'date_from',
           toKey: 'date_to',
@@ -42,6 +66,11 @@ export function CaFilters() {
       sortOptions={[
         { value: 'status:asc', label: 'Status' },
         { value: 'reference:asc', label: 'Reference (A–Z)' },
+        { value: 'reference:desc', label: 'Reference (Z–A)' },
+        { value: 'creator:asc', label: 'Creator (A–Z)' },
+        { value: 'creator:desc', label: 'Creator (Z–A)' },
+        { value: 'assignee:asc', label: 'Responsible person (A–Z)' },
+        { value: 'assignee:desc', label: 'Responsible person (Z–A)' },
       ]}
     />
   )

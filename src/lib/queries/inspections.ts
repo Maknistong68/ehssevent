@@ -7,6 +7,7 @@ import type {
   InspectionTemplate,
   Inspection,
   InspectionResponse,
+  Profile,
 } from '@/types/database'
 import type { InspectionStatus } from '@/types/enums'
 
@@ -14,6 +15,7 @@ interface InspectionFilters {
   status?: InspectionStatus
   project_id?: string
   template_id?: string
+  conducted_by?: string[]
   search?: string
 }
 
@@ -47,6 +49,11 @@ export async function getInspections(
       (i) => i.template_id === filters.template_id
     )
   }
+  if (filters.conducted_by?.length) {
+    inspections = inspections.filter((i) =>
+      filters.conducted_by!.includes(i.conducted_by)
+    )
+  }
   if (filters.search) {
     const q = filters.search.toLowerCase()
     inspections = inspections.filter(
@@ -70,5 +77,17 @@ export async function getInspectionResponses(
 ): Promise<InspectionResponse[]> {
   return MOCK_INSPECTION_RESPONSES.filter(
     (r) => r.inspection_id === inspectionId
+  )
+}
+
+// Distinct people who have conducted inspections, used to populate the
+// "Conducted by" multi-select filter options.
+export async function getInspectionConductors(): Promise<Profile[]> {
+  const map = new Map<string, Profile>()
+  for (const i of MOCK_INSPECTIONS) {
+    if (i.conductor) map.set(i.conductor.id, i.conductor)
+  }
+  return [...map.values()].sort((a, b) =>
+    (a.full_name ?? '').localeCompare(b.full_name ?? '')
   )
 }

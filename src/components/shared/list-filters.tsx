@@ -23,6 +23,7 @@ import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { DatePicker } from '@/components/ui/date-picker'
 import { Search, SlidersHorizontal } from 'lucide-react'
+import { cn } from '@/lib/utils'
 
 export type ListFilterField =
   | { type: 'search'; key: string; placeholder?: string }
@@ -31,6 +32,12 @@ export type ListFilterField =
       key: string
       label: string
       placeholder?: string
+      options: { value: string; label: string }[]
+    }
+  | {
+      type: 'multiselect'
+      key: string
+      label: string
       options: { value: string; label: string }[]
     }
   | { type: 'daterange'; fromKey: string; toKey: string; label: string }
@@ -195,6 +202,55 @@ export function ListFilters({
                       onChange={(v) => setField(field.toKey, v)}
                       placeholder="To"
                     />
+                  </div>
+                </div>
+              )
+            }
+
+            if (field.type === 'multiselect') {
+              const selected = new Set(
+                (draft[field.key] ?? '').split(',').filter(Boolean)
+              )
+              const toggle = (value: string) => {
+                const next = new Set(selected)
+                if (next.has(value)) next.delete(value)
+                else next.add(value)
+                setField(field.key, Array.from(next).join(','))
+              }
+              return (
+                <div key={field.key} className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label>{field.label}</Label>
+                    {selected.size > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => setField(field.key, '')}
+                        className="text-xs text-muted-foreground hover:text-foreground"
+                      >
+                        Clear ({selected.size})
+                      </button>
+                    )}
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {field.options.map((option) => {
+                      const active = selected.has(option.value)
+                      return (
+                        <button
+                          key={option.value}
+                          type="button"
+                          aria-pressed={active}
+                          onClick={() => toggle(option.value)}
+                          className={cn(
+                            'rounded-full border px-3 py-1.5 text-sm transition-colors',
+                            active
+                              ? 'border-primary bg-primary text-primary-foreground'
+                              : 'border-input bg-background text-foreground hover:bg-muted'
+                          )}
+                        >
+                          {option.label}
+                        </button>
+                      )
+                    })}
                   </div>
                 </div>
               )
