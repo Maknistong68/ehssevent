@@ -3,29 +3,24 @@ import { z } from 'zod'
 /**
  * Typed, validated environment access.
  *
- * The app currently runs entirely on a mock layer, so every integration key is
- * **optional** here — a missing key is valid in mock mode and the value falls
- * back to `undefined`. The schema still validates the *shape* of any key that
- * IS provided (e.g. a malformed Supabase URL fails fast at boot), and it gives
- * the upcoming Supabase/login integration a single, typed contract to make
- * keys required.
+ * The app runs on a real Supabase backend, so the data/auth keys and the public
+ * app origin are **required** — a missing one throws at startup, surfacing a
+ * misconfigured deployment immediately instead of at first use. Optional keys
+ * are deferred integrations (email, monitoring, legal/DPO copy); their shape is
+ * still validated when provided.
  *
  * `NEXT_PUBLIC_*` vars are referenced as static literals so Next.js can inline
  * them into both the server and client bundles. Do NOT read these via dynamic
  * `process.env[key]` access — that breaks the inlining.
- *
- * TODO(prod): on cutover, change the keys the live build depends on from
- * `.optional()` to required (e.g. `z.string().url()`), so a misconfigured
- * deployment fails at startup instead of at first use.
  */
 const envSchema = z.object({
-  // ── Supabase (data + auth) ────────────────────────────────────────────────
-  NEXT_PUBLIC_SUPABASE_URL: z.string().url().optional(),
-  NEXT_PUBLIC_SUPABASE_ANON_KEY: z.string().min(1).optional(),
-  SUPABASE_SERVICE_ROLE_KEY: z.string().min(1).optional(),
+  // ── Supabase (data + auth) — required ─────────────────────────────────────
+  NEXT_PUBLIC_SUPABASE_URL: z.string().url(),
+  NEXT_PUBLIC_SUPABASE_ANON_KEY: z.string().min(1),
+  SUPABASE_SERVICE_ROLE_KEY: z.string().min(1),
 
   // ── Public app origin (used for absolute URLs, CSP, CSRF posture) ──────────
-  NEXT_PUBLIC_APP_ORIGIN: z.string().url().optional(),
+  NEXT_PUBLIC_APP_ORIGIN: z.string().url(),
 
   // ── Image optimizer allowlist (comma-separated hostnames) ─────────────────
   NEXT_PUBLIC_IMAGE_DOMAINS: z.string().optional(),
@@ -64,7 +59,7 @@ const parsed = envSchema.safeParse({
 })
 
 if (!parsed.success) {
-  // A *malformed* (not missing) value is a real misconfiguration — fail loudly.
+  // A missing or malformed value is a real misconfiguration — fail loudly.
   const issues = parsed.error.issues
     .map((i) => `  - ${i.path.join('.')}: ${i.message}`)
     .join('\n')

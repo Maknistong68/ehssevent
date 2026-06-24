@@ -78,7 +78,7 @@ export function AdminUsers({
 
   // Invite dialog state
   const [inviteOpen, setInviteOpen] = useState(false)
-  const [inviteUsername, setInviteUsername] = useState('')
+  const [inviteEmail, setInviteEmail] = useState('')
   const [inviteRole, setInviteRole] = useState<UserRole>('client_user')
   const [inviteOrg, setInviteOrg] = useState('')
   const [inviting, setInviting] = useState(false)
@@ -147,7 +147,7 @@ export function AdminUsers({
   const handleInvite = async () => {
     setInviting(true)
     const result = await inviteUser({
-      username: inviteUsername,
+      email: inviteEmail,
       role: inviteRole,
       organization_id: inviteOrg || null,
     })
@@ -156,7 +156,7 @@ export function AdminUsers({
     } else {
       toast.success('Invitation sent')
       setInviteOpen(false)
-      setInviteUsername('')
+      setInviteEmail('')
       setInviteOrg('')
       router.refresh()
     }
@@ -201,12 +201,12 @@ export function AdminUsers({
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label>Username</Label>
+              <Label>Email</Label>
               <Input
-                type="text"
-                placeholder="username"
-                value={inviteUsername}
-                onChange={(e) => setInviteUsername(e.target.value)}
+                type="email"
+                placeholder="name@example.com"
+                value={inviteEmail}
+                onChange={(e) => setInviteEmail(e.target.value)}
               />
             </div>
             <div className="space-y-2">
@@ -250,7 +250,7 @@ export function AdminUsers({
             </div>
             <Button
               onClick={handleInvite}
-              disabled={inviting || !inviteUsername.trim()}
+              disabled={inviting || !inviteEmail.trim()}
               className="w-full"
             >
               {inviting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}

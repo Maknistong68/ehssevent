@@ -1,10 +1,17 @@
 import createMiddleware from 'next-intl/middleware'
+import { type NextRequest } from 'next/server'
 import { routing } from '@/i18n/routing'
+import { updateSession } from '@/lib/supabase/middleware'
 
 const intlMiddleware = createMiddleware(routing)
 
-export function proxy(request: Parameters<typeof intlMiddleware>[0]) {
-  return intlMiddleware(request)
+// Next.js 16 renamed `middleware.ts` to `proxy.ts`. This runs on every matched
+// request: first next-intl resolves the locale (producing the response), then
+// we refresh the Supabase session and attach any rotated auth cookies to that
+// same response so the user stays logged in while navigating.
+export async function proxy(request: NextRequest) {
+  const response = intlMiddleware(request)
+  return updateSession(request, response)
 }
 
 export const config = {

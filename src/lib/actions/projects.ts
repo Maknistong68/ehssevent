@@ -7,13 +7,8 @@ import {
   createProjectSchema,
   updateProjectSchema,
 } from '@/lib/validators/projects'
-import {
-  MOCK_PROJECTS,
-  MOCK_PROJECT_CONTRACTORS,
-  MOCK_ORGANIZATIONS,
-} from '@/lib/mock-data'
+import { createClient } from '@/lib/supabase/server'
 import { logAudit } from '@/lib/actions/audit'
-import type { Project } from '@/types/database'
 
 export async function createProject(input: unknown) {
   const auth = await requirePermission('project:manage')
@@ -24,29 +19,32 @@ export async function createProject(input: unknown) {
     return { error: parsed.error.issues[0].message }
   }
 
-  const data = parsed.data
-  const now = new Date().toISOString()
-  const clientOrgId = auth.profile.organization_id ?? ''
-  const clientOrg = MOCK_ORGANIZATIONS.find((o) => o.id === clientOrgId)
-
-  const project: Project = {
-    id: crypto.randomUUID(),
-    name: data.name,
-    description: data.description || null,
-    client_org_id: clientOrgId,
-    location: data.location || null,
-    is_active: true,
-    created_at: now,
-    updated_at: now,
-    client_organization: clientOrg,
+  if (!auth.profile.organization_id) {
+    return { error: 'Your account is not assigned to an organization' }
   }
-  MOCK_PROJECTS.push(project)
+
+  const data = parsed.data
+  const supabase = await createClient()
+  const { data: project, error } = await supabase
+    .from('projects')
+    .insert({
+      name: data.name,
+      description: data.description || null,
+      client_org_id: auth.profile.organization_id,
+      location: data.location || null,
+      is_active: true,
+    })
+    .select('id, name, location')
+    .single()
+  if (error || !project) {
+    return { error: error?.message ?? 'Failed to create project' }
+  }
 
   await logAudit({
     action: 'project.create',
     target_table: 'projects',
-    target_id: project.id,
-    target_label: project.name,
+    target_id: project.id as string,
+    target_label: project.name as string,
     metadata: { location: project.location },
   })
 
@@ -64,20 +62,28 @@ export async function updateProject(input: unknown) {
   }
 
   const data = parsed.data
-  const project = MOCK_PROJECTS.find((p) => p.id === data.id)
-  if (!project) return { error: 'Project not found' }
+  const supabase = await createClient()
+  const patch: Record<string, unknown> = {
+    name: data.name,
+    description: data.description || null,
+    location: data.location || null,
+  }
+  if (data.is_active !== undefined) patch.is_active = data.is_active
 
-  project.name = data.name
-  project.description = data.description || null
-  project.location = data.location || null
-  if (data.is_active !== undefined) project.is_active = data.is_active
-  project.updated_at = new Date().toISOString()
+  const { data: project, error } = await supabase
+    .from('projects')
+    .update(patch)
+    .eq('id', data.id)
+    .select('id, name')
+    .maybeSingle()
+  if (error) return { error: error.message }
+  if (!project) return { error: 'Project not found' }
 
   await logAudit({
     action: 'project.update',
     target_table: 'projects',
-    target_id: project.id,
-    target_label: project.name,
+    target_id: project.id as string,
+    target_label: project.name as string,
   })
 
   revalidatePath(`/projects/${project.id}`)
@@ -92,29 +98,40 @@ export async function addContractorToProject(
   const auth = await requirePermission('project:manage')
   if (!auth.ok) return { error: auth.error }
 
-  const project = MOCK_PROJECTS.find((p) => p.id === projectId)
+  const supabase = await createClient()
+  const { data: project } = await supabase
+    .from('projects')
+    .select('id, name')
+    .eq('id', projectId)
+    .maybeSingle()
   if (!project) return { error: 'Project not found' }
 
-  const org = MOCK_ORGANIZATIONS.find((o) => o.id === contractorOrgId)
+  const { data: org } = await supabase
+    .from('organizations')
+    .select('id, name')
+    .eq('id', contractorOrgId)
+    .maybeSingle()
   if (!org) return { error: 'Contractor not found' }
 
-  const exists = MOCK_PROJECT_CONTRACTORS.some(
-    (pc) =>
-      pc.project_id === projectId && pc.contractor_org_id === contractorOrgId
-  )
-  if (!exists) {
-    MOCK_PROJECT_CONTRACTORS.push({
+  const { data: existing } = await supabase
+    .from('project_contractors')
+    .select('project_id')
+    .eq('project_id', projectId)
+    .eq('contractor_org_id', contractorOrgId)
+    .maybeSingle()
+
+  if (!existing) {
+    const { error } = await supabase.from('project_contractors').insert({
       project_id: projectId,
       contractor_org_id: contractorOrgId,
-      created_at: new Date().toISOString(),
-      contractor_organization: org,
     })
+    if (error) return { error: error.message }
 
     await logAudit({
       action: 'project.contractor_add',
       target_table: 'projects',
       target_id: projectId,
-      target_label: project.name,
+      target_label: project.name as string,
       metadata: { contractor: org.name },
     })
   }
@@ -131,23 +148,35 @@ export async function removeContractorFromProject(
   const auth = await requirePermission('project:manage')
   if (!auth.ok) return { error: auth.error }
 
-  const idx = MOCK_PROJECT_CONTRACTORS.findIndex(
-    (pc) =>
-      pc.project_id === projectId && pc.contractor_org_id === contractorOrgId
-  )
-  if (idx >= 0) {
-    const [removed] = MOCK_PROJECT_CONTRACTORS.splice(idx, 1)
-    const project = MOCK_PROJECTS.find((p) => p.id === projectId)
-    await logAudit({
-      action: 'project.contractor_remove',
-      target_table: 'projects',
-      target_id: projectId,
-      target_label: project?.name ?? null,
-      metadata: {
-        contractor: removed.contractor_organization?.name ?? contractorOrgId,
-      },
-    })
-  }
+  const supabase = await createClient()
+  const { data: org } = await supabase
+    .from('organizations')
+    .select('name')
+    .eq('id', contractorOrgId)
+    .maybeSingle()
+
+  const { error } = await supabase
+    .from('project_contractors')
+    .delete()
+    .eq('project_id', projectId)
+    .eq('contractor_org_id', contractorOrgId)
+  if (error) return { error: error.message }
+
+  const { data: project } = await supabase
+    .from('projects')
+    .select('name')
+    .eq('id', projectId)
+    .maybeSingle()
+
+  await logAudit({
+    action: 'project.contractor_remove',
+    target_table: 'projects',
+    target_id: projectId,
+    target_label: (project?.name as string | null) ?? null,
+    metadata: {
+      contractor: (org?.name as string | null) ?? contractorOrgId,
+    },
+  })
 
   revalidatePath(`/projects/${projectId}`)
   revalidatePath('/projects')

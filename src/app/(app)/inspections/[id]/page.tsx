@@ -1,8 +1,8 @@
 export const dynamic = 'force-dynamic'
 
-import { notFound } from 'next/navigation'
+import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
-import { MOCK_USER_ID } from '@/lib/mock-data'
+import { getSessionProfile } from '@/lib/auth/guards'
 import {
   getInspectionById,
   getInspectionResponses,
@@ -32,6 +32,9 @@ export async function generateMetadata({ params }: Props) {
 
 export default async function InspectionDetailPage({ params }: Props) {
   const { id } = await params
+  const profile = await getSessionProfile()
+  if (!profile) redirect('/login')
+
   const [inspection, responses, correctiveActions] = await Promise.all([
     getInspectionById(id),
     getInspectionResponses(id),
@@ -40,7 +43,7 @@ export default async function InspectionDetailPage({ params }: Props) {
 
   if (!inspection) notFound()
 
-  const canRaiseCa = MOCK_USER_ID === inspection.conducted_by
+  const canRaiseCa = profile.id === inspection.conducted_by
 
   const project = inspection.project as
     | { id: string; name: string; location?: string }

@@ -1,10 +1,14 @@
-import { MOCK_DSR_REQUESTS } from '@/lib/mock-data'
+import { createClient } from '@/lib/supabase/server'
 import type { DsrRequest } from '@/types/database'
 
-/** All data-subject requests, newest first, for the admin DSR queue. */
+/** All data-subject requests, newest first, for the admin DSR queue. RLS lets
+ * platform admins see every request (and a user only their own). */
 export async function getDsrRequests(): Promise<DsrRequest[]> {
-  return [...MOCK_DSR_REQUESTS].sort(
-    (a, b) =>
-      new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-  )
+  const supabase = await createClient()
+  const { data, error } = await supabase
+    .from('dsr_requests')
+    .select('*')
+    .order('created_at', { ascending: false })
+  if (error) return []
+  return (data ?? []) as unknown as DsrRequest[]
 }

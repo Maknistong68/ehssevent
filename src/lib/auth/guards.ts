@@ -1,13 +1,9 @@
 import { cookies } from 'next/headers'
 import { ADMIN_ROLES, type UserRole, type UserStatus } from '@/types/enums'
 import { can, isViewPermission, type Permission } from '@/lib/auth/permissions'
-import { MOCK_PROFILES } from '@/lib/mock-data'
+import { createClient } from '@/lib/supabase/server'
 
 export const IMPERSONATION_COOKIE = 'impersonate_uid'
-// The chosen mock identity from the login role launcher. Both the server guards
-// (here) and the client effective-profile resolver read it, so a selected role
-// flows through the whole stack — mirroring IMPERSONATION_COOKIE.
-export const MOCK_SESSION_COOKIE = 'mock_session_uid'
 
 export interface SessionProfile {
   id: string
@@ -16,28 +12,39 @@ export interface SessionProfile {
   status: UserStatus
 }
 
-const MOCK_SESSION: SessionProfile = {
-  id: '00000000-0000-0000-0000-000000000001',
-  role: 'client_admin',
-  organization_id: '10000000-0000-0000-0000-000000000001',
-  status: 'active',
-}
-
+/**
+ * Resolves the REAL signed-in user from Supabase Auth and looks up their
+ * profile (role, organization, lifecycle status). Returns `null` when there is
+ * no valid session or no matching profile row. There is no hardcoded fallback:
+ * an unauthenticated request resolves to no session, full stop.
+ *
+ * Authorization always runs against this real session. Impersonation ("view
+ * as") only changes the *effective* profile used to render the UI — see
+ * getEffectiveProfile — and is forced read-only by requirePermission below.
+ */
 export async function getSessionProfile(): Promise<SessionProfile | null> {
-  const cookieStore = await cookies()
-  const uid = cookieStore.get(MOCK_SESSION_COOKIE)?.value
-  if (uid) {
-    const profile = MOCK_PROFILES.find((p) => p.id === uid)
-    if (profile) {
-      return {
-        id: profile.id,
-        role: profile.role,
-        organization_id: profile.organization_id,
-        status: profile.status,
-      }
-    }
+  const supabase = await createClient()
+
+  const {
+    data: { user },
+    error,
+  } = await supabase.auth.getUser()
+  if (error || !user) return null
+
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('id, role, organization_id, status')
+    .eq('id', user.id)
+    .single()
+
+  if (!profile) return null
+
+  return {
+    id: profile.id as string,
+    role: profile.role as UserRole,
+    organization_id: profile.organization_id as string | null,
+    status: profile.status as UserStatus,
   }
-  return MOCK_SESSION
 }
 
 type GuardResult =
@@ -45,10 +52,10 @@ type GuardResult =
   | { ok: false; error: string }
 
 export async function requireUser(): Promise<GuardResult> {
-  // Resolve the live session (reflects the role chosen in the login launcher)
-  // rather than the hardcoded default, so requireAdmin/requirePermission
-  // authorize against the selected role.
-  const profile = (await getSessionProfile()) ?? MOCK_SESSION
+  const profile = await getSessionProfile()
+  if (!profile) {
+    return { ok: false, error: 'You must be signed in' }
+  }
   // Only fully `active` accounts may pass authentication. Each non-active
   // status is reported distinctly so the lifecycle is observable:
   //   pending     — self-signup awaiting administrator approval.

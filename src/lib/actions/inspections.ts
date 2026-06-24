@@ -8,59 +8,48 @@ import {
   updateTemplateSchema,
   submitInspectionSchema,
 } from '@/lib/validators/inspections'
-import {
-  MOCK_USER_ID,
-  MOCK_INSPECTIONS,
-  MOCK_INSPECTION_RESPONSES,
-  MOCK_CORRECTIVE_ACTIONS,
-  MOCK_CURRENT_USER,
-  MOCK_PROJECTS,
-  MOCK_INSPECTION_TEMPLATES,
-  MOCK_PROFILES,
-} from '@/lib/mock-data'
+import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { COMPLIANCE_SCORE } from '@/types/enums'
 import type { ComplianceValue } from '@/types/enums'
-import type {
-  Inspection,
-  InspectionResponse,
-  CorrectiveAction,
-  Event,
-  InspectionTemplate,
-} from '@/types/database'
 import { logAudit } from '@/lib/actions/audit'
 import { resolveDefaultApprover } from '@/lib/queries/users'
-import { randomUUID } from 'crypto'
 
 export async function createTemplate(input: unknown) {
   const auth = await requirePermission('inspection:templates')
   if (!auth.ok) return { error: auth.error }
+  if (!auth.profile.organization_id) {
+    return { error: 'Your account is not assigned to an organization' }
+  }
 
   const parsed = createTemplateSchema.safeParse(input)
   if (!parsed.success) {
     return { error: parsed.error.issues[0].message }
   }
 
-  const now = new Date().toISOString()
-  const template: InspectionTemplate = {
-    id: randomUUID(),
-    organization_id: MOCK_CURRENT_USER.organization_id || '',
-    name: parsed.data.name,
-    description: parsed.data.description || null,
-    sections: parsed.data.sections,
-    is_active: true,
-    created_by: MOCK_USER_ID,
-    created_at: now,
-    updated_at: now,
-    creator: MOCK_CURRENT_USER,
+  const supabase = await createClient()
+  const { data: template, error } = await supabase
+    .from('inspection_templates')
+    .insert({
+      organization_id: auth.profile.organization_id,
+      name: parsed.data.name,
+      description: parsed.data.description || null,
+      sections: parsed.data.sections,
+      is_active: true,
+      created_by: auth.profile.id,
+    })
+    .select('id, name')
+    .single()
+  if (error || !template) {
+    return { error: error?.message ?? 'Failed to create template' }
   }
-  MOCK_INSPECTION_TEMPLATES.push(template)
 
   await logAudit({
     action: 'inspection_template.create',
     target_table: 'inspection_templates',
-    target_id: template.id,
-    target_label: template.name,
-    metadata: { sections: template.sections.length },
+    target_id: template.id as string,
+    target_label: template.name as string,
+    metadata: { sections: parsed.data.sections.length },
   })
 
   revalidatePath('/inspections/templates')
@@ -76,24 +65,30 @@ export async function updateTemplate(input: unknown) {
     return { error: parsed.error.issues[0].message }
   }
 
-  const template = MOCK_INSPECTION_TEMPLATES.find(
-    (t) => t.id === parsed.data.id
-  )
-  if (!template) return { error: 'Template not found' }
-
-  template.name = parsed.data.name
-  template.description = parsed.data.description || null
-  template.sections = parsed.data.sections
-  if (parsed.data.is_active !== undefined) {
-    template.is_active = parsed.data.is_active
+  const supabase = await createClient()
+  const patch: Record<string, unknown> = {
+    name: parsed.data.name,
+    description: parsed.data.description || null,
+    sections: parsed.data.sections,
   }
-  template.updated_at = new Date().toISOString()
+  if (parsed.data.is_active !== undefined) {
+    patch.is_active = parsed.data.is_active
+  }
+
+  const { data: template, error } = await supabase
+    .from('inspection_templates')
+    .update(patch)
+    .eq('id', parsed.data.id)
+    .select('id, name')
+    .maybeSingle()
+  if (error) return { error: error.message }
+  if (!template) return { error: 'Template not found' }
 
   await logAudit({
     action: 'inspection_template.update',
     target_table: 'inspection_templates',
-    target_id: template.id,
-    target_label: template.name,
+    target_id: template.id as string,
+    target_label: template.name as string,
   })
 
   revalidatePath('/inspections/templates')
@@ -106,18 +101,26 @@ export async function toggleTemplateActive(templateId: string) {
   const auth = await requirePermission('inspection:templates')
   if (!auth.ok) return { error: auth.error }
 
-  const template = MOCK_INSPECTION_TEMPLATES.find((t) => t.id === templateId)
-  if (!template) return { error: 'Template not found' }
+  const supabase = await createClient()
+  const { data: current } = await supabase
+    .from('inspection_templates')
+    .select('id, name, is_active')
+    .eq('id', templateId)
+    .maybeSingle()
+  if (!current) return { error: 'Template not found' }
 
-  template.is_active = !template.is_active
-  template.updated_at = new Date().toISOString()
+  const { error } = await supabase
+    .from('inspection_templates')
+    .update({ is_active: !current.is_active })
+    .eq('id', templateId)
+  if (error) return { error: error.message }
 
   await logAudit({
     action: 'inspection_template.toggle_active',
     target_table: 'inspection_templates',
-    target_id: template.id,
-    target_label: template.name,
-    metadata: { is_active: template.is_active },
+    target_id: current.id as string,
+    target_label: current.name as string,
+    metadata: { is_active: !current.is_active },
   })
 
   revalidatePath('/inspections/templates')
@@ -129,6 +132,9 @@ export async function toggleTemplateActive(templateId: string) {
 export async function submitInspection(input: unknown) {
   const auth = await requirePermission('inspection:conduct')
   if (!auth.ok) return { error: auth.error }
+  if (!auth.profile.organization_id) {
+    return { error: 'Your account is not assigned to an organization' }
+  }
 
   const parsed = submitInspectionSchema.safeParse(input)
   if (!parsed.success) {
@@ -138,11 +144,15 @@ export async function submitInspection(input: unknown) {
   const { template_id, project_id, notes, responses, corrective_actions } =
     parsed.data
 
+  const supabase = await createClient()
+
   // Enforce that the inspection is complete: every required item must be
   // answered before the record can be saved.
-  const submitTemplate = MOCK_INSPECTION_TEMPLATES.find(
-    (t) => t.id === template_id
-  )
+  const { data: submitTemplate } = await supabase
+    .from('inspection_templates')
+    .select('sections')
+    .eq('id', template_id)
+    .maybeSingle()
   if (submitTemplate) {
     const isAnswered = (sectionId: string, itemId: string) => {
       const resp = responses.find(
@@ -152,9 +162,15 @@ export async function submitInspection(input: unknown) {
       if (resp.field_type === 'photo') return resp.photo_urls.length > 0
       return !!(resp.value && resp.value.trim() !== '')
     }
-    const missing = submitTemplate.sections
+    const sections = (submitTemplate.sections ?? []) as {
+      id: string
+      items: { id: string; required: boolean }[]
+    }[]
+    const missing = sections
       .flatMap((s) => s.items.map((i) => ({ section: s, item: i })))
-      .filter(({ section, item }) => item.required && !isAnswered(section.id, item.id))
+      .filter(
+        ({ section, item }) => item.required && !isAnswered(section.id, item.id)
+      )
     if (missing.length > 0) {
       return {
         error: `Inspection is incomplete: ${missing.length} required item(s) need a response.`,
@@ -162,9 +178,12 @@ export async function submitInspection(input: unknown) {
     }
   }
 
-  const inspectionId = randomUUID()
-  const now = new Date().toISOString()
-  const refNum = `INS-${new Date().getFullYear()}-${String(MOCK_INSPECTIONS.length + 1).padStart(3, '0')}`
+  const admin = createAdminClient()
+  const year = new Date().getFullYear()
+  const { count: inspCount } = await admin
+    .from('inspections')
+    .select('id', { count: 'exact', head: true })
+  const refNum = `INS-${year}-${String((inspCount ?? 0) + 1).padStart(3, '0')}`
 
   // Calculate compliance score
   let scorableItems = 0
@@ -184,112 +203,89 @@ export async function submitInspection(input: unknown) {
     (r) => r.field_type === 'compliance' && r.value === 'fully_compliant'
   ).length
 
-  const template = MOCK_INSPECTION_TEMPLATES.find((t) => t.id === template_id)
-  const project = MOCK_PROJECTS.find((p) => p.id === project_id)
-
   // Create inspection record
-  const inspection: Inspection = {
-    id: inspectionId,
-    reference_number: refNum,
-    template_id,
-    project_id,
-    organization_id: MOCK_CURRENT_USER.organization_id || '',
-    conducted_by: MOCK_USER_ID,
-    status: 'completed',
-    score,
-    total_items: responses.length,
-    scorable_items: scorableItems,
-    compliant_items: compliantItems,
-    notes: notes || null,
-    completed_at: now,
-    created_at: now,
-    updated_at: now,
-    template: template || undefined,
-    project: project || undefined,
-    conductor: {
-      id: MOCK_USER_ID,
-      username: MOCK_CURRENT_USER.username,
-      email: MOCK_CURRENT_USER.email,
-      full_name: MOCK_CURRENT_USER.full_name,
-      role: MOCK_CURRENT_USER.role,
-      organization_id: MOCK_CURRENT_USER.organization_id,
-      status: 'active',
-      terms_accepted_at: null,
-      privacy_accepted_at: null,
-      terms_version: null,
-      privacy_version: null,
-      created_at: MOCK_CURRENT_USER.created_at,
-      updated_at: MOCK_CURRENT_USER.updated_at,
-    },
+  const { data: inspection, error: inspError } = await supabase
+    .from('inspections')
+    .insert({
+      reference_number: refNum,
+      template_id,
+      project_id,
+      organization_id: auth.profile.organization_id,
+      conducted_by: auth.profile.id,
+      status: 'completed',
+      score,
+      total_items: responses.length,
+      scorable_items: scorableItems,
+      compliant_items: compliantItems,
+      notes: notes || null,
+      completed_at: new Date().toISOString(),
+    })
+    .select('id')
+    .single()
+  if (inspError || !inspection) {
+    return { error: inspError?.message ?? 'Failed to save inspection' }
   }
-  MOCK_INSPECTIONS.push(inspection)
+  const inspectionId = inspection.id as string
 
   // Create response records
-  for (const resp of responses) {
-    const responseRecord: InspectionResponse = {
-      id: randomUUID(),
-      inspection_id: inspectionId,
-      section_id: resp.section_id,
-      item_id: resp.item_id,
-      field_type: resp.field_type,
-      value: resp.value,
-      comment: resp.comment ?? null,
-      photo_urls: resp.photo_urls,
-      created_at: now,
-    }
-    MOCK_INSPECTION_RESPONSES.push(responseRecord)
+  if (responses.length > 0) {
+    const { error: respError } = await supabase
+      .from('inspection_responses')
+      .insert(
+        responses.map((resp) => ({
+          inspection_id: inspectionId,
+          section_id: resp.section_id,
+          item_id: resp.item_id,
+          field_type: resp.field_type,
+          value: resp.value,
+          comment: resp.comment ?? null,
+          photo_urls: resp.photo_urls,
+        }))
+      )
+    if (respError) return { error: respError.message }
   }
 
   // Create corrective actions for non-compliant items
   if (corrective_actions && corrective_actions.length > 0) {
     // Segregation of duties: prefer a separate approver-capable colleague over
     // the inspector, falling back to the inspector only if none exists.
-    const caApprover =
-      resolveDefaultApprover(
-        MOCK_USER_ID,
-        MOCK_CURRENT_USER.organization_id ?? null
-      ) ?? MOCK_CURRENT_USER
-    for (const ca of corrective_actions) {
-      const caId = randomUUID()
-      const caRefNum = `CA-${new Date().getFullYear()}-${String(MOCK_CORRECTIVE_ACTIONS.length + 1).padStart(3, '0')}`
-      const assignee = MOCK_PROFILES.find((p) => p.id === ca.assigned_to)
+    const approver = await resolveDefaultApprover(
+      auth.profile.id,
+      auth.profile.organization_id
+    )
+    const approverId = approver?.id ?? auth.profile.id
 
-      const caRecord: CorrectiveAction = {
-        id: caId,
-        reference_number: caRefNum,
-        event_id: null,
-        inspection_id: inspectionId,
-        section_id: ca.section_id,
-        item_id: ca.item_id,
-        item_label: ca.item_label,
-        project_id,
-        created_by: MOCK_USER_ID,
-        creator_org_id: MOCK_CURRENT_USER.organization_id || '',
-        assigned_to: ca.assigned_to,
-        approver_id: caApprover.id,
-        title: ca.title,
-        description: ca.description?.trim()
-          ? ca.description
-          : `Corrective action for inspection item: ${ca.item_label}`,
-        priority: ca.priority ?? 'medium',
-        status: 'open',
-        due_date: ca.due_date?.trim()
-          ? ca.due_date
-          : new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
-        photo_urls: [],
-        completed_at: null,
-        approved_at: null,
-        rejection_reason: null,
-        created_at: now,
-        updated_at: now,
-        inspection: { id: inspectionId, reference_number: refNum },
-        project: project || undefined,
-        creator: MOCK_CURRENT_USER,
-        assignee: assignee || undefined,
-        approver: caApprover,
-      }
-      MOCK_CORRECTIVE_ACTIONS.push(caRecord)
-    }
+    const { count: caCount } = await admin
+      .from('corrective_actions')
+      .select('id', { count: 'exact', head: true })
+    const baseSeq = caCount ?? 0
+
+    const rows = corrective_actions.map((ca, index) => ({
+      reference_number: `CA-${year}-${String(baseSeq + index + 1).padStart(3, '0')}`,
+      event_id: null,
+      inspection_id: inspectionId,
+      section_id: ca.section_id,
+      item_id: ca.item_id,
+      item_label: ca.item_label,
+      project_id,
+      created_by: auth.profile.id,
+      creator_org_id: auth.profile.organization_id,
+      assigned_to: ca.assigned_to,
+      approver_id: approverId,
+      title: ca.title,
+      description: ca.description?.trim()
+        ? ca.description
+        : `Corrective action for inspection item: ${ca.item_label}`,
+      priority: ca.priority ?? 'medium',
+      status: 'open' as const,
+      due_date: ca.due_date?.trim()
+        ? ca.due_date
+        : new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
+    }))
+    const { error: caError } = await supabase
+      .from('corrective_actions')
+      .insert(rows)
+    if (caError) return { error: caError.message }
   }
 
   await logAudit({

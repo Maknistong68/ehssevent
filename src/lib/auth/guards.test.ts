@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 
-// Shared, test-controlled cookie jar backing the mocked `next/headers`.
+// Shared, test-controlled cookie jar backing the mocked `next/headers`
+// (used only for the impersonation cookie now).
 const cookieJar = new Map<string, string>()
 
 vi.mock('next/headers', () => ({
@@ -12,45 +13,72 @@ vi.mock('next/headers', () => ({
   }),
 }))
 
-vi.mock('@/lib/mock-data', () => ({
-  MOCK_PROFILES: [
-    {
-      id: 'admin-1',
-      role: 'client_admin',
-      organization_id: 'org-1',
-      status: 'active',
+// Test-controlled Supabase session. `currentUserId` is the authenticated user
+// (null = unauthenticated); `profiles` is the backing profile table.
+let currentUserId: string | null = null
+
+const profiles: Record<
+  string,
+  { id: string; role: string; organization_id: string | null; status: string }
+> = {
+  'admin-1': {
+    id: 'admin-1',
+    role: 'client_admin',
+    organization_id: 'org-1',
+    status: 'active',
+  },
+  'user-1': {
+    id: 'user-1',
+    role: 'client_user',
+    organization_id: 'org-1',
+    status: 'active',
+  },
+  'sys-1': {
+    id: 'sys-1',
+    role: 'system_admin',
+    organization_id: null,
+    status: 'active',
+  },
+  'pending-1': {
+    id: 'pending-1',
+    role: 'client_user',
+    organization_id: 'org-1',
+    status: 'pending',
+  },
+  'invited-1': {
+    id: 'invited-1',
+    role: 'client_user',
+    organization_id: 'org-1',
+    status: 'invited',
+  },
+  'deact-1': {
+    id: 'deact-1',
+    role: 'client_user',
+    organization_id: 'org-1',
+    status: 'deactivated',
+  },
+}
+
+vi.mock('@/lib/supabase/server', () => ({
+  createClient: async () => ({
+    auth: {
+      getUser: async () => ({
+        data: {
+          user: currentUserId
+            ? { id: currentUserId, email: `${currentUserId}@test` }
+            : null,
+        },
+        error: currentUserId ? null : new Error('no session'),
+      }),
     },
-    {
-      id: 'user-1',
-      role: 'client_user',
-      organization_id: 'org-1',
-      status: 'active',
-    },
-    {
-      id: 'sys-1',
-      role: 'system_admin',
-      organization_id: null,
-      status: 'active',
-    },
-    {
-      id: 'pending-1',
-      role: 'client_user',
-      organization_id: 'org-1',
-      status: 'pending',
-    },
-    {
-      id: 'invited-1',
-      role: 'client_user',
-      organization_id: 'org-1',
-      status: 'invited',
-    },
-    {
-      id: 'deact-1',
-      role: 'client_user',
-      organization_id: 'org-1',
-      status: 'deactivated',
-    },
-  ],
+    from: () => ({
+      select: () => ({
+        eq: (_col: string, val: string) => ({
+          single: async () => ({ data: profiles[val] ?? null, error: null }),
+        }),
+      }),
+    }),
+  }),
 }))
 
 import {
@@ -58,57 +86,62 @@ import {
   requireUser,
   requireAdmin,
   requirePermission,
-  MOCK_SESSION_COOKIE,
   IMPERSONATION_COOKIE,
 } from '@/lib/auth/guards'
 
 beforeEach(() => {
   cookieJar.clear()
+  currentUserId = null
 })
 
 describe('getSessionProfile()', () => {
-  it('falls back to the default mock admin session when no cookie is set', async () => {
+  it('returns null when there is no authenticated session', async () => {
     const profile = await getSessionProfile()
-    expect(profile?.role).toBe('client_admin')
+    expect(profile).toBeNull()
   })
 
-  it('resolves the profile selected by the mock session cookie', async () => {
-    cookieJar.set(MOCK_SESSION_COOKIE, 'sys-1')
+  it('resolves the real signed-in profile', async () => {
+    currentUserId = 'sys-1'
     const profile = await getSessionProfile()
     expect(profile?.id).toBe('sys-1')
     expect(profile?.role).toBe('system_admin')
   })
 
-  it('falls back to default when the cookie points at an unknown id', async () => {
-    cookieJar.set(MOCK_SESSION_COOKIE, 'does-not-exist')
+  it('returns null when the auth user has no profile row', async () => {
+    currentUserId = 'no-profile'
     const profile = await getSessionProfile()
-    expect(profile?.role).toBe('client_admin')
+    expect(profile).toBeNull()
   })
 })
 
 describe('requireUser()', () => {
+  it('rejects an unauthenticated request', async () => {
+    const result = await requireUser()
+    expect(result.ok).toBe(false)
+  })
+
   it('admits an active account', async () => {
-    cookieJar.set(MOCK_SESSION_COOKIE, 'user-1')
+    currentUserId = 'user-1'
     const result = await requireUser()
     expect(result.ok).toBe(true)
   })
 
   it('rejects a pending account awaiting approval', async () => {
-    cookieJar.set(MOCK_SESSION_COOKIE, 'pending-1')
+    currentUserId = 'pending-1'
     const result = await requireUser()
     expect(result.ok).toBe(false)
     if (!result.ok) expect(result.error).toMatch(/approval/i)
   })
 
   it('rejects an invited (not yet accepted) account', async () => {
-    cookieJar.set(MOCK_SESSION_COOKIE, 'invited-1')
+    currentUserId = 'invited-1'
     const result = await requireUser()
     expect(result.ok).toBe(false)
     if (!result.ok) expect(result.error).toMatch(/invitation/i)
   })
 
   it('rejects a deactivated account', async () => {
-    cookieJar.set(MOCK_SESSION_COOKIE, 'deact-1')
+    currentUserId = 'deact-1'
     const result = await requireUser()
     expect(result.ok).toBe(false)
     if (!result.ok) expect(result.error).toMatch(/deactivated/i)
@@ -116,13 +149,14 @@ describe('requireUser()', () => {
 })
 
 describe('requireAdmin()', () => {
-  it('rejects a non-admin (default client_admin is not a platform admin)', async () => {
+  it('rejects a non-admin (client_admin is not a platform admin)', async () => {
+    currentUserId = 'admin-1'
     const result = await requireAdmin()
     expect(result.ok).toBe(false)
   })
 
   it('admits a platform admin role', async () => {
-    cookieJar.set(MOCK_SESSION_COOKIE, 'sys-1')
+    currentUserId = 'sys-1'
     const result = await requireAdmin()
     expect(result.ok).toBe(true)
   })
@@ -130,19 +164,19 @@ describe('requireAdmin()', () => {
 
 describe('requirePermission()', () => {
   it('admits a role that holds the permission', async () => {
-    cookieJar.set(MOCK_SESSION_COOKIE, 'user-1')
+    currentUserId = 'user-1'
     const result = await requirePermission('event:view')
     expect(result.ok).toBe(true)
   })
 
   it('rejects a role lacking the permission', async () => {
-    cookieJar.set(MOCK_SESSION_COOKIE, 'user-1')
+    currentUserId = 'user-1'
     const result = await requirePermission('event:manage')
     expect(result.ok).toBe(false)
   })
 
   it('blocks mutations while impersonating', async () => {
-    cookieJar.set(MOCK_SESSION_COOKIE, 'user-1')
+    currentUserId = 'user-1'
     cookieJar.set(IMPERSONATION_COOKIE, 'someone-else')
     const result = await requirePermission('event:create')
     expect(result.ok).toBe(false)
@@ -150,7 +184,7 @@ describe('requirePermission()', () => {
   })
 
   it('still allows view permissions while impersonating', async () => {
-    cookieJar.set(MOCK_SESSION_COOKIE, 'user-1')
+    currentUserId = 'user-1'
     cookieJar.set(IMPERSONATION_COOKIE, 'someone-else')
     const result = await requirePermission('event:view')
     expect(result.ok).toBe(true)

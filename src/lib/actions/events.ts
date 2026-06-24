@@ -1,52 +1,55 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import {
-  requirePermission,
-  requireUser,
-  getSessionProfile,
-} from '@/lib/auth/guards'
+import { requirePermission, requireUser } from '@/lib/auth/guards'
 import { allowedEventTransitions } from '@/lib/auth/permissions'
-import {
-  MOCK_EVENTS,
-  MOCK_EVENT_RESPONSES,
-  MOCK_PROFILES,
-  MOCK_ORGANIZATIONS,
-} from '@/lib/mock-data'
+import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import {
   createEventSchema,
   updateEventSchema,
   updateApprovalLevelSchema,
   closeoutEventSchema,
   approveCloseoutSchema,
-  createEventResponseSchema,
 } from '@/lib/validators/events'
 import { reduceGeoPrecision } from '@/lib/utils/geo'
 import { logAudit } from '@/lib/actions/audit'
 import { createNotification } from '@/lib/actions/notifications'
 import { EVENT_APPROVAL_LABELS } from '@/types/enums'
-import type { Event, EventResponse } from '@/types/database'
+
+// Generates the next EVT-YYYY-NNN reference. Counts via the service-role client
+// so the sequence is global (reference_number is unique across all orgs) rather
+// than scoped to what the caller can see under RLS.
+async function nextReferenceNumber(): Promise<string> {
+  const admin = createAdminClient()
+  const { count } = await admin
+    .from('events')
+    .select('id', { count: 'exact', head: true })
+  const year = new Date().getFullYear()
+  return `EVT-${year}-${String((count ?? 0) + 1).padStart(3, '0')}`
+}
 
 export async function createEvent(input: unknown) {
   const auth = await requirePermission('event:create')
   if (!auth.ok) return { error: auth.error }
+
+  if (!auth.profile.organization_id) {
+    return { error: 'Your account is not assigned to an organization' }
+  }
 
   const parsed = createEventSchema.safeParse(input)
   if (!parsed.success) {
     return { error: parsed.error.issues[0].message }
   }
 
-  const now = new Date().toISOString()
   const data = parsed.data
+  const now = new Date().toISOString()
 
-  const newEvent: Event = {
-    id: crypto.randomUUID(),
-    reference_number: `EVT-${new Date().getFullYear()}-${String(
-      MOCK_EVENTS.length + 1
-    ).padStart(3, '0')}`,
+  const payload = {
+    reference_number: await nextReferenceNumber(),
     project_id: data.project_id || null,
     created_by: auth.profile.id,
-    creator_org_id: auth.profile.organization_id ?? '',
+    creator_org_id: auth.profile.organization_id,
     approval_level: data.approval_level ?? 'draft',
     type: data.type,
     was_fire: data.was_fire,
@@ -89,34 +92,31 @@ export async function createEvent(input: unknown) {
     lead_investigator_id: data.lead_investigator_id || null,
     validator_id: data.validator_id || null,
     approver_id: data.approver_id || null,
-    closeout_photo_urls: [],
-    date_closure: null,
-    client_closeout_approved_at: null,
-    client_closeout_approved_by: null,
-    reporting_deadline_24h: null,
-    reporting_deadline_3day: null,
-    deadline_24h_met: false,
-    deadline_3day_met: false,
-    deadline_24h_met_at: null,
-    deadline_3day_met_at: null,
-    created_at: now,
-    updated_at: now,
   }
 
-  MOCK_EVENTS.push(newEvent)
+  const supabase = await createClient()
+  const { data: created, error } = await supabase
+    .from('events')
+    .insert(payload)
+    .select('id, reference_number')
+    .single()
+
+  if (error || !created) {
+    return { error: error?.message ?? 'Failed to create event' }
+  }
 
   await logAudit({
     action: 'event.create',
     target_table: 'events',
-    target_id: newEvent.id,
-    target_label: newEvent.reference_number,
-    metadata: { type: newEvent.type, approval_level: newEvent.approval_level },
+    target_id: created.id as string,
+    target_label: created.reference_number as string,
+    metadata: { type: payload.type, approval_level: payload.approval_level },
   })
 
   revalidatePath('/events')
   revalidatePath('/dashboard')
 
-  return { success: true, event_id: newEvent.id }
+  return { success: true, event_id: created.id as string }
 }
 
 // Fields a user may edit on an existing event, paired with how they map from
@@ -160,7 +160,12 @@ export async function updateEvent(input: unknown) {
   }
 
   const data = parsed.data
-  const event = MOCK_EVENTS.find((e) => e.id === data.event_id)
+  const supabase = await createClient()
+  const { data: event } = await supabase
+    .from('events')
+    .select('*')
+    .eq('id', data.event_id)
+    .maybeSingle()
   if (!event) return { error: 'Event not found' }
 
   // Closed events are immutable.
@@ -180,8 +185,9 @@ export async function updateEvent(input: unknown) {
     }
   }
 
-  // Build the changed-field diff and apply edits.
+  // Build the changed-field diff and the patch to persist.
   const diff: Record<string, { from: unknown; to: unknown }> = {}
+  const patch: Record<string, unknown> = {}
   const normalize = (key: string, value: unknown): unknown => {
     if (key === 'latitude' || key === 'longitude') {
       return typeof value === 'number' ? reduceGeoPrecision(value) : null
@@ -194,36 +200,41 @@ export async function updateEvent(input: unknown) {
   for (const key of EDITABLE_EVENT_FIELDS) {
     if (!(key in data)) continue
     const next = normalize(key, (data as Record<string, unknown>)[key])
-    const prev = (event as unknown as Record<string, unknown>)[key]
+    const prev = (event as Record<string, unknown>)[key]
     const changed = Array.isArray(next)
       ? JSON.stringify(next) !== JSON.stringify(prev)
       : next !== prev
     if (changed) {
       diff[key] = { from: prev, to: next }
-      ;(event as unknown as Record<string, unknown>)[key] = next
+      patch[key] = next
     }
   }
 
   // Latitude / longitude are normalized but not in EDITABLE_EVENT_FIELDS list.
   for (const key of ['latitude', 'longitude'] as const) {
     const next = normalize(key, (data as Record<string, unknown>)[key])
-    if (next !== event[key]) {
-      diff[key] = { from: event[key], to: next }
-      event[key] = next as number | null
+    if (next !== (event as Record<string, unknown>)[key]) {
+      diff[key] = { from: (event as Record<string, unknown>)[key], to: next }
+      patch[key] = next
     }
   }
 
-  if (Object.keys(diff).length === 0) {
-    return { success: true, event_id: event.id }
+  if (Object.keys(patch).length === 0) {
+    return { success: true, event_id: event.id as string }
   }
 
-  event.updated_at = new Date().toISOString()
+  // updated_at is maintained by the database trigger.
+  const { error } = await supabase
+    .from('events')
+    .update(patch)
+    .eq('id', event.id)
+  if (error) return { error: error.message }
 
   await logAudit({
     action: 'event.update',
     target_table: 'events',
-    target_id: event.id,
-    target_label: event.reference_number,
+    target_id: event.id as string,
+    target_label: event.reference_number as string,
     metadata: { changes: diff, reason: data.reason || null },
   })
 
@@ -231,7 +242,7 @@ export async function updateEvent(input: unknown) {
   revalidatePath('/events')
   revalidatePath('/dashboard')
 
-  return { success: true, event_id: event.id }
+  return { success: true, event_id: event.id as string }
 }
 
 export async function updateEventApprovalLevel(input: unknown) {
@@ -243,7 +254,12 @@ export async function updateEventApprovalLevel(input: unknown) {
     return { error: parsed.error.issues[0].message }
   }
 
-  const event = MOCK_EVENTS.find((e) => e.id === parsed.data.event_id)
+  const supabase = await createClient()
+  const { data: event } = await supabase
+    .from('events')
+    .select('*')
+    .eq('id', parsed.data.event_id)
+    .maybeSingle()
   if (!event) return { error: 'Event not found' }
 
   // Closed events are immutable for everyone (see PLAN, closed-event lock).
@@ -264,15 +280,18 @@ export async function updateEventApprovalLevel(input: unknown) {
   }
 
   const previousLevel = event.approval_level
-  event.approval_level = parsed.data.approval_level
-  event.updated_at = new Date().toISOString()
+  const { error } = await supabase
+    .from('events')
+    .update({ approval_level: parsed.data.approval_level })
+    .eq('id', event.id)
+  if (error) return { error: error.message }
 
   await logAudit({
     action:
       parsed.data.approval_level === 'closed' ? 'event.close' : 'event.advance',
     target_table: 'events',
-    target_id: event.id,
-    target_label: event.reference_number,
+    target_id: event.id as string,
+    target_label: event.reference_number as string,
     metadata: {
       approval_level: { from: previousLevel, to: parsed.data.approval_level },
     },
@@ -281,65 +300,15 @@ export async function updateEventApprovalLevel(input: unknown) {
   // Keep the event's reporter informed as it moves through the workflow.
   if (event.created_by && event.created_by !== auth.profile.id) {
     await createNotification({
-      user_id: event.created_by,
+      user_id: event.created_by as string,
       type: 'event_stage_changed',
       title: `Event ${event.reference_number} moved to ${
         EVENT_APPROVAL_LABELS[parsed.data.approval_level]
       }`,
-      body: event.event_description ?? null,
+      body: (event.event_description as string | null) ?? null,
       link: `/events/${event.id}`,
     })
   }
-
-  revalidatePath(`/events/${parsed.data.event_id}`)
-  revalidatePath('/events')
-  revalidatePath('/dashboard')
-
-  return { success: true }
-}
-
-export async function addEventResponse(input: unknown) {
-  const auth = await requirePermission('event:respond')
-  if (!auth.ok) return { error: auth.error }
-
-  const parsed = createEventResponseSchema.safeParse(input)
-  if (!parsed.success) {
-    return { error: parsed.error.issues[0].message }
-  }
-
-  const event = MOCK_EVENTS.find((e) => e.id === parsed.data.event_id)
-  if (!event) return { error: 'Event not found' }
-
-  const profile = await getSessionProfile()
-  if (!profile) return { error: 'Not authenticated' }
-
-  const responder = MOCK_PROFILES.find((p) => p.id === profile.id)
-  const responderOrgId = profile.organization_id ?? ''
-  const responderOrg = MOCK_ORGANIZATIONS.find((o) => o.id === responderOrgId)
-  const now = new Date().toISOString()
-
-  const response: EventResponse = {
-    id: crypto.randomUUID(),
-    event_id: parsed.data.event_id,
-    responded_by: profile.id,
-    responder_org_id: responderOrgId,
-    response_text: parsed.data.response_text,
-    photo_urls: parsed.data.photo_urls,
-    is_closing: parsed.data.is_closing,
-    created_at: now,
-    responder: responder ?? undefined,
-    responder_organization: responderOrg,
-  }
-  MOCK_EVENT_RESPONSES.push(response)
-  event.updated_at = now
-
-  await logAudit({
-    action: 'event.respond',
-    target_table: 'events',
-    target_id: event.id,
-    target_label: event.reference_number,
-    metadata: { is_closing: parsed.data.is_closing },
-  })
 
   revalidatePath(`/events/${parsed.data.event_id}`)
   revalidatePath('/events')
@@ -357,19 +326,29 @@ export async function closeoutEvent(input: unknown) {
     return { error: parsed.error.issues[0].message }
   }
 
-  const event = MOCK_EVENTS.find((e) => e.id === parsed.data.event_id)
+  const supabase = await createClient()
+  const { data: event } = await supabase
+    .from('events')
+    .select('id, reference_number')
+    .eq('id', parsed.data.event_id)
+    .maybeSingle()
   if (!event) return { error: 'Event not found' }
 
   const now = new Date().toISOString()
-  event.closeout_photo_urls = parsed.data.closeout_photo_urls
-  event.date_closure = parsed.data.date_closure || now
-  event.updated_at = now
+  const { error } = await supabase
+    .from('events')
+    .update({
+      closeout_photo_urls: parsed.data.closeout_photo_urls,
+      date_closure: parsed.data.date_closure || now,
+    })
+    .eq('id', event.id)
+  if (error) return { error: error.message }
 
   await logAudit({
     action: 'event.closeout',
     target_table: 'events',
-    target_id: event.id,
-    target_label: event.reference_number,
+    target_id: event.id as string,
+    target_label: event.reference_number as string,
     metadata: { photos: parsed.data.closeout_photo_urls.length },
   })
 
@@ -392,7 +371,12 @@ export async function approveCloseout(input: unknown) {
     return { error: parsed.error.issues[0].message }
   }
 
-  const event = MOCK_EVENTS.find((e) => e.id === parsed.data.event_id)
+  const supabase = await createClient()
+  const { data: event } = await supabase
+    .from('events')
+    .select('id, reference_number, date_closure, client_closeout_approved_at')
+    .eq('id', parsed.data.event_id)
+    .maybeSingle()
   if (!event) return { error: 'Event not found' }
   if (!event.date_closure) {
     return { error: 'Event must be closed out before it can be approved' }
@@ -402,15 +386,20 @@ export async function approveCloseout(input: unknown) {
   }
 
   const now = new Date().toISOString()
-  event.client_closeout_approved_at = now
-  event.client_closeout_approved_by = auth.profile.id
-  event.updated_at = now
+  const { error } = await supabase
+    .from('events')
+    .update({
+      client_closeout_approved_at: now,
+      client_closeout_approved_by: auth.profile.id,
+    })
+    .eq('id', event.id)
+  if (error) return { error: error.message }
 
   await logAudit({
     action: 'event.closeout_approved',
     target_table: 'events',
-    target_id: event.id,
-    target_label: event.reference_number,
+    target_id: event.id as string,
+    target_label: event.reference_number as string,
   })
 
   revalidatePath(`/events/${parsed.data.event_id}`)

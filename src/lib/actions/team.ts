@@ -3,8 +3,8 @@
 import { revalidatePath } from 'next/cache'
 import { requirePermission } from '@/lib/auth/guards'
 import { logAudit } from '@/lib/actions/audit'
-import { MOCK_PROFILES } from '@/lib/mock-data'
-import type { Profile } from '@/types/database'
+import { createAdminClient } from '@/lib/supabase/admin'
+import { env } from '@/lib/env'
 import type { UserRole, UserStatus } from '@/types/enums'
 
 export async function updateTeamMember(input: {
@@ -15,23 +15,42 @@ export async function updateTeamMember(input: {
   const auth = await requirePermission('user:manage')
   if (!auth.ok) return { error: auth.error }
 
-  const profile = MOCK_PROFILES.find((p) => p.id === input.user_id)
-  if (profile) {
-    if (input.role) profile.role = input.role
-    if (input.status) profile.status = input.status
-    profile.updated_at = new Date().toISOString()
+  const admin = createAdminClient()
+  // Scope edits to the admin's own organization for non-platform admins.
+  const { data: target } = await admin
+    .from('profiles')
+    .select('id, organization_id')
+    .eq('id', input.user_id)
+    .maybeSingle()
+  if (!target) return { error: 'User not found' }
+  if (
+    auth.profile.organization_id &&
+    target.organization_id !== auth.profile.organization_id
+  ) {
+    return { error: 'You can only manage members of your organization.' }
   }
+
+  const patch: Record<string, unknown> = {}
+  if (input.role) patch.role = input.role
+  if (input.status) patch.status = input.status
+
+  const { error } = await admin
+    .from('profiles')
+    .update(patch)
+    .eq('id', input.user_id)
+  if (error) return { error: error.message }
 
   revalidatePath('/team')
   return { success: true }
 }
 
 /**
- * Invite a member into the current admin's organization. Creates an `invited`
- * profile scoped to that organization.
+ * Invite a member into the current admin's organization by email. Sends a
+ * Supabase invitation; the created auth user yields a pending profile, which
+ * we assign to the admin's org with the chosen role and mark `invited`.
  */
 export async function inviteTeamMember(input: {
-  username: string
+  email: string
   role: UserRole
 }) {
   const auth = await requirePermission('user:manage')
@@ -40,38 +59,33 @@ export async function inviteTeamMember(input: {
     return { error: 'You are not assigned to an organization.' }
   }
 
-  const username = input.username.trim()
-  if (
-    MOCK_PROFILES.some(
-      (p) => p.username?.toLowerCase() === username.toLowerCase()
-    )
-  ) {
-    return { error: 'A user with this username already exists.' }
+  const email = input.email.trim().toLowerCase()
+  if (!email) return { error: 'An email address is required.' }
+
+  const admin = createAdminClient()
+  const { data: invited, error } =
+    await admin.auth.admin.inviteUserByEmail(email, {
+      redirectTo: `${env.NEXT_PUBLIC_APP_ORIGIN}/accept-invite`,
+    })
+  if (error || !invited?.user) {
+    return { error: error?.message ?? 'Failed to invite member' }
   }
 
-  const now = new Date().toISOString()
-  const newProfile: Profile = {
-    id: crypto.randomUUID(),
-    username,
-    email: null,
-    full_name: null,
-    role: input.role,
-    organization_id: auth.profile.organization_id,
-    status: 'invited',
-    terms_accepted_at: null,
-    privacy_accepted_at: null,
-    terms_version: null,
-    privacy_version: null,
-    created_at: now,
-    updated_at: now,
-  }
-  MOCK_PROFILES.push(newProfile)
+  const { error: profileError } = await admin
+    .from('profiles')
+    .update({
+      role: input.role,
+      organization_id: auth.profile.organization_id,
+      status: 'invited',
+    })
+    .eq('id', invited.user.id)
+  if (profileError) return { error: profileError.message }
 
   await logAudit({
     action: 'user.invite',
     target_table: 'profiles',
-    target_id: newProfile.id,
-    target_label: newProfile.username,
+    target_id: invited.user.id,
+    target_label: email,
     metadata: {
       role: input.role,
       organization_id: auth.profile.organization_id,
@@ -95,19 +109,29 @@ export async function approveTeamMember(input: {
     return { error: 'You are not assigned to an organization.' }
   }
 
-  const profile = MOCK_PROFILES.find((p) => p.id === input.user_id)
+  const admin = createAdminClient()
+  const { data: profile } = await admin
+    .from('profiles')
+    .select('id, email')
+    .eq('id', input.user_id)
+    .maybeSingle()
   if (!profile) return { error: 'User not found' }
 
-  profile.role = input.role
-  profile.organization_id = auth.profile.organization_id
-  profile.status = 'active'
-  profile.updated_at = new Date().toISOString()
+  const { error } = await admin
+    .from('profiles')
+    .update({
+      role: input.role,
+      organization_id: auth.profile.organization_id,
+      status: 'active',
+    })
+    .eq('id', input.user_id)
+  if (error) return { error: error.message }
 
   await logAudit({
     action: 'user.approve',
     target_table: 'profiles',
-    target_id: profile.id,
-    target_label: profile.email,
+    target_id: input.user_id,
+    target_label: (profile.email as string | null) ?? input.user_id,
     metadata: {
       role: input.role,
       organization_id: auth.profile.organization_id,

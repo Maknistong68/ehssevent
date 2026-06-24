@@ -2,7 +2,8 @@
 
 import { revalidatePath } from 'next/cache'
 import { requireUser, requirePermission } from '@/lib/auth/guards'
-import { MOCK_NOTIFICATION_PREFS, MOCK_ORGANIZATIONS } from '@/lib/mock-data'
+import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { defaultNotificationPreferences } from '@/lib/queries/settings'
 import { logAudit } from '@/lib/actions/audit'
 import {
@@ -15,8 +16,9 @@ import {
 type ActionResult = { success?: boolean; error?: string }
 
 /**
- * Persists the current user's notification preferences. Creates the row on
- * first save, otherwise mutates it in place.
+ * Persists the current user's notification preferences. Upserts the row so it
+ * is created on first save and updated thereafter. RLS limits the row to the
+ * authenticated user.
  */
 export async function updateNotificationPreferences(
   input: NotificationPreferencesInput
@@ -30,15 +32,13 @@ export async function updateNotificationPreferences(
   }
 
   const userId = auth.profile.id
-  const existing = MOCK_NOTIFICATION_PREFS.find((p) => p.user_id === userId)
-  if (existing) {
-    Object.assign(existing, parsed.data)
-  } else {
-    MOCK_NOTIFICATION_PREFS.push({
-      ...defaultNotificationPreferences(userId),
-      ...parsed.data,
-    })
-  }
+  const supabase = await createClient()
+  const { error } = await supabase.from('notification_preferences').upsert({
+    ...defaultNotificationPreferences(userId),
+    ...parsed.data,
+    user_id: userId,
+  })
+  if (error) return { error: error.message }
 
   await logAudit({
     action: 'update',
@@ -53,8 +53,9 @@ export async function updateNotificationPreferences(
 }
 
 /**
- * Updates the caller's organization. Gated by org:manage; mutates the mock
- * organization record.
+ * Updates the caller's organization. Gated by org:manage. Writes via the
+ * service-role client since organization rows are not directly user-writable
+ * under RLS.
  */
 export async function updateOrganization(
   input: UpdateOrganizationInput
@@ -67,20 +68,34 @@ export async function updateOrganization(
     return { error: parsed.error.issues[0].message }
   }
 
-  const org = MOCK_ORGANIZATIONS.find((o) => o.id === parsed.data.id)
-  if (!org) return { error: 'Organization not found' }
+  // A non-platform admin may only edit their own organization.
+  if (
+    auth.profile.organization_id &&
+    parsed.data.id !== auth.profile.organization_id
+  ) {
+    return { error: 'You can only edit your own organization.' }
+  }
 
-  org.name = parsed.data.name
-  org.contact_email = parsed.data.contact_email
-    ? parsed.data.contact_email
-    : null
-  org.updated_at = new Date().toISOString()
+  const admin = createAdminClient()
+  const { data: org, error } = await admin
+    .from('organizations')
+    .update({
+      name: parsed.data.name,
+      contact_email: parsed.data.contact_email
+        ? parsed.data.contact_email
+        : null,
+    })
+    .eq('id', parsed.data.id)
+    .select('id, name, contact_email')
+    .maybeSingle()
+  if (error) return { error: error.message }
+  if (!org) return { error: 'Organization not found' }
 
   await logAudit({
     action: 'update',
     target_table: 'organizations',
-    target_id: org.id,
-    target_label: org.name,
+    target_id: org.id as string,
+    target_label: org.name as string,
     metadata: { name: org.name, contact_email: org.contact_email },
   })
 

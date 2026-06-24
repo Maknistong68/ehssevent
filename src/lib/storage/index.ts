@@ -1,18 +1,16 @@
-// Mock object-storage seam.
+// Object-storage seam backed by Supabase Storage.
 //
-// In mock mode an "upload" creates a local object URL and a fake storage key,
-// recording an access-log entry so uploads are observable during the running
-// session. This keeps the call sites identical to a real storage backend.
-//
-// TODO(prod): replace with real object storage (e.g. Supabase Storage):
-//   - upload the File to `bucket` under a server-generated key,
-//   - return the durable public/signed URL + key,
-//   - write the access-log entry server-side (RLS-protected, append-only).
+// Uploads run from the browser using the authenticated Supabase client; the
+// `observation-photos` bucket is public, so the returned URL is a durable
+// public URL that survives refresh and redeploys. Storage RLS allows any
+// authenticated user to insert and anyone to read (see 0002_rls.sql).
+
+import { createClient } from '@/lib/supabase/client'
 
 export interface StorageObject {
-  /** Fake storage key, shaped like `bucket/uuid-filename`. */
+  /** Storage key within the bucket, shaped like `uuid-filename`. */
   key: string
-  /** Accessible URL for the uploaded object (an object URL in mock mode). */
+  /** Durable public URL for the uploaded object. */
   url: string
   bucket: string
   filename: string
@@ -21,27 +19,36 @@ export interface StorageObject {
   uploaded_at: string
 }
 
-// In-memory access log of uploads performed this session (mock only).
-export const STORAGE_ACCESS_LOG: StorageObject[] = []
-
 /**
- * "Uploads" a file to the given bucket. Returns a StorageObject whose `url` is
- * usable immediately by the UI. The upload is recorded in STORAGE_ACCESS_LOG.
+ * Uploads a file to the given bucket and returns a StorageObject whose `url`
+ * is a durable public URL usable immediately by the UI.
  */
-export function uploadToStorage(
+export async function uploadToStorage(
   file: File,
   bucket = 'observation-photos'
-): StorageObject {
-  const key = `${bucket}/${crypto.randomUUID()}-${file.name}`
-  const record: StorageObject = {
+): Promise<StorageObject> {
+  const supabase = createClient()
+  const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_')
+  const key = `${crypto.randomUUID()}-${safeName}`
+
+  const { error } = await supabase.storage.from(bucket).upload(key, file, {
+    cacheControl: '3600',
+    contentType: file.type || undefined,
+    upsert: false,
+  })
+  if (error) throw new Error(error.message)
+
+  const {
+    data: { publicUrl },
+  } = supabase.storage.from(bucket).getPublicUrl(key)
+
+  return {
     key,
-    url: URL.createObjectURL(file),
+    url: publicUrl,
     bucket,
     filename: file.name,
     size: file.size,
     content_type: file.type,
     uploaded_at: new Date().toISOString(),
   }
-  STORAGE_ACCESS_LOG.push(record)
-  return record
 }

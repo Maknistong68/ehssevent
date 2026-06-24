@@ -3,13 +3,6 @@ import { z } from 'zod'
 const optionalText = z.string().optional().or(z.literal(''))
 const optionalUuid = z.string().uuid().optional().or(z.literal(''))
 
-export const createEventResponseSchema = z.object({
-  event_id: z.string().uuid(),
-  response_text: z.string().min(1, 'Response cannot be empty'),
-  photo_urls: z.array(z.string()).default([]),
-  is_closing: z.boolean().default(false),
-})
-
 export const createEventSchema = z.object({
   // Workflow / classification — approval level defaults to 'draft' server-side,
   // classification is derived/defaulted server-side when not supplied.

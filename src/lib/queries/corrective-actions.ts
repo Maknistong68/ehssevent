@@ -1,4 +1,4 @@
-import { MOCK_CORRECTIVE_ACTIONS } from '@/lib/mock-data'
+import { createClient } from '@/lib/supabase/server'
 import { isCorrectiveActionOverdue } from '@/lib/utils/corrective-actions'
 import type { CorrectiveAction, Profile } from '@/types/database'
 import type {
@@ -20,73 +20,77 @@ interface CorrectiveActionFilters {
   search?: string
 }
 
+// corrective_actions has three FKs into profiles (created_by, assigned_to,
+// approver_id) so each embed is disambiguated by its constraint name.
+const CA_SELECT = `
+  *,
+  event:events(*),
+  inspection:inspections(id, reference_number),
+  project:projects(*),
+  creator:profiles!corrective_actions_created_by_fkey(*),
+  assignee:profiles!corrective_actions_assigned_to_fkey(*),
+  approver:profiles!corrective_actions_approver_id_fkey(*)
+`
+
 export async function getCorrectiveActions(
   filters: CorrectiveActionFilters = {}
 ): Promise<CorrectiveAction[]> {
-  let cas = [...MOCK_CORRECTIVE_ACTIONS]
+  const supabase = await createClient()
+  let query = supabase
+    .from('corrective_actions')
+    .select(CA_SELECT)
+    .order('created_at', { ascending: false })
 
-  if (filters.status) {
-    cas = cas.filter((ca) => ca.status === filters.status)
-  }
-  if (filters.priority) {
-    cas = cas.filter((ca) => ca.priority === filters.priority)
-  }
-  if (filters.project_id) {
-    cas = cas.filter((ca) => ca.project_id === filters.project_id)
-  }
-  if (filters.event_id) {
-    cas = cas.filter((ca) => ca.event_id === filters.event_id)
-  }
-  if (filters.inspection_id) {
-    cas = cas.filter((ca) => ca.inspection_id === filters.inspection_id)
-  }
-  if (filters.created_by?.length) {
-    cas = cas.filter((ca) => filters.created_by!.includes(ca.created_by))
-  }
-  if (filters.assigned_to?.length) {
-    cas = cas.filter(
-      (ca) => !!ca.assigned_to && filters.assigned_to!.includes(ca.assigned_to)
-    )
-  }
-  if (filters.overdue) {
-    cas = cas.filter((ca) => isCorrectiveActionOverdue(ca))
-  }
-  if (filters.date_from) {
-    cas = cas.filter((ca) => ca.created_at.slice(0, 10) >= filters.date_from!)
-  }
-  if (filters.date_to) {
-    cas = cas.filter((ca) => ca.created_at.slice(0, 10) <= filters.date_to!)
-  }
+  if (filters.status) query = query.eq('status', filters.status)
+  if (filters.priority) query = query.eq('priority', filters.priority)
+  if (filters.project_id) query = query.eq('project_id', filters.project_id)
+  if (filters.event_id) query = query.eq('event_id', filters.event_id)
+  if (filters.inspection_id)
+    query = query.eq('inspection_id', filters.inspection_id)
+  if (filters.created_by?.length)
+    query = query.in('created_by', filters.created_by)
+  if (filters.assigned_to?.length)
+    query = query.in('assigned_to', filters.assigned_to)
+  if (filters.date_from) query = query.gte('created_at', filters.date_from)
+  if (filters.date_to)
+    query = query.lte('created_at', `${filters.date_to}T23:59:59`)
   if (filters.search) {
-    const q = filters.search.toLowerCase()
-    cas = cas.filter(
-      (ca) =>
-        ca.title.toLowerCase().includes(q) ||
-        ca.reference_number.toLowerCase().includes(q)
-    )
+    const q = filters.search.replace(/[%,]/g, '')
+    query = query.or(`title.ilike.%${q}%,reference_number.ilike.%${q}%`)
   }
 
+  const { data, error } = await query
+  if (error) throw new Error(error.message)
+  let cas = (data ?? []) as unknown as CorrectiveAction[]
+
+  // Overdue depends on due_date + status, evaluated in app code.
+  if (filters.overdue) cas = cas.filter((ca) => isCorrectiveActionOverdue(ca))
   return cas
 }
 
 export async function getCorrectiveActionById(
   id: string
 ): Promise<CorrectiveAction | null> {
-  return MOCK_CORRECTIVE_ACTIONS.find((ca) => ca.id === id) ?? null
+  const supabase = await createClient()
+  const { data, error } = await supabase
+    .from('corrective_actions')
+    .select(CA_SELECT)
+    .eq('id', id)
+    .maybeSingle()
+  if (error) throw new Error(error.message)
+  return (data as unknown as CorrectiveAction) ?? null
 }
 
 export async function getEventCorrectiveActions(
   eventId: string
 ): Promise<CorrectiveAction[]> {
-  return MOCK_CORRECTIVE_ACTIONS.filter((ca) => ca.event_id === eventId)
+  return getCorrectiveActions({ event_id: eventId })
 }
 
 export async function getInspectionCorrectiveActions(
   inspectionId: string
 ): Promise<CorrectiveAction[]> {
-  return MOCK_CORRECTIVE_ACTIONS.filter(
-    (ca) => ca.inspection_id === inspectionId
-  )
+  return getCorrectiveActions({ inspection_id: inspectionId })
 }
 
 const byFullName = (a: Profile, b: Profile) =>
@@ -98,11 +102,23 @@ export async function getCorrectiveActionPeople(): Promise<{
   creators: Profile[]
   assignees: Profile[]
 }> {
+  const supabase = await createClient()
+  const { data, error } = await supabase
+    .from('corrective_actions')
+    .select(
+      `creator:profiles!corrective_actions_created_by_fkey(*),
+       assignee:profiles!corrective_actions_assigned_to_fkey(*)`
+    )
+  if (error) return { creators: [], assignees: [] }
+
   const creators = new Map<string, Profile>()
   const assignees = new Map<string, Profile>()
-  for (const ca of MOCK_CORRECTIVE_ACTIONS) {
-    if (ca.creator) creators.set(ca.creator.id, ca.creator)
-    if (ca.assignee) assignees.set(ca.assignee.id, ca.assignee)
+  for (const row of (data ?? []) as unknown as {
+    creator: Profile | null
+    assignee: Profile | null
+  }[]) {
+    if (row.creator) creators.set(row.creator.id, row.creator)
+    if (row.assignee) assignees.set(row.assignee.id, row.assignee)
   }
   return {
     creators: [...creators.values()].sort(byFullName),

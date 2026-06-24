@@ -7,25 +7,19 @@ import {
   useState,
   type ReactNode,
 } from 'react'
-import { MOCK_CURRENT_USER } from '@/lib/mock-data'
 import type { Profile } from '@/types/database'
 
-interface MockUser {
+interface AuthUser {
   id: string
   email: string | null
 }
 
 interface AuthContextType {
-  user: MockUser | null
+  user: AuthUser | null
   profile: Profile | null
   effectiveProfile: Profile | null
   isImpersonating: boolean
   loading: boolean
-}
-
-const mockUser: MockUser = {
-  id: MOCK_CURRENT_USER.id,
-  email: MOCK_CURRENT_USER.email,
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -38,11 +32,13 @@ const AuthContext = createContext<AuthContextType>({
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   // `profile` is the real signed-in identity; `effectiveProfile` is what the UI
-  // renders as — they differ while an admin is impersonating ("view as").
+  // renders as — they differ while an admin is impersonating ("view as"). Both
+  // are resolved from the server (which reads the Supabase session), so nothing
+  // here is hardcoded.
   const [state, setState] = useState<AuthContextType>({
-    user: mockUser,
-    profile: MOCK_CURRENT_USER,
-    effectiveProfile: MOCK_CURRENT_USER,
+    user: null,
+    profile: null,
+    effectiveProfile: null,
     isImpersonating: false,
     loading: true,
   })
@@ -57,10 +53,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           data: { profile: Profile | null; isImpersonating: boolean } | null
         ) => {
           if (!active) return
+          const profile = data?.profile ?? null
           setState({
-            user: mockUser,
-            profile: MOCK_CURRENT_USER,
-            effectiveProfile: data?.profile ?? MOCK_CURRENT_USER,
+            user: profile ? { id: profile.id, email: profile.email } : null,
+            profile,
+            effectiveProfile: profile,
             isImpersonating: Boolean(data?.isImpersonating),
             loading: false,
           })

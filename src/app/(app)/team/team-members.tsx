@@ -66,7 +66,7 @@ export function TeamMembers({ members, currentUserId }: TeamMembersProps) {
 
   // Invite dialog state
   const [inviteOpen, setInviteOpen] = useState(false)
-  const [inviteUsername, setInviteUsername] = useState('')
+  const [inviteEmail, setInviteEmail] = useState('')
   const [inviteRole, setInviteRole] = useState<UserRole>('client_user')
   const [inviting, setInviting] = useState(false)
 
@@ -130,7 +130,7 @@ export function TeamMembers({ members, currentUserId }: TeamMembersProps) {
   const handleInvite = async () => {
     setInviting(true)
     const result = await inviteTeamMember({
-      username: inviteUsername,
+      email: inviteEmail,
       role: inviteRole,
     })
     if (result.error) {
@@ -138,7 +138,7 @@ export function TeamMembers({ members, currentUserId }: TeamMembersProps) {
     } else {
       toast.success('Invitation sent')
       setInviteOpen(false)
-      setInviteUsername('')
+      setInviteEmail('')
       router.refresh()
     }
     setInviting(false)
@@ -166,12 +166,12 @@ export function TeamMembers({ members, currentUserId }: TeamMembersProps) {
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label>Username</Label>
+              <Label>Email</Label>
               <Input
-                type="text"
-                placeholder="username"
-                value={inviteUsername}
-                onChange={(e) => setInviteUsername(e.target.value)}
+                type="email"
+                placeholder="name@example.com"
+                value={inviteEmail}
+                onChange={(e) => setInviteEmail(e.target.value)}
               />
             </div>
             <div className="space-y-2">
@@ -194,7 +194,7 @@ export function TeamMembers({ members, currentUserId }: TeamMembersProps) {
             </div>
             <Button
               onClick={handleInvite}
-              disabled={inviting || !inviteUsername.trim()}
+              disabled={inviting || !inviteEmail.trim()}
               className="w-full"
             >
               {inviting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}

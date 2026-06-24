@@ -1,7 +1,7 @@
 export const dynamic = 'force-dynamic'
 
-import { notFound } from 'next/navigation'
-import { MOCK_USER_ID, MOCK_CURRENT_USER } from '@/lib/mock-data'
+import { notFound, redirect } from 'next/navigation'
+import { getSessionProfile } from '@/lib/auth/guards'
 import { getCorrectiveActionById } from '@/lib/queries/corrective-actions'
 import { getAssignableUsers } from '@/lib/queries/users'
 import { getRecordAuditLog } from '@/lib/queries/audit'
@@ -23,6 +23,9 @@ export async function generateMetadata({ params }: Props) {
 
 export default async function CorrectiveActionDetailPage({ params }: Props) {
   const { id } = await params
+  const profile = await getSessionProfile()
+  if (!profile) redirect('/login')
+
   const [ca, users, auditLog] = await Promise.all([
     getCorrectiveActionById(id),
     getAssignableUsers(),
@@ -32,13 +35,12 @@ export default async function CorrectiveActionDetailPage({ params }: Props) {
   if (!ca) notFound()
 
   const isAdmin =
-    MOCK_CURRENT_USER.role === 'system_admin' ||
-    MOCK_CURRENT_USER.role === 'support'
+    profile.role === 'system_admin' || profile.role === 'support'
 
   return (
     <CaDetail
       correctiveAction={ca}
-      currentUserId={MOCK_USER_ID}
+      currentUserId={profile.id}
       isAdmin={isAdmin}
       users={users}
       auditLog={auditLog}

@@ -1,6 +1,7 @@
 export const dynamic = 'force-dynamic'
 
-import { MOCK_CURRENT_USER } from '@/lib/mock-data'
+import { redirect } from 'next/navigation'
+import { getEffectiveProfile } from '@/lib/auth/impersonation'
 import {
   getNotificationPreferences,
   defaultNotificationPreferences,
@@ -12,7 +13,9 @@ export const metadata = {
 }
 
 export default async function SettingsPage() {
-  const profile = MOCK_CURRENT_USER
+  const { profile } = await getEffectiveProfile()
+  if (!profile) redirect('/login')
+
   const preferences =
     (await getNotificationPreferences()) ??
     defaultNotificationPreferences(profile.id)

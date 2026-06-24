@@ -15,7 +15,6 @@ import {
 export type Permission =
   | 'event:view'
   | 'event:create'
-  | 'event:respond'
   // Advance a contractor-owned workflow stage (contractor_review,
   // contractor_investigation). Held by contractor actors and, as oversight,
   // by client managers/admins.
@@ -43,7 +42,6 @@ export type Permission =
 const BASE_PERMISSIONS: Permission[] = [
   'event:view',
   'event:create',
-  'event:respond',
   'ca:view',
   'ca:create',
   'inspection:view',
@@ -81,7 +79,6 @@ const ADMIN_PERMISSIONS: Permission[] = [
 export const ALL_PERMISSIONS: Permission[] = [
   'event:view',
   'event:create',
-  'event:respond',
   'event:review',
   'event:manage',
   'ca:view',

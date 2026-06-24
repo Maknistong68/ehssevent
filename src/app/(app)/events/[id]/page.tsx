@@ -3,7 +3,7 @@ export const dynamic = 'force-dynamic'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft } from 'lucide-react'
-import { getEventById, getEventResponses } from '@/lib/queries/events'
+import { getEventById } from '@/lib/queries/events'
 import { getEventCorrectiveActions } from '@/lib/queries/corrective-actions'
 import { getAssignableUsers } from '@/lib/queries/users'
 import { getRecordAuditLog } from '@/lib/queries/audit'
@@ -28,9 +28,8 @@ export default async function EventPage({ params }: Props) {
     notFound()
   }
 
-  const [correctiveActions, responses, users, auditLog] = await Promise.all([
+  const [correctiveActions, users, auditLog] = await Promise.all([
     getEventCorrectiveActions(id),
-    getEventResponses(id),
     getAssignableUsers(),
     getRecordAuditLog('events', id),
   ])
@@ -46,7 +45,6 @@ export default async function EventPage({ params }: Props) {
       <EventDetail
         event={event}
         correctiveActions={correctiveActions}
-        responses={responses}
         users={users}
       />
       <Card>

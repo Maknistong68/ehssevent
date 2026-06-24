@@ -42,7 +42,10 @@ interface EditEventFormProps {
   users: AssignableUser[]
 }
 
-const WITH_RESPONSE: EventType[] = [
+// Safety event types that capture hazard detail, work/repeat flags, and an
+// immediate corrective action. Positive observations and leadership events
+// don't use this section.
+const SAFETY_EVENT_TYPES: EventType[] = [
   'near_miss',
   'incident',
   'hazard_identification',
@@ -140,9 +143,9 @@ export function EditEventForm({ event, users }: EditEventFormProps) {
   // Significant Hazard is also captured for Positive Observations (analytics
   // only) so positive findings can be tied back to the same hazard taxonomy.
   const showSignificantHazard =
-    WITH_RESPONSE.includes(type) || type === 'positive_observation'
-  const showWorkRepeat = WITH_RESPONSE.includes(type)
-  const showResponse = WITH_RESPONSE.includes(type)
+    SAFETY_EVENT_TYPES.includes(type) || type === 'positive_observation'
+  const showWorkRepeat = SAFETY_EVENT_TYPES.includes(type)
+  const showImmediateAction = SAFETY_EVENT_TYPES.includes(type)
 
   const addAttendee = () => {
     const name = attendeeInput.trim()
@@ -177,11 +180,11 @@ export function EditEventForm({ event, users }: EditEventFormProps) {
       impact_other: showImpact ? impactOther || undefined : undefined,
       work_related: showWorkRepeat ? workRelated : true,
       repeat_incident: showWorkRepeat ? repeatIncident : false,
-      stop_work: showResponse ? stopWork : false,
-      stop_work_details: showResponse
+      stop_work: showImmediateAction ? stopWork : false,
+      stop_work_details: showImmediateAction
         ? stopWorkDetails || undefined
         : undefined,
-      immediate_corrective_actions: showResponse
+      immediate_corrective_actions: showImmediateAction
         ? immediateCorrectiveActions || undefined
         : undefined,
       leadership_member_id: isLeadership
@@ -515,7 +518,7 @@ export function EditEventForm({ event, users }: EditEventFormProps) {
       </Card>
 
       {/* Immediate Corrective Action + Stop Work */}
-      {showResponse && (
+      {showImmediateAction && (
         <Card>
           <CardContent className="p-4 space-y-4">
             <h3 className="font-heading text-sm font-semibold tracking-tight">

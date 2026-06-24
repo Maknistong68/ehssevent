@@ -1,8 +1,4 @@
-import {
-  MOCK_INSPECTION_TEMPLATES,
-  MOCK_INSPECTIONS,
-  MOCK_INSPECTION_RESPONSES,
-} from '@/lib/mock-data'
+import { createClient } from '@/lib/supabase/server'
 import type {
   InspectionTemplate,
   Inspection,
@@ -19,73 +15,110 @@ interface InspectionFilters {
   search?: string
 }
 
+const TEMPLATE_SELECT = '*, creator:profiles(*)'
+const INSPECTION_SELECT = `
+  *,
+  template:inspection_templates(*),
+  project:projects(*),
+  conductor:profiles(*)
+`
+
 export async function getTemplates(): Promise<InspectionTemplate[]> {
-  return MOCK_INSPECTION_TEMPLATES.filter((t) => t.is_active)
+  const supabase = await createClient()
+  const { data, error } = await supabase
+    .from('inspection_templates')
+    .select(TEMPLATE_SELECT)
+    .eq('is_active', true)
+    .order('name', { ascending: true })
+  if (error) return []
+  return (data ?? []) as unknown as InspectionTemplate[]
 }
 
 export async function getAllTemplates(): Promise<InspectionTemplate[]> {
-  return [...MOCK_INSPECTION_TEMPLATES]
+  const supabase = await createClient()
+  const { data, error } = await supabase
+    .from('inspection_templates')
+    .select(TEMPLATE_SELECT)
+    .order('name', { ascending: true })
+  if (error) return []
+  return (data ?? []) as unknown as InspectionTemplate[]
 }
 
 export async function getTemplateById(
   id: string
 ): Promise<InspectionTemplate | null> {
-  return MOCK_INSPECTION_TEMPLATES.find((t) => t.id === id) ?? null
+  const supabase = await createClient()
+  const { data, error } = await supabase
+    .from('inspection_templates')
+    .select(TEMPLATE_SELECT)
+    .eq('id', id)
+    .maybeSingle()
+  if (error) return null
+  return (data as unknown as InspectionTemplate) ?? null
 }
 
 export async function getInspections(
   filters: InspectionFilters = {}
 ): Promise<Inspection[]> {
-  let inspections = [...MOCK_INSPECTIONS]
+  const supabase = await createClient()
+  let query = supabase
+    .from('inspections')
+    .select(INSPECTION_SELECT)
+    .order('created_at', { ascending: false })
 
-  if (filters.status) {
-    inspections = inspections.filter((i) => i.status === filters.status)
-  }
-  if (filters.project_id) {
-    inspections = inspections.filter((i) => i.project_id === filters.project_id)
-  }
-  if (filters.template_id) {
-    inspections = inspections.filter(
-      (i) => i.template_id === filters.template_id
-    )
-  }
-  if (filters.conducted_by?.length) {
-    inspections = inspections.filter((i) =>
-      filters.conducted_by!.includes(i.conducted_by)
-    )
-  }
+  if (filters.status) query = query.eq('status', filters.status)
+  if (filters.project_id) query = query.eq('project_id', filters.project_id)
+  if (filters.template_id) query = query.eq('template_id', filters.template_id)
+  if (filters.conducted_by?.length)
+    query = query.in('conducted_by', filters.conducted_by)
   if (filters.search) {
-    const q = filters.search.toLowerCase()
-    inspections = inspections.filter(
-      (i) =>
-        i.reference_number.toLowerCase().includes(q) ||
-        (i.notes && i.notes.toLowerCase().includes(q))
-    )
+    const q = filters.search.replace(/[%,]/g, '')
+    query = query.or(`reference_number.ilike.%${q}%,notes.ilike.%${q}%`)
   }
 
-  return inspections
+  const { data, error } = await query
+  if (error) throw new Error(error.message)
+  return (data ?? []) as unknown as Inspection[]
 }
 
 export async function getInspectionById(
   id: string
 ): Promise<Inspection | null> {
-  return MOCK_INSPECTIONS.find((i) => i.id === id) ?? null
+  const supabase = await createClient()
+  const { data, error } = await supabase
+    .from('inspections')
+    .select(INSPECTION_SELECT)
+    .eq('id', id)
+    .maybeSingle()
+  if (error) throw new Error(error.message)
+  return (data as unknown as Inspection) ?? null
 }
 
 export async function getInspectionResponses(
   inspectionId: string
 ): Promise<InspectionResponse[]> {
-  return MOCK_INSPECTION_RESPONSES.filter(
-    (r) => r.inspection_id === inspectionId
-  )
+  const supabase = await createClient()
+  const { data, error } = await supabase
+    .from('inspection_responses')
+    .select('*')
+    .eq('inspection_id', inspectionId)
+  if (error) return []
+  return (data ?? []) as unknown as InspectionResponse[]
 }
 
 // Distinct people who have conducted inspections, used to populate the
 // "Conducted by" multi-select filter options.
 export async function getInspectionConductors(): Promise<Profile[]> {
+  const supabase = await createClient()
+  const { data, error } = await supabase
+    .from('inspections')
+    .select('conductor:profiles(*)')
+  if (error) return []
   const map = new Map<string, Profile>()
-  for (const i of MOCK_INSPECTIONS) {
-    if (i.conductor) map.set(i.conductor.id, i.conductor)
+  for (const row of (data ?? []) as unknown as {
+    conductor: Profile | null
+  }[]) {
+    if (row.conductor) map.set(row.conductor.id, row.conductor)
   }
   return [...map.values()].sort((a, b) =>
     (a.full_name ?? '').localeCompare(b.full_name ?? '')

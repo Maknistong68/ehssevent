@@ -7,8 +7,6 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { CaCard } from '@/components/corrective-actions/ca-card'
-import { EventResponseTimeline } from './event-response-timeline'
-import { EventResponseForm } from './event-response-form'
 import { Plus, Pencil } from 'lucide-react'
 import { PhotoGrid } from '@/components/shared/photo-lightbox'
 import {
@@ -39,7 +37,7 @@ import {
   EVENT_HAZARD_LABELS,
   EVENT_IMPACTED_PARTY_LABELS,
 } from '@/types/enums'
-import type { Event, CorrectiveAction, EventResponse } from '@/types/database'
+import type { Event, CorrectiveAction } from '@/types/database'
 import type { AssignableUser } from '@/lib/queries/users'
 import { resolvePerson, displayName } from '@/lib/utils/people'
 
@@ -60,12 +58,10 @@ const fmt = (d: string | null) =>
 export function EventDetail({
   event,
   correctiveActions = [],
-  responses = [],
   users = [],
 }: {
   event: Event
   correctiveActions?: CorrectiveAction[]
-  responses?: EventResponse[]
   users?: AssignableUser[]
 }) {
   const router = useRouter()
@@ -384,15 +380,6 @@ export function EventDetail({
           )}
         </CardContent>
       </Card>
-
-      {/* Responses */}
-      <div className="space-y-4">
-        <h3 className="font-heading text-sm font-semibold tracking-tight">
-          Responses
-        </h3>
-        <EventResponseTimeline responses={responses} />
-        <EventResponseForm eventId={event.id} canClose />
-      </div>
 
       {/* Closeout evidence — read-only preview visible to all viewers once the
           event has been closed out. */}

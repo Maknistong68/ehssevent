@@ -1,5 +1,5 @@
-import { MOCK_EVENTS, MOCK_EVENT_RESPONSES } from '@/lib/mock-data'
-import type { Event, EventResponse } from '@/types/database'
+import { createClient } from '@/lib/supabase/server'
+import type { Event } from '@/types/database'
 import type {
   EventApprovalLevel,
   EventType,
@@ -17,54 +17,58 @@ interface EventFilters {
   search?: string
 }
 
+// Embedded relations matching the Event interface. The profiles table has
+// several FKs from events (created_by, reviewer_id, …) so the creator join is
+// disambiguated by the constraint name. Cross-org creator/org rows may resolve
+// to null when RLS hides them — the UI already treats those as optional.
+const EVENT_SELECT = `
+  *,
+  project:projects(*),
+  creator:profiles!events_created_by_fkey(*),
+  creator_organization:organizations!events_creator_org_id_fkey(*)
+`
+
 export async function getEvents(filters: EventFilters = {}): Promise<Event[]> {
-  let events = [...MOCK_EVENTS]
+  const supabase = await createClient()
 
-  if (filters.approval_level) {
-    events = events.filter((e) => e.approval_level === filters.approval_level)
-  }
-  if (filters.type) {
-    events = events.filter((e) => e.type === filters.type)
-  }
-  if (filters.classification) {
-    events = events.filter((e) => e.classification === filters.classification)
-  }
-  if (filters.project_id) {
-    events = events.filter((e) => e.project_id === filters.project_id)
-  }
-  if (filters.site) {
-    events = events.filter((e) => e.site === filters.site)
-  }
-  if (filters.date_from) {
-    events = events.filter(
-      (e) => !!e.event_date && e.event_date.slice(0, 10) >= filters.date_from!
-    )
-  }
-  if (filters.date_to) {
-    events = events.filter(
-      (e) => !!e.event_date && e.event_date.slice(0, 10) <= filters.date_to!
-    )
-  }
+  // RLS scopes the rows to the caller's organization (or all rows for platform
+  // admins), so no app-side org filtering is needed here.
+  let query = supabase
+    .from('events')
+    .select(EVENT_SELECT)
+    .order('reported_date', { ascending: false, nullsFirst: false })
+    .order('created_at', { ascending: false })
+
+  if (filters.approval_level)
+    query = query.eq('approval_level', filters.approval_level)
+  if (filters.type) query = query.eq('type', filters.type)
+  if (filters.classification)
+    query = query.eq('classification', filters.classification)
+  if (filters.project_id) query = query.eq('project_id', filters.project_id)
+  if (filters.site) query = query.eq('site', filters.site)
+  if (filters.date_from) query = query.gte('event_date', filters.date_from)
+  if (filters.date_to)
+    query = query.lte('event_date', `${filters.date_to}T23:59:59`)
   if (filters.search) {
-    const q = filters.search.toLowerCase()
-    events = events.filter(
-      (e) =>
-        e.reference_number.toLowerCase().includes(q) ||
-        (e.event_description &&
-          e.event_description.toLowerCase().includes(q)) ||
-        (e.specific_area && e.specific_area.toLowerCase().includes(q))
+    const q = filters.search.replace(/[%,]/g, '')
+    query = query.or(
+      `reference_number.ilike.%${q}%,event_description.ilike.%${q}%,specific_area.ilike.%${q}%`
     )
   }
 
-  return events
+  const { data, error } = await query
+  if (error) throw new Error(error.message)
+  return (data ?? []) as unknown as Event[]
 }
 
 export async function getEventById(id: string): Promise<Event | null> {
-  return MOCK_EVENTS.find((e) => e.id === id) ?? null
-}
+  const supabase = await createClient()
+  const { data, error } = await supabase
+    .from('events')
+    .select(EVENT_SELECT)
+    .eq('id', id)
+    .maybeSingle()
 
-export async function getEventResponses(
-  eventId: string
-): Promise<EventResponse[]> {
-  return MOCK_EVENT_RESPONSES.filter((r) => r.event_id === eventId)
+  if (error) throw new Error(error.message)
+  return (data as unknown as Event) ?? null
 }

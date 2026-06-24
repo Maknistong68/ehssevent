@@ -1,9 +1,4 @@
-import {
-  MOCK_PROJECTS,
-  MOCK_PROJECT_CONTRACTORS,
-  MOCK_ORGANIZATIONS,
-  MOCK_PROFILES,
-} from '@/lib/mock-data'
+import { createClient } from '@/lib/supabase/server'
 import type {
   Project,
   Organization,
@@ -12,27 +7,59 @@ import type {
 } from '@/types/database'
 
 export async function getProjects(): Promise<Project[]> {
-  return MOCK_PROJECTS.filter((p) => p.is_active)
+  const supabase = await createClient()
+  const { data, error } = await supabase
+    .from('projects')
+    .select('*, client_organization:organizations(*)')
+    .eq('is_active', true)
+    .order('name', { ascending: true })
+  if (error) return []
+  return (data ?? []) as unknown as Project[]
 }
 
 export async function getProjectById(id: string): Promise<Project | null> {
-  return MOCK_PROJECTS.find((p) => p.id === id) ?? null
+  const supabase = await createClient()
+  const { data, error } = await supabase
+    .from('projects')
+    .select('*, client_organization:organizations(*)')
+    .eq('id', id)
+    .maybeSingle()
+  if (error) return null
+  return (data as unknown as Project) ?? null
 }
 
 export async function getProjectContractors(
   projectId: string
 ): Promise<ProjectContractor[]> {
-  return MOCK_PROJECT_CONTRACTORS.filter((pc) => pc.project_id === projectId)
+  const supabase = await createClient()
+  const { data, error } = await supabase
+    .from('project_contractors')
+    .select('*, contractor_organization:organizations(*)')
+    .eq('project_id', projectId)
+  if (error) return []
+  return (data ?? []) as unknown as ProjectContractor[]
 }
 
 export async function getContractorOrganizations(): Promise<Organization[]> {
-  return MOCK_ORGANIZATIONS.filter(
-    (o) => o.org_type === 'contractor' && o.is_active
-  )
+  const supabase = await createClient()
+  const { data, error } = await supabase
+    .from('organizations')
+    .select('*')
+    .eq('org_type', 'contractor')
+    .eq('is_active', true)
+    .order('name', { ascending: true })
+  if (error) return []
+  return (data ?? []) as unknown as Organization[]
 }
 
 export async function getOrganizationUsers(orgId: string): Promise<Profile[]> {
-  return MOCK_PROFILES.filter(
-    (p) => p.organization_id === orgId && p.status === 'active'
-  )
+  const supabase = await createClient()
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('organization_id', orgId)
+    .eq('status', 'active')
+    .order('full_name', { ascending: true, nullsFirst: false })
+  if (error) return []
+  return (data ?? []) as unknown as Profile[]
 }

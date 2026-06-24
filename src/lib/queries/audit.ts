@@ -1,4 +1,4 @@
-import { MOCK_AUDIT_LOGS } from '@/lib/mock-data'
+import { createClient } from '@/lib/supabase/server'
 
 export interface AuditLogEntry {
   id: string
@@ -23,36 +23,32 @@ export interface AuditLogFilters {
   table?: string
 }
 
-function byCreatedAtDesc(a: AuditLogEntry, b: AuditLogEntry): number {
-  return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-}
+const AUDIT_SELECT =
+  'id, actor_id, actor_email, action, target_table, target_id, target_label, metadata, created_at'
 
 export async function getAuditLogs(
   limit = 100,
   filters: AuditLogFilters = {}
 ): Promise<AuditLogEntry[]> {
-  let logs = [...MOCK_AUDIT_LOGS]
+  const supabase = await createClient()
+  let query = supabase
+    .from('audit_logs')
+    .select(AUDIT_SELECT)
+    .order('created_at', { ascending: false })
+    .limit(limit)
 
-  if (filters.from) {
-    const from = new Date(filters.from).getTime()
-    logs = logs.filter((l) => new Date(l.created_at).getTime() >= from)
-  }
+  if (filters.from) query = query.gte('created_at', filters.from)
   if (filters.to) {
     // Treat `to` as inclusive of the whole day.
-    const to = new Date(filters.to).getTime() + 24 * 60 * 60 * 1000 - 1
-    logs = logs.filter((l) => new Date(l.created_at).getTime() <= to)
+    const end = new Date(new Date(filters.to).getTime() + 24 * 60 * 60 * 1000 - 1)
+    query = query.lte('created_at', end.toISOString())
   }
-  if (filters.actor) {
-    const needle = filters.actor.toLowerCase()
-    logs = logs.filter((l) =>
-      (l.actor_email ?? '').toLowerCase().includes(needle)
-    )
-  }
-  if (filters.table) {
-    logs = logs.filter((l) => l.target_table === filters.table)
-  }
+  if (filters.actor) query = query.ilike('actor_email', `%${filters.actor}%`)
+  if (filters.table) query = query.eq('target_table', filters.table)
 
-  return logs.sort(byCreatedAtDesc).slice(0, limit)
+  const { data, error } = await query
+  if (error) return []
+  return (data ?? []) as unknown as AuditLogEntry[]
 }
 
 /**
@@ -63,16 +59,31 @@ export async function getRecordAuditLog(
   table: string,
   id: string
 ): Promise<AuditLogEntry[]> {
-  return MOCK_AUDIT_LOGS.filter(
-    (l) => l.target_table === table && l.target_id === id
-  ).sort(byCreatedAtDesc)
+  const supabase = await createClient()
+  const { data, error } = await supabase
+    .from('audit_logs')
+    .select(AUDIT_SELECT)
+    .eq('target_table', table)
+    .eq('target_id', id)
+    .order('created_at', { ascending: false })
+
+  if (error) return []
+  return (data ?? []) as unknown as AuditLogEntry[]
 }
 
 /** Distinct target tables present in the log, for the admin filter dropdown. */
 export async function getAuditTables(): Promise<string[]> {
+  const supabase = await createClient()
+  const { data, error } = await supabase
+    .from('audit_logs')
+    .select('target_table')
+    .not('target_table', 'is', null)
+
+  if (error) return []
   const tables = new Set<string>()
-  for (const l of MOCK_AUDIT_LOGS) {
-    if (l.target_table) tables.add(l.target_table)
+  for (const row of data ?? []) {
+    const t = (row as { target_table: string | null }).target_table
+    if (t) tables.add(t)
   }
   return [...tables].sort()
 }

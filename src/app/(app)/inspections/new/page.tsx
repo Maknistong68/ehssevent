@@ -7,9 +7,9 @@ import { getAssignableUsers } from '@/lib/queries/users'
 import { InspectionForm } from '@/components/inspections/inspection-form'
 import { EmptyState } from '@/components/shared/empty-state'
 import { Card, CardContent } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
 import { ClipboardCheck } from 'lucide-react'
-import { MOCK_CURRENT_USER, MOCK_ORGANIZATIONS } from '@/lib/mock-data'
+import { redirect } from 'next/navigation'
+import { getEffectiveProfile } from '@/lib/auth/impersonation'
 import { displayName } from '@/lib/utils/people'
 
 export const metadata = {
@@ -22,14 +22,17 @@ interface Props {
 
 export default async function NewInspectionPage({ searchParams }: Props) {
   const params = await searchParams
+  const { profile } = await getEffectiveProfile()
+  if (!profile) redirect('/login')
+
   const [templates, projects, assignableUsers] = await Promise.all([
     getTemplates(),
     getProjects(),
     getAssignableUsers(),
   ])
 
-  const organizationName = MOCK_ORGANIZATIONS[0]?.name || 'Unknown Organization'
-  const conductedByName = displayName(MOCK_CURRENT_USER)
+  const organizationName = profile.organization?.name || 'Unknown Organization'
+  const conductedByName = displayName(profile)
 
   // If template_id is in search params, use that template
   const selectedTemplate = params.template_id

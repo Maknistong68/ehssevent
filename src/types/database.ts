@@ -158,20 +158,6 @@ export interface Event {
   project?: Project
   creator?: Profile
   creator_organization?: Organization
-  responses?: EventResponse[]
-}
-
-export interface EventResponse {
-  id: string
-  event_id: string
-  responded_by: string
-  responder_org_id: string
-  response_text: string
-  photo_urls: string[]
-  is_closing: boolean
-  created_at: string
-  responder?: Profile
-  responder_organization?: Organization
 }
 
 export interface CorrectiveAction {

@@ -62,11 +62,13 @@ export function PhotoUpload({
         continue
       }
 
-      // Route through the mock storage seam (returns a usable URL + fake key
-      // and records an access-log entry). Swapped for real object storage in
-      // the prod phase.
-      const { url } = uploadToStorage(file, bucket)
-      newPhotos.push(url)
+      // Upload to Supabase Storage and keep the durable public URL.
+      try {
+        const { url } = await uploadToStorage(file, bucket)
+        newPhotos.push(url)
+      } catch {
+        setError('Upload failed. Please try again.')
+      }
     }
 
     onPhotosChange([...photos, ...newPhotos])

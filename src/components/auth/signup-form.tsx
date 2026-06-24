@@ -4,12 +4,20 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { AuthShell, AuthField, AuthAlert } from '@/components/auth/auth-shell'
-import { AlertCircle, CheckCircle2, Loader2, Lock, User } from 'lucide-react'
+import {
+  AlertCircle,
+  CheckCircle2,
+  Loader2,
+  Lock,
+  Mail,
+  User,
+} from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { signup } from '@/lib/actions/auth'
 
 export function SignupForm() {
   const [username, setUsername] = useState('')
+  const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [termsAccepted, setTermsAccepted] = useState(false)
@@ -44,6 +52,7 @@ export function SignupForm() {
     // Send consent to the server so it can be recorded (proof of consent).
     const result = await signup({
       username,
+      email,
       password,
       confirm_password: confirmPassword,
       terms_accepted: termsAccepted,
@@ -95,6 +104,15 @@ export function SignupForm() {
           autoComplete="username"
           value={username}
           onChange={(e) => setUsername(e.target.value)}
+          required
+        />
+        <AuthField
+          icon={<Mail className="h-5 w-5" />}
+          type="email"
+          placeholder={t('emailPlaceholder')}
+          autoComplete="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
           required
         />
         <AuthField

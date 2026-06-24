@@ -1,6 +1,5 @@
 'use server'
 
-import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import {
   loginSchema,
@@ -12,10 +11,15 @@ import {
   CURRENT_TERMS_VERSION,
   CURRENT_PRIVACY_VERSION,
 } from '@/lib/constants/legal'
-import { IMPERSONATION_COOKIE, MOCK_SESSION_COOKIE } from '@/lib/auth/guards'
-import { MOCK_PROFILES } from '@/lib/mock-data'
-import type { Profile } from '@/types/database'
+import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
+import { env } from '@/lib/env'
 
+/**
+ * Real sign-in against Supabase Auth. Verifies the password, then confirms the
+ * account is `active` (a `pending`/`invited`/`deactivated` user is signed back
+ * out with an explanatory message). On success, lands on the dashboard.
+ */
 export async function login(formData: FormData) {
   const parsed = loginSchema.safeParse({
     email: formData.get('email'),
@@ -26,35 +30,48 @@ export async function login(formData: FormData) {
     return { error: parsed.error.issues[0].message }
   }
 
+  const supabase = await createClient()
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email: parsed.data.email,
+    password: parsed.data.password,
+  })
+
+  if (error || !data.user) {
+    return { error: 'Invalid email or password.' }
+  }
+
+  // Gate on lifecycle status so a not-yet-approved account can't slip through.
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('status')
+    .eq('id', data.user.id)
+    .single()
+
+  if (profile?.status !== 'active') {
+    await supabase.auth.signOut()
+    const message =
+      profile?.status === 'pending'
+        ? 'Your account is awaiting administrator approval.'
+        : profile?.status === 'invited'
+          ? 'Please accept your invitation to activate your account.'
+          : profile?.status === 'deactivated'
+            ? 'This account has been deactivated.'
+            : 'Your account is not active.'
+    return { error: message }
+  }
+
   redirect('/dashboard')
 }
 
 /**
- * Mock role launcher. Sets the `mock_session_uid` cookie to the chosen profile
- * so the whole stack (server guards + client effective profile) signs in as
- * that role, then lands on the role-aware dashboard. No PII is collected — the
- * caller only passes a profile id selected from the login role cards.
+ * Restricted self-signup. Creates the Supabase Auth user; a database trigger
+ * (handle_new_user) inserts a matching profile in `pending` status with no
+ * organization. The account cannot authenticate until an administrator approves
+ * it (assigning a role + organization and flipping status to `active`).
+ *
+ * Consent (terms/privacy version) is passed as user metadata so the trigger can
+ * stamp provable consent timestamps — the PDPL lawful-basis record.
  */
-export async function loginAs(profileId: string) {
-  const profile = MOCK_PROFILES.find((p) => p.id === profileId)
-  if (!profile) {
-    return { error: 'Unknown role selected.' }
-  }
-
-  // httpOnly so the mock session is set only via this server action, mirroring
-  // startImpersonation.
-  const cookieStore = await cookies()
-  cookieStore.set(MOCK_SESSION_COOKIE, profileId, {
-    httpOnly: true,
-    sameSite: 'lax',
-    path: '/',
-  })
-  // Clear any leftover impersonation so the freshly selected role is clean.
-  cookieStore.delete(IMPERSONATION_COOKIE)
-
-  redirect('/dashboard')
-}
-
 export async function signup(input: SignupInput) {
   const parsed = signupSchema.safeParse(input)
 
@@ -62,47 +79,38 @@ export async function signup(input: SignupInput) {
     return { error: parsed.error.issues[0].message }
   }
 
-  // Username is the identity key — reject duplicates (case-insensitive) so two
-  // accounts can never collide on sign-in.
   const username = parsed.data.username.trim()
-  if (
-    MOCK_PROFILES.some(
-      (p) => p.username?.toLowerCase() === username.toLowerCase()
-    )
-  ) {
+
+  // Username is the human identity key — reject duplicates up front for a clear
+  // message (the DB unique constraint is the ultimate guard).
+  const admin = createAdminClient()
+  const { data: existing } = await admin
+    .from('profiles')
+    .select('id')
+    .ilike('username', username)
+    .maybeSingle()
+  if (existing) {
     return { error: 'This username is already taken.' }
   }
 
-  // Record provable consent at the moment of acceptance: timestamp + the exact
-  // policy version the user agreed to. This is what lets the controller later
-  // demonstrate a valid lawful basis under the PDPL.
-  const now = new Date().toISOString()
-  const consent = {
-    terms_accepted_at: now,
-    privacy_accepted_at: now,
-    terms_version: CURRENT_TERMS_VERSION,
-    privacy_version: CURRENT_PRIVACY_VERSION,
-  }
+  const supabase = await createClient()
+  const { error } = await supabase.auth.signUp({
+    email: parsed.data.email,
+    password: parsed.data.password,
+    options: {
+      emailRedirectTo: `${env.NEXT_PUBLIC_APP_ORIGIN ?? ''}/login`,
+      data: {
+        username,
+        terms_version: CURRENT_TERMS_VERSION,
+        privacy_version: CURRENT_PRIVACY_VERSION,
+      },
+    },
+  })
 
-  // Restricted signup: a self-registered account lands in `pending` and cannot
-  // authenticate until an administrator reviews and approves it (assigning a
-  // real role and organization). Role/org are placeholders until then.
-  // TODO(prod): create the auth user and INSERT the profile row with these
-  // consent fields (resolve the new user id from Supabase Auth). The consent
-  // stamp must be persisted, not just computed.
-  const newProfile: Profile = {
-    id: crypto.randomUUID(),
-    username,
-    email: null,
-    full_name: null,
-    role: 'client_user',
-    organization_id: null,
-    status: 'pending',
-    ...consent,
-    created_at: now,
-    updated_at: now,
+  if (error) {
+    // Most commonly a duplicate email.
+    return { error: 'Could not create the account. Try a different email.' }
   }
-  MOCK_PROFILES.push(newProfile)
 
   return {
     success:
@@ -111,24 +119,36 @@ export async function signup(input: SignupInput) {
 }
 
 /**
- * Mock invite acceptance. In production this would be reached via a signed
- * invite token; here it flips the matching `invited` profile to `active`
- * (the "set password" step is represented by the form that calls this).
+ * Invite acceptance. A genuine flow arrives via a signed Supabase invite link;
+ * here we simply confirm the account is active once the password is set. Kept
+ * for the existing accept-invite form contract.
  */
 export async function acceptInvite(input: {
   username: string
 }): Promise<{ success?: string; error?: string }> {
-  const profile = MOCK_PROFILES.find(
-    (p) => p.username?.toLowerCase() === input.username.trim().toLowerCase()
-  )
+  const admin = createAdminClient()
+  const { data: profile } = await admin
+    .from('profiles')
+    .select('id, status')
+    .ilike('username', input.username.trim())
+    .maybeSingle()
+
   if (!profile || profile.status !== 'invited') {
     return { error: 'No pending invitation was found for this username.' }
   }
-  profile.status = 'active'
-  profile.updated_at = new Date().toISOString()
+
+  await admin
+    .from('profiles')
+    .update({ status: 'active', updated_at: new Date().toISOString() })
+    .eq('id', profile.id)
+
   return { success: 'Invitation accepted — your account is now active.' }
 }
 
+/**
+ * Sends a Supabase password-reset email. Always reports success so the endpoint
+ * cannot be used to enumerate which emails have accounts.
+ */
 export async function forgotPassword(formData: FormData) {
   const parsed = forgotPasswordSchema.safeParse({
     email: formData.get('email'),
@@ -138,30 +158,47 @@ export async function forgotPassword(formData: FormData) {
     return { error: parsed.error.issues[0].message }
   }
 
+  const supabase = await createClient()
+  await supabase.auth.resetPasswordForEmail(parsed.data.email, {
+    redirectTo: `${env.NEXT_PUBLIC_APP_ORIGIN ?? ''}/login`,
+  })
+
   return { success: 'Check your email for a password reset link.' }
 }
 
 export async function logout() {
-  // Clear both the selected mock session and any active impersonation so
-  // switching roles starts from a clean slate.
-  const cookieStore = await cookies()
-  cookieStore.delete(MOCK_SESSION_COOKIE)
-  cookieStore.delete(IMPERSONATION_COOKIE)
+  const supabase = await createClient()
+  await supabase.auth.signOut()
   redirect('/login')
 }
 
 /**
  * Records that the current user has (re-)accepted the latest Terms and Privacy
- * Policy. Called by the re-consent gate when the stored consent version is
- * older than the currently published version.
+ * Policy. Stamps the authenticated user's profile — the user is resolved from
+ * the Supabase session, never from the client.
  */
 export async function recordConsent(): Promise<{
   success?: boolean
   error?: string
 }> {
-  // TODO(prod): UPDATE the authenticated user's profile, stamping
-  // terms_accepted_at = now(), privacy_accepted_at = now(),
-  // terms_version = CURRENT_TERMS_VERSION, privacy_version = CURRENT_PRIVACY_VERSION.
-  // Resolve the user from the Supabase session (auth.uid()), never from the client.
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) return { error: 'Not authenticated' }
+
+  const now = new Date().toISOString()
+  const { error } = await supabase
+    .from('profiles')
+    .update({
+      terms_accepted_at: now,
+      privacy_accepted_at: now,
+      terms_version: CURRENT_TERMS_VERSION,
+      privacy_version: CURRENT_PRIVACY_VERSION,
+      updated_at: now,
+    })
+    .eq('id', user.id)
+
+  if (error) return { error: 'Could not record consent' }
   return { success: true }
 }

@@ -2,7 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { requireUser } from '@/lib/auth/guards'
-import { MOCK_CURRENT_USER } from '@/lib/mock-data'
+import { createClient } from '@/lib/supabase/server'
 
 export async function updateProfile(input: { full_name: string }) {
   const auth = await requireUser()
@@ -13,8 +13,13 @@ export async function updateProfile(input: { full_name: string }) {
     return { error: 'Name must be at least 2 characters' }
   }
 
-  // Mutate the in-memory mock user
-  ;(MOCK_CURRENT_USER as { full_name: string | null }).full_name = name
+  // RLS allows a user to update only their own profile row.
+  const supabase = await createClient()
+  const { error } = await supabase
+    .from('profiles')
+    .update({ full_name: name })
+    .eq('id', auth.profile.id)
+  if (error) return { error: error.message }
 
   revalidatePath('/profile')
   revalidatePath('/dashboard')

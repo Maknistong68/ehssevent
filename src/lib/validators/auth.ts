@@ -15,6 +15,9 @@ export const signupSchema = z
         /^[a-zA-Z0-9_]+$/,
         'Username may only contain letters, numbers, and underscores'
       ),
+    // Supabase Auth is email-based, so sign-up collects an email (used to sign
+    // in and to receive confirmation / reset links).
+    email: z.string().email('Please enter a valid email address'),
     password: z.string().min(6, 'Password must be at least 6 characters'),
     confirm_password: z.string(),
     // PDPL consent must be provable: the controller has to record that the

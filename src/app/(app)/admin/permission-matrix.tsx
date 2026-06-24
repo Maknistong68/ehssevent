@@ -39,7 +39,6 @@ const ROLE_LABELS: Record<UserRole, string> = {
 const PERMISSION_LABELS: Record<Permission, string> = {
   'event:view': 'View events',
   'event:create': 'Create / report events',
-  'event:respond': 'Respond to events',
   'event:review': 'Advance contractor stages',
   'event:manage': 'Advance client stages / close out',
   'ca:view': 'View corrective actions',

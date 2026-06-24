@@ -12,6 +12,7 @@ import {
   Mail,
 } from 'lucide-react'
 import { useTranslations } from 'next-intl'
+import { forgotPassword } from '@/lib/actions/auth'
 
 export function ForgotPasswordForm() {
   const [email, setEmail] = useState('')
@@ -26,8 +27,14 @@ export function ForgotPasswordForm() {
     setSuccess('')
     setLoading(true)
 
-    // Mock — always succeeds
-    setSuccess(t('checkEmailReset'))
+    const formData = new FormData()
+    formData.set('email', email)
+    const result = await forgotPassword(formData)
+    if (result?.error) {
+      setError(result.error)
+    } else {
+      setSuccess(result?.success ?? t('checkEmailReset'))
+    }
     setLoading(false)
   }
 

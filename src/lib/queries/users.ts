@@ -1,4 +1,4 @@
-import { MOCK_PROFILES } from '@/lib/mock-data'
+import { createClient } from '@/lib/supabase/server'
 import { can } from '@/lib/auth/permissions'
 import type { Profile } from '@/types/database'
 
@@ -10,12 +10,15 @@ export interface AssignableUser {
 }
 
 export async function getAssignableUsers(): Promise<AssignableUser[]> {
-  return MOCK_PROFILES.filter((p) => p.status === 'active').map((p) => ({
-    id: p.id,
-    full_name: p.full_name,
-    email: p.email,
-    username: p.username,
-  }))
+  const supabase = await createClient()
+  // RLS scopes profiles to the caller's organization (platform admins see all).
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('id, full_name, email, username')
+    .eq('status', 'active')
+    .order('full_name', { ascending: true, nullsFirst: false })
+  if (error) return []
+  return (data ?? []) as AssignableUser[]
 }
 
 /**
@@ -24,15 +27,18 @@ export async function getAssignableUsers(): Promise<AssignableUser[]> {
  * `ca:approve` permission and is NOT the creator. Returns undefined if no such
  * approver exists (callers fall back to the creator).
  */
-export function resolveDefaultApprover(
+export async function resolveDefaultApprover(
   creatorId: string,
   organizationId: string | null
-): Profile | undefined {
-  return MOCK_PROFILES.find(
-    (p) =>
-      p.id !== creatorId &&
-      p.status === 'active' &&
-      p.organization_id === organizationId &&
-      can(p.role, 'ca:approve')
-  )
+): Promise<Profile | undefined> {
+  if (!organizationId) return undefined
+  const supabase = await createClient()
+  const { data } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('organization_id', organizationId)
+    .eq('status', 'active')
+    .neq('id', creatorId)
+  const candidates = (data ?? []) as unknown as Profile[]
+  return candidates.find((p) => can(p.role, 'ca:approve'))
 }

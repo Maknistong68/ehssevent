@@ -4,7 +4,7 @@ import { cookies } from 'next/headers'
 import { revalidatePath } from 'next/cache'
 import { logAudit } from '@/lib/actions/audit'
 import { IMPERSONATION_COOKIE, requirePermission } from '@/lib/auth/guards'
-import { MOCK_PROFILES } from '@/lib/mock-data'
+import { createAdminClient } from '@/lib/supabase/admin'
 
 export async function startImpersonation(userId: string) {
   // Only actors granted `impersonate:use` may view-as another user.
@@ -18,7 +18,12 @@ export async function startImpersonation(userId: string) {
   }
 
   // The target must exist before we record an impersonation session.
-  const target = MOCK_PROFILES.find((p) => p.id === userId)
+  const admin = createAdminClient()
+  const { data: target } = await admin
+    .from('profiles')
+    .select('id')
+    .eq('id', userId)
+    .maybeSingle()
   if (!target) return { error: 'User not found' }
 
   // httpOnly so the impersonation session can only be changed via these
