@@ -104,6 +104,12 @@ export function DsrQueue({ requests }: DsrQueueProps) {
                     {req.note}
                   </p>
                 )}
+                {req.resolution_note && (
+                  <p className="rounded-md bg-muted/60 p-2 text-xs text-muted-foreground whitespace-pre-wrap">
+                    <span className="font-medium">Resolution: </span>
+                    {req.resolution_note}
+                  </p>
+                )}
                 <p className="text-xs text-muted-foreground">
                   Submitted{' '}
                   {format(new Date(req.created_at), 'dd MMM yyyy, h:mm a')}

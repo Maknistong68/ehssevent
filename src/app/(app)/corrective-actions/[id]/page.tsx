@@ -34,8 +34,7 @@ export default async function CorrectiveActionDetailPage({ params }: Props) {
 
   if (!ca) notFound()
 
-  const isAdmin =
-    profile.role === 'system_admin' || profile.role === 'support'
+  const isAdmin = profile.role === 'system_admin' || profile.role === 'support'
 
   return (
     <CaDetail

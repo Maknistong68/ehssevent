@@ -11,8 +11,15 @@ import { env } from '@/lib/env'
 /** Current published version of the Terms of Service. */
 export const CURRENT_TERMS_VERSION = '1.0'
 
-/** Current published version of the Privacy Policy (PDPL). */
-export const CURRENT_PRIVACY_VERSION = '1.0'
+/**
+ * Current published version of the Privacy Policy (PDPL).
+ *
+ * Bumped 1.0 → 2.0: the lawful basis for incident/injury/health processing was
+ * corrected from "consent" to "legal obligation" (Saudi Labor Law / OSH / GOSI),
+ * and the data-location statement was corrected to In-Kingdom residency. Both are
+ * material changes, so existing users are re-prompted to acknowledge the notice.
+ */
+export const CURRENT_PRIVACY_VERSION = '2.0'
 
 // Data Protection Officer contact surface. Configured via environment so the
 // real, monitored details can be set per deployment without code changes; the
@@ -41,6 +48,14 @@ export const LEGAL_EMAIL = env.NEXT_PUBLIC_LEGAL_EMAIL ?? 'legal@example.com'
  * Surfaced to the user when they submit a request so expectations are clear.
  */
 export const DSR_RESPONSE_DAYS = 30
+
+/**
+ * Labor-law retention period for HSE incident records. Records younger than
+ * this must be kept (and erasure of them lawfully refused); the scheduled
+ * retention job destroys records once they pass it. See docs/ropa.md (A2) and
+ * the DPIA (R5 mitigation).
+ */
+export const INCIDENT_RETENTION_YEARS = 10
 
 // The actionable rights a data subject can exercise under PDPL Article 4.
 // (The fifth right — to be informed — is satisfied by the privacy notice

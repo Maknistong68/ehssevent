@@ -6,11 +6,7 @@ import { Camera, X, Loader2 } from 'lucide-react'
 import { toSecurePhotoUrl } from '@/lib/utils/photo-url'
 import { uploadToStorage } from '@/lib/storage'
 import Image from 'next/image'
-import {
-  Dialog,
-  DialogContent,
-  DialogTitle,
-} from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
 
 const ALLOWED_TYPES = [
   'image/jpeg',
@@ -100,6 +96,7 @@ export function PhotoUpload({
                 src={toSecurePhotoUrl(url)}
                 alt={`Photo ${i + 1}`}
                 fill
+                unoptimized
                 className="object-cover"
               />
             </button>
@@ -128,6 +125,7 @@ export function PhotoUpload({
                 src={toSecurePhotoUrl(photos[previewIndex])}
                 alt={`Photo ${previewIndex + 1}`}
                 fill
+                unoptimized
                 className="object-contain"
               />
             </div>

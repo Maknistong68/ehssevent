@@ -103,12 +103,10 @@ export async function getCorrectiveActionPeople(): Promise<{
   assignees: Profile[]
 }> {
   const supabase = await createClient()
-  const { data, error } = await supabase
-    .from('corrective_actions')
-    .select(
-      `creator:profiles!corrective_actions_created_by_fkey(*),
+  const { data, error } = await supabase.from('corrective_actions').select(
+    `creator:profiles!corrective_actions_created_by_fkey(*),
        assignee:profiles!corrective_actions_assigned_to_fkey(*)`
-    )
+  )
   if (error) return { creators: [], assignees: [] }
 
   const creators = new Map<string, Profile>()

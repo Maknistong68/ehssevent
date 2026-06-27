@@ -17,6 +17,7 @@ needs no tools installed.** Method B is for if you already use the Supabase CLI.
 ## Method A — Supabase Dashboard (recommended)
 
 ### Step 1 — Run the schema
+
 1. Open your project at https://supabase.com/dashboard → your project.
 2. Left sidebar → **SQL Editor** → **+ New query**.
 3. Open `event-report/supabase/migrations/0001_schema.sql` in your editor, copy
@@ -24,10 +25,12 @@ needs no tools installed.** Method B is for if you already use the Supabase CLI.
 4. Click **Run** (or Ctrl/Cmd + Enter). Wait for "Success. No rows returned".
 
 ### Step 2 — Run the RLS policies
+
 1. New query → paste **all** of `migrations/0002_rls.sql` → **Run**.
 2. This also creates the `observation-photos` storage bucket used for photos.
 
 ### Step 3 — Run the seed
+
 1. New query → paste **all** of `seed.sql` → **Run**.
 2. This creates **Company A**, **Company B**, a contractor org, one sample
    project per company, and two helper functions used below.
@@ -96,15 +99,17 @@ Company B's data.
      ```
 
 ### Seed organization IDs (for reference)
-| Organization        | ID                                       |
-| ------------------- | ---------------------------------------- |
-| Company A (client)  | `a0000000-0000-0000-0000-0000000000a1`   |
-| Company B (client)  | `b0000000-0000-0000-0000-0000000000b1`   |
-| Pilot Contractors   | `c0000000-0000-0000-0000-0000000000c1`   |
+
+| Organization       | ID                                     |
+| ------------------ | -------------------------------------- |
+| Company A (client) | `a0000000-0000-0000-0000-0000000000a1` |
+| Company B (client) | `b0000000-0000-0000-0000-0000000000b1` |
+| Pilot Contractors  | `c0000000-0000-0000-0000-0000000000c1` |
 
 ---
 
 ## Verify it worked
+
 - Dashboard → **Table Editor**: you see empty tables plus `organizations` with
   Company A / Company B / Pilot Contractors, and two rows in `projects`.
 - Dashboard → **Authentication → Users**: your admin (and any testers) appear.
@@ -116,6 +121,7 @@ Company B's data.
 ---
 
 ## Then run the app
+
 1. Paste your real keys into `event-report/.env.local` (Project Settings → API:
    Project URL, anon key, service_role key).
 2. `npm run dev`, open http://localhost:3000.

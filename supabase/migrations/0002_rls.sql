@@ -268,17 +268,41 @@ create policy audit_logs_select on public.audit_logs
 
 -- ============================================================================
 -- Storage: the `observation-photos` bucket for event / inspection / CA photos.
+--
+-- These photos can contain injuries / faces (sensitive — and potentially
+-- biometric — personal data under PDPL Art. 23–25). The bucket is therefore
+-- PRIVATE and access is scoped to the caller's organization by the object's
+-- top-level path folder (`{organization_id}/{uuid-filename}`). Objects are
+-- never served by durable public URL; the app reads them through an
+-- authenticated proxy (`/api/photos`) that streams the bytes under RLS and
+-- writes a per-access audit row.
 -- ============================================================================
 
 insert into storage.buckets (id, name, public)
-values ('observation-photos', 'observation-photos', true)
-on conflict (id) do nothing;
+values ('observation-photos', 'observation-photos', false)
+on conflict (id) do update set public = false;
 
--- Any authenticated user may upload to the bucket; anyone may read (public
--- bucket → durable public URLs). Tighten to org-scoped paths post-pilot.
+-- Read: an authenticated user may read only objects stored under their own
+-- organization's folder; platform admins (acting as DPO / support) may read
+-- across orgs. `storage.foldername(name)` returns the path segments, so
+-- `[1]` is the leading `{organization_id}` folder.
 create policy "observation_photos_read" on storage.objects
-  for select using (bucket_id = 'observation-photos');
+  for select to authenticated using (
+    bucket_id = 'observation-photos'
+    and (
+      public.is_platform_admin()
+      or (storage.foldername(name))[1] = public.auth_org_id()::text
+    )
+  );
 
+-- Insert: an authenticated user may write only into their own org's folder,
+-- so a forged path cannot drop an object into another tenant's namespace.
 create policy "observation_photos_insert" on storage.objects
   for insert to authenticated
-  with check (bucket_id = 'observation-photos');
+  with check (
+    bucket_id = 'observation-photos'
+    and (storage.foldername(name))[1] = public.auth_org_id()::text
+  );
+
+-- Update / delete are performed by the service-role client (retention purges,
+-- DSR fulfilment) which bypasses RLS; no anon/authenticated policy is granted.

@@ -32,6 +32,9 @@ const envSchema = z.object({
   // ── Error monitoring / observability ──────────────────────────────────────
   NEXT_PUBLIC_MONITORING_DSN: z.string().url().optional(),
 
+  // ── Scheduled-job auth (retention/destruction cron) — server-only ─────────
+  CRON_SECRET: z.string().min(1).optional(),
+
   // ── PDPL Data Protection Officer contact (shown in UI, so public) ─────────
   NEXT_PUBLIC_DPO_EMAIL: z.string().email().optional(),
   NEXT_PUBLIC_DPO_PHONE: z.string().min(1).optional(),
@@ -51,6 +54,7 @@ const parsed = envSchema.safeParse({
   EMAIL_API_KEY: process.env.EMAIL_API_KEY,
   EMAIL_FROM: process.env.EMAIL_FROM,
   NEXT_PUBLIC_MONITORING_DSN: process.env.NEXT_PUBLIC_MONITORING_DSN,
+  CRON_SECRET: process.env.CRON_SECRET,
   NEXT_PUBLIC_DPO_EMAIL: process.env.NEXT_PUBLIC_DPO_EMAIL,
   NEXT_PUBLIC_DPO_PHONE: process.env.NEXT_PUBLIC_DPO_PHONE,
   NEXT_PUBLIC_DPO_ADDRESS: process.env.NEXT_PUBLIC_DPO_ADDRESS,

@@ -4,11 +4,7 @@ import { useState } from 'react'
 import Image from 'next/image'
 import { cn } from '@/lib/utils'
 import { toSecurePhotoUrl } from '@/lib/utils/photo-url'
-import {
-  Dialog,
-  DialogContent,
-  DialogTitle,
-} from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
 
 interface PhotoGridProps {
   photos: string[]
@@ -41,6 +37,7 @@ export function PhotoGrid({ photos, thumbClassName }: PhotoGridProps) {
               src={toSecurePhotoUrl(url)}
               alt={`Photo ${i + 1}`}
               fill
+              unoptimized
               className="object-cover"
             />
           </button>
@@ -61,6 +58,7 @@ export function PhotoGrid({ photos, thumbClassName }: PhotoGridProps) {
                 src={toSecurePhotoUrl(photos[openIndex])}
                 alt={`Photo ${openIndex + 1}`}
                 fill
+                unoptimized
                 className="object-contain"
               />
             </div>

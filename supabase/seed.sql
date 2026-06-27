@@ -24,6 +24,21 @@
 --   (And similarly assign your first non-admin tester to Company A.)
 -- ============================================================================
 
+-- ── Safety gate: never seed a production database (A9 / C6) ──────────────────
+-- This file loads demo organizations/projects and is for local / dev / pilot
+-- use ONLY. To run it you must explicitly opt in for the current session:
+--     set app.allow_seed = 'on';
+-- Running it without that flag aborts, so the demo data can't reach production
+-- by accident (e.g. a stray `supabase db reset` pointed at the wrong project).
+do $$
+begin
+  if coalesce(current_setting('app.allow_seed', true), 'off') <> 'on' then
+    raise exception
+      'seed.sql is dev-only. Run "set app.allow_seed = ''on'';" first to confirm this is NOT a production database.';
+  end if;
+end;
+$$;
+
 -- ── Organizations ───────────────────────────────────────────────────────────
 
 insert into public.organizations (id, name, org_type, contact_email, is_active)

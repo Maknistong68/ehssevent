@@ -22,9 +22,7 @@ export async function getAdminStats(): Promise<AdminStats> {
   // Platform-wide counts (admin-only page) via the service-role client.
   const admin = createAdminClient()
   const [orgs, users, inactive, pending] = await Promise.all([
-    admin
-      .from('organizations')
-      .select('id', { count: 'exact', head: true }),
+    admin.from('organizations').select('id', { count: 'exact', head: true }),
     admin.from('profiles').select('id', { count: 'exact', head: true }),
     admin
       .from('profiles')
@@ -53,10 +51,7 @@ export async function getPendingApprovalCount(): Promise<number> {
 }
 
 export async function getDashboardStats(): Promise<DashboardStats> {
-  const [events, cas] = await Promise.all([
-    getEvents(),
-    getCorrectiveActions(),
-  ])
+  const [events, cas] = await Promise.all([getEvents(), getCorrectiveActions()])
 
   const draft = events.filter((e) => e.approval_level === 'draft').length
   const closed = events.filter((e) => e.approval_level === 'closed').length
@@ -129,16 +124,20 @@ export async function getInspectionStats(): Promise<InspectionStats> {
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).getTime()
   let completedThisMonth = 0
   const scores: number[] = []
-  for (const row of data as { score: number | null; completed_at: string | null }[]) {
-    if (row.completed_at && new Date(row.completed_at).getTime() >= monthStart) {
+  for (const row of data as {
+    score: number | null
+    completed_at: string | null
+  }[]) {
+    if (
+      row.completed_at &&
+      new Date(row.completed_at).getTime() >= monthStart
+    ) {
       completedThisMonth++
     }
     if (typeof row.score === 'number') scores.push(row.score)
   }
   const average_score =
-    scores.length > 0
-      ? scores.reduce((a, b) => a + b, 0) / scores.length
-      : null
+    scores.length > 0 ? scores.reduce((a, b) => a + b, 0) / scores.length : null
 
   return {
     total: data.length,

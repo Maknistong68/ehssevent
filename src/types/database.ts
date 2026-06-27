@@ -51,6 +51,7 @@ export interface DsrRequest {
   type: 'access' | 'copy' | 'correction' | 'destruction'
   note: string | null
   status: 'received' | 'in_progress' | 'completed' | 'rejected'
+  resolution_note: string | null // DPO outcome / retention-refusal reason (visible to requester)
   created_at: string
   due_at: string // statutory response deadline (created_at + DSR_RESPONSE_DAYS)
   resolved_at: string | null

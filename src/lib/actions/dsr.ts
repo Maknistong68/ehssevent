@@ -10,6 +10,7 @@ import { requireUser, requirePermission } from '@/lib/auth/guards'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { logAudit } from '@/lib/actions/audit'
+import { notifyDpoOfDsr } from '@/lib/email'
 import type { DsrRequest } from '@/types/database'
 
 export interface SubmitDsrInput {
@@ -69,9 +70,15 @@ export async function submitDsrRequest(
     return { error: error?.message ?? 'Failed to submit request.' }
   }
 
-  // The DPO is notified out-of-band (transactional email is deferred for the
-  // pilot); reference the request id and statutory deadline when wiring it up.
-  void DPO_EMAIL
+  // Notify the DPO so the statutory response clock is actioned. Best-effort:
+  // a failed/!configured email must not fail the (already-persisted) request.
+  await notifyDpoOfDsr({
+    dpoEmail: DPO_EMAIL,
+    requestId: request.id as string,
+    type: input.type,
+    requesterEmail,
+    dueAt: request.due_at as string,
+  })
 
   // Accountability: log the request to the audit trail.
   await logAudit({
@@ -124,6 +131,9 @@ export async function updateDsrStatus(
   const patch: Record<string, unknown> = { status }
   if (status === 'completed' || status === 'rejected') {
     patch.resolved_at = new Date().toISOString()
+    // Persist the reason on the request so the data subject can read why their
+    // request was rejected/resolved (PDPL transparency). Visible via RLS.
+    if (note?.trim()) patch.resolution_note = note.trim()
   }
 
   const { error } = await admin
@@ -148,10 +158,60 @@ export async function updateDsrStatus(
 }
 
 /**
- * Fulfils a DSR. For a `destruction` request this redacts the subject's profile
- * record; other request types are marked completed (the access/copy/correction
- * artefacts are produced out-of-band). Writes go through the service-role client.
- * Every action is audited.
+ * Counts the statutory HSE records authored by / about a data subject that must
+ * be RETAINED (incident records carry a labor-law retention duty), so a
+ * destruction request can be honored for erasable PII while documenting what is
+ * lawfully kept. Counts are header-only (no row data leaves the DB).
+ */
+async function countRetainedRecords(
+  admin: ReturnType<typeof createAdminClient>,
+  subjectId: string
+): Promise<Record<string, number>> {
+  const head = { count: 'exact' as const, head: true }
+  const [events, responses, caCreated, caAssigned, inspections] =
+    await Promise.all([
+      admin.from('events').select('id', head).eq('created_by', subjectId),
+      admin
+        .from('event_responses')
+        .select('id', head)
+        .eq('responded_by', subjectId),
+      admin
+        .from('corrective_actions')
+        .select('id', head)
+        .eq('created_by', subjectId),
+      admin
+        .from('corrective_actions')
+        .select('id', head)
+        .eq('assigned_to', subjectId),
+      admin
+        .from('inspections')
+        .select('id', head)
+        .eq('conducted_by', subjectId),
+    ])
+  return {
+    events: events.count ?? 0,
+    event_responses: responses.count ?? 0,
+    corrective_actions_created: caCreated.count ?? 0,
+    corrective_actions_assigned: caAssigned.count ?? 0,
+    inspections: inspections.count ?? 0,
+  }
+}
+
+/**
+ * Fulfils a DSR. Writes go through the service-role client; every action is
+ * audited.
+ *
+ * For a `destruction` request this performs a **partial erasure**: the
+ * subject's directly-identifying profile PII (name, email) is redacted and the
+ * account deactivated, but statutory HSE records they authored (incidents,
+ * responses, corrective actions, inspections) are **retained** under the
+ * 10-year labor-law retention duty. PDPL permits refusing erasure of
+ * legally-mandated records, but the refusal must be documented and
+ * communicated — so the scope and reason are written to `resolution_note`
+ * (visible to the requester) and to the immutable audit trail.
+ *
+ * Other request types are marked completed (access/copy/correction artefacts
+ * are produced out-of-band).
  */
 export async function fulfilDsr(
   requestId: string
@@ -167,12 +227,23 @@ export async function fulfilDsr(
     .maybeSingle()
   if (!request) return { error: 'Request not found.' }
 
+  const previousStatus = request.status as DsrRequest['status']
+  let resolutionNote: string | null = null
+
   if (request.type === 'destruction') {
+    const subjectId = request.requester_id as string
+
+    // Tally statutory records BEFORE redacting so the refusal reason is exact.
+    const retained = await countRetainedRecords(admin, subjectId)
+    const retainedTotal = Object.values(retained).reduce((a, b) => a + b, 0)
+
     const { data: profile } = await admin
       .from('profiles')
       .select('id')
-      .eq('id', request.requester_id as string)
+      .eq('id', subjectId)
       .maybeSingle()
+
+    let profileRedacted = false
     if (profile) {
       const profileId = profile.id as string
       await admin
@@ -183,21 +254,38 @@ export async function fulfilDsr(
           status: 'deactivated',
         })
         .eq('id', profileId)
+      profileRedacted = true
 
       await logAudit({
         action: 'dsr.erasure',
         target_table: 'profiles',
         target_id: profileId,
         target_label: 'redacted',
-        metadata: { request_id: requestId },
+        metadata: { request_id: requestId, retained },
       })
+    }
+
+    resolutionNote =
+      retainedTotal > 0
+        ? `Your account profile (name, email) has been erased and the account deactivated. ` +
+          `However, ${retainedTotal} statutory health & safety incident record(s) you are referenced in are RETAINED ` +
+          `under the labor-law requirement to keep incident records for 10 years (PDPL permits refusing erasure of ` +
+          `records the controller is legally obliged to retain). These will be destroyed when their retention period expires.`
+        : `Your account profile (name, email) has been erased and the account deactivated. ` +
+          `No statutory incident records referencing you were found.`
+
+    if (!profileRedacted) {
+      resolutionNote = `No matching profile was found to erase. ${resolutionNote}`
     }
   }
 
-  const previousStatus = request.status as DsrRequest['status']
   const { error } = await admin
     .from('dsr_requests')
-    .update({ status: 'completed', resolved_at: new Date().toISOString() })
+    .update({
+      status: 'completed',
+      resolved_at: new Date().toISOString(),
+      resolution_note: resolutionNote,
+    })
     .eq('id', requestId)
   if (error) return { error: error.message }
 
@@ -209,6 +297,7 @@ export async function fulfilDsr(
     metadata: {
       type: request.type,
       status: { from: previousStatus, to: 'completed' },
+      resolution_note: resolutionNote,
     },
   })
 

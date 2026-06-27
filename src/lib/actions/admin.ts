@@ -113,10 +113,12 @@ export async function inviteUser(input: {
   if (!email) return { error: 'An email address is required.' }
 
   const admin = createAdminClient()
-  const { data: invited, error } =
-    await admin.auth.admin.inviteUserByEmail(email, {
+  const { data: invited, error } = await admin.auth.admin.inviteUserByEmail(
+    email,
+    {
       redirectTo: `${env.NEXT_PUBLIC_APP_ORIGIN}/accept-invite`,
-    })
+    }
+  )
   if (error || !invited?.user) {
     return { error: error?.message ?? 'Failed to invite user' }
   }

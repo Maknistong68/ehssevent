@@ -351,6 +351,12 @@ create table public.dsr_requests (
   type            public.dsr_type not null,
   note            text,
   status          public.dsr_status not null default 'received',
+  -- Outcome recorded by the DPO at resolution: what was done and, for a
+  -- destruction request, which statutory incident records were RETAINED and
+  -- why (PDPL allows refusing erasure of legally-mandated records, but the
+  -- refusal must be documented and communicated to the data subject). Visible
+  -- to the requester via RLS.
+  resolution_note text,
   created_at      timestamptz not null default now(),
   due_at          timestamptz not null,
   resolved_at     timestamptz

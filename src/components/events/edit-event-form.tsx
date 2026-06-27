@@ -290,7 +290,10 @@ export function EditEventForm({ event, users }: EditEventFormProps) {
           </h3>
           <div className="space-y-2">
             <Label>Site</Label>
-            <Select value={site || null} onValueChange={(v) => setSite(v ?? '')}>
+            <Select
+              value={site || null}
+              onValueChange={(v) => setSite(v ?? '')}
+            >
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Select site" />
               </SelectTrigger>
@@ -313,7 +316,6 @@ export function EditEventForm({ event, users }: EditEventFormProps) {
               placeholder="e.g. Hive Work Area"
             />
           </div>
-
         </CardContent>
       </Card>
 
@@ -461,9 +463,7 @@ export function EditEventForm({ event, users }: EditEventFormProps) {
                       <button
                         type="button"
                         onClick={() =>
-                          setAttendees((prev) =>
-                            prev.filter((a) => a !== name)
-                          )
+                          setAttendees((prev) => prev.filter((a) => a !== name))
                         }
                         className="text-muted-foreground hover:text-foreground"
                         aria-label={`Remove ${name}`}

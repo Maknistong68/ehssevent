@@ -489,6 +489,7 @@ export function CaDetail({
                     src={toSecurePhotoUrl(url)}
                     alt={`Photo ${i + 1}`}
                     fill
+                    unoptimized
                     className="object-cover"
                   />
                 </div>

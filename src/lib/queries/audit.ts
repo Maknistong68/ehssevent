@@ -40,7 +40,9 @@ export async function getAuditLogs(
   if (filters.from) query = query.gte('created_at', filters.from)
   if (filters.to) {
     // Treat `to` as inclusive of the whole day.
-    const end = new Date(new Date(filters.to).getTime() + 24 * 60 * 60 * 1000 - 1)
+    const end = new Date(
+      new Date(filters.to).getTime() + 24 * 60 * 60 * 1000 - 1
+    )
     query = query.lte('created_at', end.toISOString())
   }
   if (filters.actor) query = query.ilike('actor_email', `%${filters.actor}%`)

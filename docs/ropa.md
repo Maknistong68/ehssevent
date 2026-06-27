@@ -28,8 +28,8 @@ processes personal and sensitive personal data of workers and platform users.
 - **Source:** Directly from the user at registration; admin-created accounts.
 - **Lawful basis:** Necessity for performance of the service agreement; Consent (acceptance of Terms).
 - **Recipients / access:** Controller administrators; Support role; the user.
-- **Processors:** Hosting / identity provider `[name]`.
-- **Cross-border:** `[TBD — depends on hosting region; safeguards required if outside KSA]`.
+- **Processors:** Hosting / identity provider `[name]` — region: **In-Kingdom (KSA)**.
+- **Cross-border:** None — the controller has elected **In-Kingdom (KSA) hosting**; account/identity data resides within the Kingdom. No transfer outside KSA (PDPL Art. 29 not engaged). Confirm the processor's region in the host console.
 - **Retention:** Account lifetime + 5 years after the employment relationship ends.
 - **Security:** TLS; encryption at rest; MFA for privileged roles; row-level security (RLS); audit logging.
 
@@ -42,9 +42,9 @@ processes personal and sensitive personal data of workers and platform users.
 - **Source:** Reporting users; investigators; photographic capture on site.
 - **Lawful basis:** **Legal obligation** (labor / occupational safety & health law); **Legitimate interest** in workplace safety. Sensitive data is processed under the PDPL exception for obligations imposed by law and occupational-health purposes — **not** consent.
 - **Recipients / access:** Need-to-know within the reporting workflow; the relevant client and contractor organizations (segregated by RLS); regulatory authorities where legally required.
-- **Processors:** Hosting `[name]`; object storage for photos `[name]`.
-- **Cross-border:** `[TBD — sensitive-data transfer requires a PDPL transfer assessment + safeguards]`.
-- **Retention:** **Minimum 10 years** for incident records (labor-law requirement).
+- **Processors:** Hosting `[name]`; object storage for photos `[name]` — both **In-Kingdom (KSA)**.
+- **Cross-border:** None — **In-Kingdom (KSA) hosting**; incident/health data, photographs, backups and logs all reside within the Kingdom. No transfer outside KSA; PDPL Art. 29 not engaged. (If this ever changes, a sensitive-data transfer assessment + safeguards become mandatory.)
+- **Retention:** **Minimum 10 years** for incident records (labor-law requirement); destroyed thereafter by the scheduled retention job with the deletion logged to the immutable audit trail.
 - **Security:** Column-level encryption for health fields; segregated / least-privilege access; authenticated photo proxy with access logging; immutable audit trail.
 
 ## A3 — Statutory reporting to authorities
@@ -78,7 +78,7 @@ processes personal and sensitive personal data of workers and platform users.
 - **Sensitive data:** Generally none (treat photos with caution).
 - **Lawful basis:** **Legitimate interest** in safety assurance.
 - **Recipients / access:** Inspecting organization; managers (RLS-scoped).
-- **Retention:** `[e.g., 5 years]` or aligned to project records.
+- **Retention:** 5 years, aligned to project records (review against project-closure requirements).
 - **Security:** As A2.
 
 ## A6 — Audit logging, accountability & security
@@ -89,7 +89,7 @@ processes personal and sensitive personal data of workers and platform users.
 - **Sensitive data:** None (do not log sensitive payloads).
 - **Lawful basis:** **Legal obligation** (PDPL security duty); **Legitimate interest** (security / fraud prevention).
 - **Recipients / access:** Administrators; Support; DPO.
-- **Retention:** `[e.g., 7 years]`.
+- **Retention:** 7 years (security / accountability record).
 - **Security:** Append-only / immutable store; no update/delete; restricted read.
 
 ## A7 — Consent & data-subject-rights (DSR) records
@@ -99,7 +99,7 @@ processes personal and sensitive personal data of workers and platform users.
 - **Personal data:** Consent timestamps + policy version; DSR type, note, status, deadline, resolution.
 - **Lawful basis:** **Legal obligation** (PDPL compliance & accountability).
 - **Recipients / access:** DPO; administrators.
-- **Retention:** Consent proof for duration + limitation period; DSR records `[e.g., 5 years]`.
+- **Retention:** Consent proof for the account lifetime + limitation period; DSR records 5 years.
 - **Security:** Restricted access; audit-logged.
 
 ## A8 — Email notifications to attendees (optional feature)
@@ -109,8 +109,8 @@ processes personal and sensitive personal data of workers and platform users.
 - **Personal data:** Name, email; event reference.
 - **Lawful basis:** **Consent** (the per-event opt-in flag).
 - **Recipients / access:** Email / transactional provider `[name]` (Processor).
-- **Cross-border:** `[TBD per provider region]`.
-- **Retention:** Notification logs `[e.g., 12 months]`.
+- **Cross-border:** None — use an **In-Kingdom (KSA-resident)** transactional email provider; confirm the region in the provider contract / DPA.
+- **Retention:** Notification logs 12 months.
 - **Security:** Provider DPA; minimal payload.
 
 ## A9 — Administrative troubleshooting (impersonation / "view as")
@@ -125,9 +125,17 @@ processes personal and sensitive personal data of workers and platform users.
 
 ---
 
-## Placeholders to complete
+## Resolved in this revision
 
-- `[Legal entity name]`, `[dpo@your-domain]`
-- Hosting / storage / email **Processor names + regions**
-- Exact **retention values** for A5–A8
-- The **cross-border determination** (gated on the hosting-region decision)
+- **Cross-border determination:** **In-Kingdom (KSA) hosting** elected across all
+  activities — no transfer outside the Kingdom; PDPL Art. 29 not engaged. (Revert
+  to a transfer assessment only if a non-KSA processor is ever introduced.)
+- **Retention values:** A1 account +5y; A2/A3 incident **10y** (then audited
+  destruction); A5 inspections 5y; A6 audit 7y; A7 DSR 5y; A8 email logs 12m.
+
+## Remaining placeholders (require business / legal sign-off — do not fabricate)
+
+- `[Legal entity name]`, `[dpo@your-domain]` — set from `NEXT_PUBLIC_LEGAL_ENTITY_NAME`
+  / `NEXT_PUBLIC_DPO_EMAIL` once the operating entity and registered DPO are confirmed.
+- Hosting / storage / email **Processor names** (region is fixed to In-Kingdom above).
+- **Review / sign-off dates** and approver identities.

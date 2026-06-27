@@ -31,8 +31,43 @@
 - **Sensitive-data rule:** every row marked sensitive requires heightened controls
   (encryption, least-privilege access, DPIA coverage) and stricter cross-border treatment.
 
-## Placeholders to complete
+## Legitimate-interest balancing tests (P4, P5, P6, P9)
 
-- `[Legal entity name]`
-- Confirm retention values feeding P4–P8 against the RoPA.
-- Record the documented legitimate-interest balancing tests for P4, P5, P6, P9.
+Each test follows the three-part structure: **(a) Purpose** (is the interest
+legitimate?), **(b) Necessity** (is the processing needed for it?), **(c) Balance**
+(does it override the data subject's interests/rights, given safeguards?).
+
+- **P4 — Corrective action management.** (a) Closing safety actions arising from
+  incidents/inspections is a legitimate operational interest and is often mandated.
+  (b) Tracking assignee/approver identity and completion evidence is necessary to
+  prove remediation occurred. (c) Impact is low: actors are workplace personnel
+  acting in a professional capacity, access is RLS-scoped to the relevant
+  organization, and any health detail in CA notes/photos is minimized. **Balance:
+  passes.**
+- **P5 — Safety inspections.** (a) Assuring site safety via template inspections is
+  a legitimate interest. (b) Inspector identity, notes, and finding photos are
+  necessary to attribute and act on findings. (c) Data is generally non-sensitive,
+  professional-context, RLS-scoped; photos are handled with the same private-storage
+  controls as incidents. **Balance: passes.**
+- **P6 — Audit logging & security.** (a) Tamper-evident accountability is both a
+  legitimate interest and a PDPL security duty. (b) Recording actor/target/action/
+  timestamp is necessary for security and non-repudiation. (c) No sensitive payloads
+  are logged, the store is append-only with restricted read, and subjects are
+  informed via the privacy notice. **Balance: passes.**
+- **P9 — Admin troubleshooting / impersonation.** (a) Resolving user-reported issues
+  is a legitimate operational interest. (b) Viewing the platform as the affected user
+  is sometimes necessary to reproduce a problem. (c) This is the most intrusive
+  activity, so it is constrained: **read-only**, **time-boxed**, **reason-captured**,
+  and **start/stop audit-logged**, restricted to Admin/Support. With these
+  safeguards the residual impact is acceptable. **Balance: passes with safeguards.**
+
+## Resolved in this revision
+
+- **Retention values** feeding P4–P8 are confirmed against the RoPA (P4 follows the
+  parent incident/inspection lifecycle; P5 5y; P6 7y; P7 5y; P8 12m).
+- **Cross-border:** In-Kingdom (KSA) hosting across all purposes — see RoPA.
+
+## Remaining placeholder (requires business sign-off — do not fabricate)
+
+- `[Legal entity name]` — set from `NEXT_PUBLIC_LEGAL_ENTITY_NAME` once the operating
+  entity is confirmed.

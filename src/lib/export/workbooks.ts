@@ -74,7 +74,7 @@ export async function eventsToWorkbook(
       ref: e.reference_number,
       type: EVENT_TYPE_LABELS[e.type] ?? e.type,
       classification: e.classification
-        ? EVENT_CLASSIFICATION_LABELS[e.classification] ?? e.classification
+        ? (EVENT_CLASSIFICATION_LABELS[e.classification] ?? e.classification)
         : '',
       stage: EVENT_APPROVAL_LABELS[e.approval_level] ?? e.approval_level,
       site: e.site ?? '',

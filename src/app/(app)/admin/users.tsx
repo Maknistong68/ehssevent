@@ -426,9 +426,7 @@ export function AdminUsers({
                   {initials(profile.full_name, profile.email, profile.username)}
                 </div>
                 <div className="min-w-0">
-                  <p className="truncate font-medium">
-                    {displayName(profile)}
-                  </p>
+                  <p className="truncate font-medium">{displayName(profile)}</p>
                   <p className="truncate text-xs text-muted-foreground">
                     {profile.username}
                   </p>
