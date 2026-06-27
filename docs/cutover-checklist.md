@@ -51,12 +51,12 @@ injury/health data and photographs**.
 
 ## P4 — Legal accountability & sign-off (human; start early, finish last)
 
-| ID  | Item                                                                 | Owner | Status | Verification                                                                   |
-| --- | -------------------------------------------------------------------- | ----- | ------ | ------------------------------------------------------------------------------ |
-| B6  | Appoint & **register a monitored DPO**; set real env values          | `[ ]` | `[ ]`  | `NEXT_PUBLIC_DPO_*` + `NEXT_PUBLIC_LEGAL_*` set; DPO inbox monitored.          |
-| B9  | Decide on **column-level encryption** for health/injury fields       | `[ ]` | `[ ]`  | Documented key-management decision (apply `pgcrypto`/Vault or accept at-rest). |
-| B10 | DPO/SRO **sign** RoPA, DPIA, lawful-basis matrix                     | `[ ]` | `[ ]`  | Signatures + dates recorded in `docs/*.md`; DPIA residual risk accepted.       |
-| B7  | Final Arabic legal copy reviewed by counsel; consent version stamped | `[ ]` | `[ ]`  | Arabic privacy/terms render; signup records the current consent version.       |
+| ID  | Item                                                                                                          | Owner | Status | Verification                                                                   |
+| --- | ------------------------------------------------------------------------------------------------------------- | ----- | ------ | ------------------------------------------------------------------------------ |
+| B6  | Appoint & **register a monitored DPO**; set real env values                                                   | `[ ]` | `[ ]`  | `NEXT_PUBLIC_DPO_*` + `NEXT_PUBLIC_LEGAL_*` set; DPO inbox monitored.          |
+| B9  | Decide on **column-level encryption** for health/injury fields ([design note](b9-health-field-encryption.md)) | `[ ]` | `[ ]`  | Documented key-management decision (apply `pgcrypto`/Vault or accept at-rest). |
+| B10 | DPO/SRO **sign** RoPA, DPIA, lawful-basis matrix                                                              | `[ ]` | `[ ]`  | Signatures + dates recorded in `docs/*.md`; DPIA residual risk accepted.       |
+| B7  | Final Arabic legal copy reviewed by counsel; consent version stamped                                          | `[ ]` | `[ ]`  | Arabic privacy/terms render; signup records the current consent version.       |
 
 ---
 
